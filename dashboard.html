@@ -43,20 +43,9 @@
                 <a href="friends.html" style="color: var(--text-primary); text-decoration: none; padding: 0.5rem 1rem; border-radius: 8px; transition: background 0.3s;" onmouseover="this.style.background='rgba(255,149,0,0.1)'" onmouseout="this.style.background='transparent'">👥 Friends</a>
                 
                 <!-- Profile, Leaderboard, Settings -->
-                <button onclick="openProfileModal()" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-primary); padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 0.5rem;" onmouseover="this.style.background='rgba(255,149,0,0.1)'" onmouseout="this.style.background='rgba(255, 255, 255, 0.05)'">
-                    <span>👤</span>
-                    <span style="font-size: 0.875rem; font-weight: 500;">Profile</span>
-                </button>
-                
-                <button onclick="openLeaderboardModal()" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-primary); padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 0.5rem;" onmouseover="this.style.background='rgba(255,149,0,0.1)'" onmouseout="this.style.background='rgba(255, 255, 255, 0.05)'">
-                    <span>🏆</span>
-                    <span style="font-size: 0.875rem; font-weight: 500;">Leaderboard</span>
-                </button>
-                
-                <button onclick="openSettingsModal()" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-primary); padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 0.5rem;" onmouseover="this.style.background='rgba(255,149,0,0.1)'" onmouseout="this.style.background='rgba(255, 255, 255, 0.05)'">
-                    <span>⚙️</span>
-                    <span style="font-size: 0.875rem; font-weight: 500;">Settings</span>
-                </button>
+                <a onclick="openProfileModal()" style="color: var(--text-primary); text-decoration: none; padding: 0.5rem 1rem; border-radius: 8px; transition: background 0.3s; cursor: pointer;" onmouseover="this.style.background='rgba(255,149,0,0.1)'" onmouseout="this.style.background='transparent'">👤 Profile</a>
+                <a onclick="openLeaderboardModal()" style="color: var(--text-primary); text-decoration: none; padding: 0.5rem 1rem; border-radius: 8px; transition: background 0.3s; cursor: pointer;" onmouseover="this.style.background='rgba(255,149,0,0.1)'" onmouseout="this.style.background='transparent'">🏆 Leaderboard</a>
+                <a onclick="openSettingsModal()" style="color: var(--text-primary); text-decoration: none; padding: 0.5rem 1rem; border-radius: 8px; transition: background 0.3s; cursor: pointer;" onmouseover="this.style.background='rgba(255,149,0,0.1)'" onmouseout="this.style.background='transparent'">⚙️ Settings</a>
                 
                 <!-- Notification Bell -->
                 <div class="notification-bell" style="position: relative; cursor: pointer; padding: 0.5rem;" onclick="toggleNotifications()">
