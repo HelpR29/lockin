@@ -93,9 +93,9 @@ async function drawProfilePicture(ctx, imageUrl) {
         
         img.onload = () => {
             try {
-                const size = 120;
-                const x = 1050;
-                const y = 60;
+                const size = 200;  // Much bigger!
+                const x = 950;     // Adjusted position
+                const y = 150;
                 
                 // Draw circular mask
                 ctx.save();
@@ -127,9 +127,9 @@ async function drawProfilePicture(ctx, imageUrl) {
         img.onerror = (err) => {
             console.warn('Failed to load profile picture:', err);
             // Draw placeholder circle instead
-            const size = 120;
-            const x = 1050;
-            const y = 60;
+            const size = 200;  // Match the bigger size
+            const x = 950;
+            const y = 150;
             
             ctx.fillStyle = 'rgba(255, 159, 28, 0.2)';
             ctx.beginPath();
