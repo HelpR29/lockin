@@ -243,9 +243,23 @@
             }
         }
         
+        function handleAssetTypeChange() {
+            currentAssetType = document.getElementById('assetType').value;
+            const symbolInput = document.getElementById('symbolInput');
+            
+            if (currentAssetType === 'crypto') {
+                symbolInput.placeholder = 'Enter crypto pair (e.g., BTCUSDT)';
+                symbolInput.value = 'BTCUSDT';
+            } else {
+                symbolInput.placeholder = 'Enter stock symbol (e.g., AAPL)';
+                symbolInput.value = 'AAPL';
+            }
+        }
+        
         async function loadChart() {
             const symbolInput = document.getElementById('symbolInput');
             currentSymbol = symbolInput.value.trim().toUpperCase();
+            currentAssetType = document.getElementById('assetType').value;
             
             if (!currentSymbol) {
                 alert('Please enter a symbol');
@@ -253,10 +267,15 @@
             }
             
             document.querySelector('.loading-spinner').style.display = 'block';
+            document.querySelector('.loading-spinner').textContent = 'Loading chart...';
             
             try {
-                // Fetch data from Binance API (for crypto)
-                const data = await fetchCryptoData(currentSymbol, currentTimeframe);
+                let data;
+                if (currentAssetType === 'crypto') {
+                    data = await fetchCryptoData(currentSymbol, currentTimeframe);
+                } else {
+                    data = await fetchStockData(currentSymbol, currentTimeframe);
+                }
                 
                 if (data && data.length > 0) {
                     // Update chart with new data
@@ -271,6 +290,7 @@
             } catch (error) {
                 console.error('Error loading chart data:', error);
                 document.querySelector('.loading-spinner').textContent = `Error: ${error.message}. Try another symbol.`;
+                document.querySelector('.loading-spinner').style.display = 'block';
             }
         }
         
@@ -282,7 +302,7 @@
                 );
                 
                 if (!response.ok) {
-                    throw new Error('Symbol not found or API error');
+                    throw new Error('Crypto symbol not found or API error');
                 }
                 
                 const data = await response.json();
@@ -298,7 +318,75 @@
                 }));
                 
             } catch (error) {
-                console.error('Error fetching data:', error);
+                console.error('Error fetching crypto data:', error);
+                throw error;
+            }
+        }
+        
+        async function fetchStockData(symbol, interval) {
+            try {
+                // Convert timeframe to Alpha Vantage format
+                const intervalMap = {
+                    '1m': '1min',
+                    '5m': '5min',
+                    '15m': '15min',
+                    '1h': '60min',
+                    '4h': 'daily', // Alpha Vantage doesn't have 4h, use daily
+                    '1d': 'daily'
+                };
+                
+                const avInterval = intervalMap[interval] || 'daily';
+                
+                // Using Alpha Vantage API
+                const apiKey = 'X5R323WGWX5XBOM5';
+                
+                let url;
+                if (avInterval.includes('min')) {
+                    url = `https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=${symbol}&interval=${avInterval}&apikey=${apiKey}&outputsize=full`;
+                } else {
+                    url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${symbol}&apikey=${apiKey}&outputsize=compact`;
+                }
+                
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error('Stock symbol not found or API error');
+                }
+                
+                const data = await response.json();
+                
+                // Check for API errors
+                if (data['Error Message']) {
+                    throw new Error('Invalid stock symbol');
+                }
+                
+                if (data['Note']) {
+                    throw new Error('API limit reached. Please try again later or use your own API key.');
+                }
+                
+                // Get the time series data
+                const timeSeriesKey = Object.keys(data).find(key => key.includes('Time Series'));
+                if (!timeSeriesKey) {
+                    throw new Error('No data available for this stock');
+                }
+                
+                const timeSeries = data[timeSeriesKey];
+                
+                // Convert Alpha Vantage format to TradeX format
+                const chartData = Object.entries(timeSeries).map(([timestamp, values]) => ({
+                    time: new Date(timestamp).getTime(),
+                    open: parseFloat(values['1. open']),
+                    high: parseFloat(values['2. high']),
+                    low: parseFloat(values['3. low']),
+                    close: parseFloat(values['4. close']),
+                    volume: parseFloat(values['5. volume'] || 0)
+                }));
+                
+                // Sort by time ascending
+                return chartData.sort((a, b) => a.time - b.time);
+                
+            } catch (error) {
+                console.error('Error fetching stock data:', error);
                 throw error;
             }
         }
@@ -316,8 +404,10 @@
             loadChart();
         }
         
-        function quickLoadSymbol(symbol) {
+        function quickLoadSymbol(symbol, assetType) {
             document.getElementById('symbolInput').value = symbol;
+            document.getElementById('assetType').value = assetType;
+            currentAssetType = assetType;
             loadChart();
         }
         
