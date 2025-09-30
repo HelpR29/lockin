@@ -5,11 +5,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    await generateReports();
+    try {
+        await generateReports();
+    } catch (error) {
+        console.error('Error initializing reports:', error);
+        alert('Failed to load reports. Please refresh the page.');
+    }
 });
 
 async function generateReports() {
-    const { data: { user } } = await supabase.auth.getUser();
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            window.location.href = 'login.html';
+            return;
+        }
 
     const { data: trades, error } = await supabase
         .from('trades')
@@ -48,13 +58,19 @@ async function generateReports() {
     // Basic chart always
     renderPlChart(trades);
 
-    if (unlocked) {
-        renderWinLossChart(trades);
-        renderDailyPlChart(trades);
+        if (unlocked) {
+            renderWinLossChart(trades);
+            renderDailyPlChart(trades);
+        }
+    } catch (error) {
+        console.error('Error generating reports:', error);
+        throw error;
     }
 }
 
 function calculateAndDisplayKPIs(trades) {
+    if (!trades || trades.length === 0) return;
+    
     let totalPl = 0;
     let totalWins = 0;
     let totalLosses = 0;
@@ -78,15 +94,25 @@ function calculateAndDisplayKPIs(trades) {
     const avgWin = totalWins > 0 ? grossProfit / totalWins : 0;
     const avgLoss = totalLosses > 0 ? grossLoss / totalLosses : 0;
 
-    document.getElementById('kpiTotalPl').textContent = `$${totalPl.toFixed(2)}`;
-    document.getElementById('kpiWinRate').textContent = `${winRate.toFixed(2)}%`;
-    document.getElementById('kpiProfitFactor').textContent = profitFactor.toFixed(2);
-    document.getElementById('kpiAvgWin').textContent = `$${avgWin.toFixed(2)}`;
-    document.getElementById('kpiAvgLoss').textContent = `$${avgLoss.toFixed(2)}`;
+    const elements = {
+        kpiTotalPl: `$${totalPl.toFixed(2)}`,
+        kpiWinRate: `${winRate.toFixed(2)}%`,
+        kpiProfitFactor: profitFactor.toFixed(2),
+        kpiAvgWin: `$${avgWin.toFixed(2)}`,
+        kpiAvgLoss: `$${avgLoss.toFixed(2)}`
+    };
+    
+    Object.entries(elements).forEach(([id, text]) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = text;
+    });
 }
 
 function renderPlChart(trades) {
-    const ctx = document.getElementById('plChart').getContext('2d');
+    const canvas = document.getElementById('plChart');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
     let cumulativePl = 0;
     const data = trades.map(trade => {
         const pnl = (trade.exit_price - trade.entry_price) * trade.position_size * (trade.direction === 'short' ? -1 : 1);
@@ -110,7 +136,10 @@ function renderPlChart(trades) {
 }
 
 function renderWinLossChart(trades) {
-    const ctx = document.getElementById('winLossChart').getContext('2d');
+    const canvas = document.getElementById('winLossChart');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
     let wins = 0;
     let losses = 0;
     trades.forEach(trade => {
@@ -135,7 +164,10 @@ function renderWinLossChart(trades) {
 }
 
 function renderDailyPlChart(trades) {
-    const ctx = document.getElementById('dailyPlChart').getContext('2d');
+    const canvas = document.getElementById('dailyPlChart');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const dailyPl = new Array(7).fill(0);
 
