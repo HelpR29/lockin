@@ -8,24 +8,39 @@ const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Check if user is already logged in
 async function checkAuth() {
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (user) {
-        // User is logged in
-        const currentPage = window.location.pathname;
-        if (currentPage.includes('signup.html') || currentPage.includes('login.html')) {
-            window.location.href = 'dashboard.html';
+    try {
+        const { data: { user }, error } = await supabase.auth.getUser();
+        
+        if (error) {
+            console.error('Auth check error:', error);
+            return null;
         }
+        
+        if (user) {
+            // User is logged in
+            const currentPage = window.location.pathname;
+            if (currentPage.includes('signup.html') || currentPage.includes('login.html')) {
+                window.location.href = 'dashboard.html';
+            }
+        }
+        
+        return user;
+    } catch (error) {
+        console.error('Unexpected auth check error:', error);
+        return null;
     }
-    
-    return user;
 }
 
 // Sign Up Function
 async function signUp(email, password, fullName) {
     try {
+        if (!email || !password) {
+            alert('Email and password are required.');
+            return null;
+        }
+        
         const { data, error } = await supabase.auth.signUp({
-            email: email,
+            email: email.trim(),
             password: password,
             options: {
                 data: {
@@ -53,8 +68,13 @@ async function signUp(email, password, fullName) {
 // Sign In Function
 async function signIn(email, password) {
     try {
+        if (!email || !password) {
+            alert('Email and password are required.');
+            return null;
+        }
+        
         const { data, error } = await supabase.auth.signInWithPassword({
-            email: email,
+            email: email.trim(),
             password: password,
         });
 
@@ -126,5 +146,12 @@ supabase.auth.onAuthStateChange((event, session) => {
 
 // Check auth on page load
 document.addEventListener('DOMContentLoaded', () => {
-    checkAuth();
+    checkAuth().catch(err => console.error('Auth initialization error:', err));
 });
+
+// Export functions to global scope for HTML forms
+window.signUp = signUp;
+window.signIn = signIn;
+window.signOut = signOut;
+window.resetPassword = resetPassword;
+window.checkAuth = checkAuth;

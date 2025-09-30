@@ -1,20 +1,31 @@
 // Simple write-through pricing selection (no payments backend yet)
 
 document.addEventListener('DOMContentLoaded', async () => {
-  const user = await checkAuth();
-  if (!user) {
+  try {
+    const user = await checkAuth();
+    if (!user) {
+      window.location.href = 'login.html';
+      return;
+    }
+  } catch (error) {
+    console.error('Error during authentication check:', error);
     window.location.href = 'login.html';
-    return;
   }
 });
 
 async function selectPlan(planCode) {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    alert('Please log in first.');
-    window.location.href = 'login.html';
-    return;
-  }
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      alert('Please log in first.');
+      window.location.href = 'login.html';
+      return;
+    }
+    
+    if (!planCode) {
+      alert('Invalid plan selected.');
+      return;
+    }
 
   // Compute expiry (for subscriptions), lifetime has null
   let expiresAt = null;
@@ -55,8 +66,13 @@ async function selectPlan(planCode) {
     return;
   }
 
-  alert('Plan updated successfully!');
-  window.location.href = 'reports.html';
+    alert('Plan updated successfully!');
+    window.location.href = 'reports.html';
+  } catch (error) {
+    console.error('Error selecting plan:', error);
+    alert('An error occurred. Please try again.');
+  }
 }
 
+// Export function to global scope for HTML onclick handlers
 window.selectPlan = selectPlan;

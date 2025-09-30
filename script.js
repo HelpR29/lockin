@@ -1,13 +1,17 @@
 // Modern futuristic JavaScript for LockIn landing page
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize all interactive features
-    initNavigation();
-    initScrollEffects();
-    initTouchEnhancements();
-    initPerformanceOptimizations();
-    initParticleCanvas();
-    initCursorEffects();
+    try {
+        // Initialize all interactive features
+        initNavigation();
+        initScrollEffects();
+        initTouchEnhancements();
+        initPerformanceOptimizations();
+        initParticleCanvas();
+        initCursorEffects();
+    } catch (error) {
+        console.error('Error initializing landing page:', error);
+    }
 });
 
 // Navigation Toggle
@@ -162,16 +166,22 @@ function initPerformanceOptimizations() {
 
 // Preload critical resources
 function preloadCriticalResources() {
-    // Preload Google Fonts if not already loaded
-    const fontLink = document.createElement('link');
-    fontLink.rel = 'preload';
-    fontLink.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap';
-    fontLink.as = 'style';
-    fontLink.onload = function() {
-        this.onload = null;
-        this.rel = 'stylesheet';
-    };
-    document.head.appendChild(fontLink);
+    try {
+        // Preload Google Fonts if not already loaded
+        const fontLink = document.createElement('link');
+        fontLink.rel = 'preload';
+        fontLink.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap';
+        fontLink.as = 'style';
+        fontLink.onload = function() {
+            this.onload = null;
+            this.rel = 'stylesheet';
+        };
+        if (document.head) {
+            document.head.appendChild(fontLink);
+        }
+    } catch (error) {
+        console.error('Error preloading resources:', error);
+    }
 }
 
 // Add loading state management
@@ -210,9 +220,12 @@ function initParticleCanvas() {
     const canvas = document.getElementById('particle-canvas');
     if (!canvas) return;
     
-    const ctx = canvas.getContext('2d');
-    let particles = [];
-    let animationFrameId;
+    try {
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        
+        let particles = [];
+        let animationFrameId;
     
     // Set canvas size
     function resizeCanvas() {
@@ -308,16 +321,19 @@ function initParticleCanvas() {
         animationFrameId = requestAnimationFrame(animate);
     }
     
-    animate();
-    
-    // Cleanup on visibility change
-    document.addEventListener('visibilitychange', function() {
-        if (document.hidden) {
-            cancelAnimationFrame(animationFrameId);
-        } else {
-            animate();
-        }
-    });
+        animate();
+        
+        // Cleanup on visibility change
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                cancelAnimationFrame(animationFrameId);
+            } else {
+                animate();
+            }
+        });
+    } catch (error) {
+        console.error('Error initializing particle canvas:', error);
+    }
 }
 
 // Cursor Effects
