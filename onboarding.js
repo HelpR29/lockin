@@ -66,6 +66,26 @@ function updateProgress() {
     if (currentStepEl) currentStepEl.textContent = currentStep;
 }
 
+// Avatar selection
+let selectedAvatar = '';
+function selectAvatar(emoji) {
+    // Remove previous selection
+    document.querySelectorAll('.profile-pic-option').forEach(el => {
+        el.style.border = '2px solid transparent';
+        el.style.background = 'rgba(255, 149, 0, 0.1)';
+    });
+    
+    // Highlight selected avatar
+    const selectedEl = document.querySelector(`[data-avatar="${emoji}"]`);
+    if (selectedEl) {
+        selectedEl.style.border = '2px solid var(--primary)';
+        selectedEl.style.background = 'rgba(255, 149, 0, 0.3)';
+    }
+    
+    selectedAvatar = emoji;
+    document.getElementById('profileAvatar').value = emoji;
+}
+
 // Step 2: Save Profile
 async function saveProfile() {
     const form = document.getElementById('profileForm');
@@ -74,8 +94,15 @@ async function saveProfile() {
         return;
     }
     
+    if (!selectedAvatar) {
+        alert('Please select a profile picture!');
+        return;
+    }
+    
     onboardingData.profile = {
         username: document.getElementById('username').value.trim(),
+        avatar: selectedAvatar,
+        gender: document.getElementById('gender').value,
         experience: document.getElementById('experience').value,
         trading_style: document.getElementById('tradingStyle').value,
         markets: document.getElementById('markets').value
@@ -188,12 +215,21 @@ async function completeOnboarding() {
     try {
         const { data: { user } } = await supabase.auth.getUser();
         
+        // Validate all data exists
+        if (!onboardingData.profile || !onboardingData.goals || !onboardingData.rules || !onboardingData.token) {
+            throw new Error('Please complete all steps before finishing setup.');
+        }
+        
+        console.log('Saving onboarding data:', onboardingData);
+        
         // Save all onboarding data to Supabase
         const { error: profileError } = await supabase
             .from('user_profiles')
             .upsert({
                 user_id: user.id,
                 username: onboardingData.profile.username,
+                avatar: onboardingData.profile.avatar || '👤',
+                gender: onboardingData.profile.gender || 'prefer-not-to-say',
                 experience: onboardingData.profile.experience,
                 trading_style: onboardingData.profile.trading_style,
                 markets: onboardingData.profile.markets,
@@ -266,13 +302,26 @@ async function completeOnboarding() {
         
     } catch (error) {
         console.error('Error saving onboarding data:', error);
-        alert('Error saving your settings. Please try again.');
+        console.error('Error details:', error.message);
+        console.error('Current data:', onboardingData);
+        
+        let errorMsg = 'Error saving your settings. ';
+        if (error.message.includes('complete all steps')) {
+            errorMsg = error.message;
+        } else if (error.message) {
+            errorMsg += error.message;
+        } else {
+            errorMsg += 'Please try again.';
+        }
+        
+        alert(errorMsg);
         if (buttonText) buttonText.textContent = 'Complete Setup';
         if (button) button.disabled = false;
     }
 }
 
 // Export functions to global scope for HTML onclick handlers
+window.selectAvatar = selectAvatar;
 window.nextStep = nextStep;
 window.prevStep = prevStep;
 window.saveProfile = saveProfile;

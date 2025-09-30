@@ -8,6 +8,8 @@ CREATE TABLE user_profiles (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id UUID REFERENCES auth.users NOT NULL UNIQUE,
     username TEXT,
+    avatar TEXT DEFAULT '👤',
+    gender TEXT DEFAULT 'prefer-not-to-say',
     experience TEXT NOT NULL,
     trading_style TEXT NOT NULL,
     markets TEXT NOT NULL,
