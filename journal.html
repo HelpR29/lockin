@@ -118,8 +118,40 @@
                     </div>
                 </div>
 
-                <div class="trade-list-container" id="tradeList">
-                    <!-- Trades will be loaded here -->
+                <div class="journal-layout">
+                    <div class="trade-list-container" id="tradeList">
+                        <!-- Trades will be loaded here -->
+                    </div>
+                    
+                    <div class="chart-section">
+                        <h3 style="margin: 0 0 1rem 0;">📈 Trade Chart</h3>
+                        <div id="chartInfo" class="chart-info" style="display: none;">
+                            <p><strong id="chartSymbol"></strong> - <span id="chartDirection"></span></p>
+                            <div class="trade-levels-legend">
+                                <div class="legend-item">
+                                    <div class="legend-color" style="background: #4CAF50;"></div>
+                                    <span>Entry</span>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="legend-color" style="background: #2196F3;"></div>
+                                    <span>Exit</span>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="legend-color" style="background: #F44336;"></div>
+                                    <span>Stop Loss</span>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="legend-color" style="background: #FFC107;"></div>
+                                    <span>Target</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="chartContainerJournal" class="chart-container-journal">
+                            <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text-secondary);">
+                                <p>Select a trade to view its chart</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
