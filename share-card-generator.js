@@ -93,9 +93,9 @@ async function drawProfilePicture(ctx, imageUrl) {
         
         img.onload = () => {
             try {
-                const size = 200;  // Much bigger!
-                const x = 950;     // Adjusted position
-                const y = 150;
+                const size = 180;  // Slightly smaller for better fit
+                const x = 980;     // Moved right
+                const y = 180;     // Moved down
                 
                 // Draw circular mask
                 ctx.save();
@@ -127,9 +127,9 @@ async function drawProfilePicture(ctx, imageUrl) {
         img.onerror = (err) => {
             console.warn('Failed to load profile picture:', err);
             // Draw placeholder circle instead
-            const size = 200;  // Match the bigger size
-            const x = 950;
-            const y = 150;
+            const size = 180;  // Match the size
+            const x = 980;
+            const y = 180;
             
             ctx.fillStyle = 'rgba(255, 159, 28, 0.2)';
             ctx.beginPath();
@@ -174,9 +174,9 @@ function renderCompletionCard(ctx, data, token, nameColor) {
     ctx.fillText(`${streak} Day Streak 🔥`, 50, 440);
     ctx.fillText(`${discipline}% Discipline Score`, 50, 490);
 
-    // Giant token (moved to right side)
-    ctx.font = '220px sans-serif';
-    ctx.fillText(token, 850, 380);
+    // Giant token (center-right, not overlapping profile)
+    ctx.font = '200px sans-serif';
+    ctx.fillText(token, 650, 400);
 }
 
 function renderAchievementCard(ctx, data, token, nameColor) {
