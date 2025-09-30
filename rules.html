@@ -127,47 +127,96 @@
     <script>
         function openAddRuleModal() {
             console.log('🔥 openAddRuleModal called!');
+            
+            // Create a completely new modal that overrides everything
             let modal = document.getElementById('addRuleModal');
             
             if (modal) {
-                console.log('Modal element found, using existing');
-            } else {
-                console.log('Modal not found, creating new one');
-                // Create modal if it doesn't exist
-                modal = document.createElement('div');
-                modal.id = 'addRuleModal';
-                modal.className = 'modal';
-                modal.innerHTML = `
-                    <div class="modal-content" style="background: white !important; border: 5px solid red !important; color: black !important;">
-                        <span class="close-button" onclick="document.getElementById('addRuleModal').style.display='none'" style="color: black !important;">&times;</span>
-                        <h2>Add Custom Rule</h2>
-                        <form id="customRuleForm" onsubmit="window.saveCustomRule(event)">
-                            <div class="form-group">
-                                <label for="ruleCategory">Category</label>
-                                <select id="ruleCategory" required>
-                                    <option value="Risk Management">⚠️ Risk Management</option>
-                                    <option value="Entry Rules">📥 Entry Rules</option>
-                                    <option value="Exit Rules">📤 Exit Rules</option>
-                                    <option value="Psychology">🧠 Psychology</option>
-                                    <option value="General">📋 General</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="ruleText">Rule Description</label>
-                                <textarea id="ruleText" rows="3" placeholder="e.g., Never trade more than 3 times per day" required></textarea>
-                            </div>
-                            <button type="submit" class="cta-primary-large">Add Rule</button>
-                        </form>
-                    </div>
-                `;
-                document.body.appendChild(modal);
+                // Remove existing modal to avoid conflicts
+                modal.remove();
             }
             
-            // Apply styles regardless of whether it existed or was created
+            // Create fresh modal
+            modal = document.createElement('div');
+            modal.id = 'addRuleModal';
+            modal.innerHTML = `
+                <div style="
+                    background: #ffffff !important;
+                    border: 10px solid #ff0000 !important;
+                    border-radius: 20px !important;
+                    padding: 3rem !important;
+                    max-width: 600px !important;
+                    width: 90vw !important;
+                    position: relative !important;
+                    color: #000000 !important;
+                    font-family: Arial, sans-serif !important;
+                    font-size: 18px !important;
+                    box-shadow: 0 20px 60px rgba(0,0,0,0.8) !important;
+                    z-index: 9999999 !important;
+                ">
+                    <span style="
+                        position: absolute !important;
+                        top: 1rem !important;
+                        right: 1rem !important;
+                        font-size: 3rem !important;
+                        color: #000000 !important;
+                        cursor: pointer !important;
+                        line-height: 1 !important;
+                    " onclick="document.getElementById('addRuleModal').remove()">&times;</span>
+                    <h2 style="color: #000000 !important; margin-bottom: 2rem !important; font-size: 2rem !important;">🚨 MODAL TEST - CAN YOU SEE THIS?</h2>
+                    <p style="color: #000000 !important; font-size: 1.5rem !important; margin-bottom: 2rem !important;">If you can see this bright red-bordered box, the modal is working!</p>
+                    <form id="customRuleForm">
+                        <div style="margin-bottom: 2rem !important;">
+                            <label style="display: block !important; color: #000000 !important; font-weight: bold !important; margin-bottom: 0.5rem !important;">Category:</label>
+                            <select id="ruleCategory" required style="
+                                width: 100% !important;
+                                padding: 1rem !important;
+                                background: #f0f0f0 !important;
+                                border: 2px solid #000000 !important;
+                                border-radius: 8px !important;
+                                color: #000000 !important;
+                                font-size: 1rem !important;
+                            ">
+                                <option value="Risk Management">⚠️ Risk Management</option>
+                                <option value="Entry Rules">📥 Entry Rules</option>
+                                <option value="Exit Rules">📤 Exit Rules</option>
+                                <option value="Psychology">🧠 Psychology</option>
+                                <option value="General">📋 General</option>
+                            </select>
+                        </div>
+                        <div style="margin-bottom: 2rem !important;">
+                            <label style="display: block !important; color: #000000 !important; font-weight: bold !important; margin-bottom: 0.5rem !important;">Rule Description:</label>
+                            <textarea id="ruleText" rows="4" required placeholder="Enter your trading rule here..." style="
+                                width: 100% !important;
+                                padding: 1rem !important;
+                                background: #f0f0f0 !important;
+                                border: 2px solid #000000 !important;
+                                border-radius: 8px !important;
+                                color: #000000 !important;
+                                font-size: 1rem !important;
+                                resize: vertical !important;
+                            "></textarea>
+                        </div>
+                        <button type="submit" style="
+                            background: #000000 !important;
+                            color: #ffffff !important;
+                            padding: 1rem 2rem !important;
+                            border: none !important;
+                            border-radius: 8px !important;
+                            font-size: 1.2rem !important;
+                            font-weight: bold !important;
+                            cursor: pointer !important;
+                            width: 100% !important;
+                        ">Add Rule</button>
+                    </form>
+                </div>
+            `;
+            
+            // Apply ultra-aggressive styling to modal container
             modal.style.cssText = `
                 display: flex !important;
                 position: fixed !important;
-                z-index: 9999999 !important;
+                z-index: 2147483647 !important;
                 top: 0 !important;
                 left: 0 !important;
                 width: 100vw !important;
@@ -177,23 +226,22 @@
                 align-items: center !important;
                 visibility: visible !important;
                 opacity: 1 !important;
+                pointer-events: auto !important;
                 transform: translateZ(0) !important;
+                will-change: transform !important;
             `;
             
-            console.log('✅ Modal opened');
+            document.body.appendChild(modal);
             
-            // Force repaint
+            console.log('✅ Fresh modal created and opened');
+            
+            // Force multiple repaints
             modal.offsetHeight;
             document.body.offsetHeight;
-            
-            // Debug info
-            const computed = window.getComputedStyle(modal);
-            console.log('Modal computed:', {
-                display: computed.display,
-                zIndex: computed.zIndex,
-                visibility: computed.visibility
-            });
-            console.log('Modal rect:', modal.getBoundingClientRect());
+            setTimeout(() => {
+                modal.offsetHeight;
+                console.log('Modal rect after delay:', modal.getBoundingClientRect());
+            }, 100);
         }
         
         function openTemplateModal() {
