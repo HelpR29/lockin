@@ -143,13 +143,13 @@ async function openLeaderboardModal() {
             <h2 style="margin-bottom: 2rem; text-align: center;">🏆 Leaderboard</h2>
             
             <div style="max-height: 500px; overflow-y: auto;">
-                ${leaderboard.map((user, index) => `
+                ${usersWithNames.map((user, index) => `
                     <div style="background: ${index < 3 ? 'rgba(255, 149, 0, 0.1)' : 'var(--card-bg)'}; border: 1px solid var(--glass-border); border-radius: 12px; padding: 1rem; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 1rem;">
                         <div style="font-size: 1.5rem; font-weight: 700; width: 40px; text-align: center; color: ${index === 0 ? '#FFD700' : index === 1 ? '#C0C0C0' : index === 2 ? '#CD7F32' : 'var(--text-secondary)'};">
                             ${index + 1}
                         </div>
                         <div style="flex: 1;">
-                            <div style="font-weight: 600;">Trader #${user.user_id.substring(0, 8)}</div>
+                            <div style="font-weight: 600;">${user.userName}</div>
                             <div style="font-size: 0.875rem; color: var(--text-secondary);">
                                 Level ${user.level} | ${user.beers_cracked} Glasses | ${user.streak} Day Streak
                             </div>
