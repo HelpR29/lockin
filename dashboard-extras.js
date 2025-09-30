@@ -77,7 +77,7 @@ async function openProfileModal() {
             
             <div style="text-align: center; margin-bottom: 2rem;">
                 <div style="width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), #FFB84D); margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; font-size: 3rem;">
-                    ${user.email?.[0]?.toUpperCase() || '?'}
+                    ${(user.user_metadata?.full_name?.[0] || user.email?.[0])?.toUpperCase() || '?'}
                 </div>
                 <h3 style="margin: 0.5rem 0;">${user.user_metadata?.full_name || 'Trader'}</h3>
                 <p style="color: var(--text-secondary); font-size: 0.875rem;">${user.email}</p>
@@ -122,6 +122,17 @@ async function openLeaderboardModal() {
         console.error('Error loading leaderboard:', error);
         return;
     }
+    
+    // Fetch user metadata for each user
+    const usersPromises = leaderboard.map(async (entry) => {
+        const { data: userData } = await supabase.auth.admin.getUserById(entry.user_id);
+        return {
+            ...entry,
+            userName: userData?.user?.user_metadata?.full_name || userData?.user?.email?.split('@')[0] || 'Trader'
+        };
+    });
+    
+    const usersWithNames = await Promise.all(usersPromises);
     
     const modal = document.createElement('div');
     modal.className = 'modal';
