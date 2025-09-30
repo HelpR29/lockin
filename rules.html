@@ -45,7 +45,7 @@
                 
                 <!-- Add Custom Rule Button -->
                 <div style="margin-bottom: 2rem; display: flex; justify-content: center;">
-                    <button class="cta-primary" onclick="openAddRuleModal()" style="padding: 0.75rem 2rem;">
+                    <button class="cta-primary" onclick="window.openAddRuleModal()" style="padding: 0.75rem 2rem;">
                         + Add Custom Rule
                     </button>
                 </div>
@@ -56,8 +56,8 @@
                     </div>
 
                     <div class="rules-actions">
-                        <button class="cta-primary" onclick="openAddRuleModal()">+ Add Custom Rule</button>
-                        <button class="cta-secondary" onclick="openTemplateModal()">Add from Template</button>
+                        <button class="cta-primary" onclick="window.openAddRuleModal()">+ Add Custom Rule</button>
+                        <button class="cta-secondary" onclick="window.openTemplateModal()">Add from Template</button>
                     </div>
                 </div>
             </div>
@@ -67,7 +67,7 @@
     <!-- Add/Edit Rule Modal -->
     <div id="ruleModal" class="modal">
         <div class="modal-content">
-            <span class="close-button" onclick="closeModal('ruleModal')">&times;</span>
+            <span class="close-button" onclick="window.closeModal('ruleModal')">&times;</span>
             <h2 id="modalTitle">Add New Rule</h2>
             <form id="ruleForm">
                 <input type="hidden" id="ruleId">
@@ -86,9 +86,9 @@
     <!-- Add Custom Rule Modal -->
     <div id="addRuleModal" class="modal">
         <div class="modal-content">
-            <span class="close-button" onclick="closeModal('addRuleModal')">&times;</span>
+            <span class="close-button" onclick="window.closeModal('addRuleModal')">&times;</span>
             <h2>Add Custom Rule</h2>
-            <form id="customRuleForm" onsubmit="saveCustomRule(event)">
+            <form id="customRuleForm" onsubmit="window.saveCustomRule(event)">
                 <div class="form-group">
                     <label for="ruleCategory">Category</label>
                     <select id="ruleCategory" required>
@@ -111,7 +111,7 @@
     <!-- Template Selection Modal -->
     <div id="templateModal" class="modal">
         <div class="modal-content">
-            <span class="close-button" onclick="closeModal('templateModal')">&times;</span>
+            <span class="close-button" onclick="window.closeModal('templateModal')">&times;</span>
             <h2>Add from Template</h2>
             <div id="templateList">
             </div>
@@ -120,7 +120,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="auth.js"></script>
-    <script src="rules-simple.js"></script>
+    <script src="rules-simple.js?v=2"></script>
     <script src="script.js"></script>
     
     <style>

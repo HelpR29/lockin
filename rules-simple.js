@@ -1,5 +1,86 @@
 // Simplified Rules System for trading_rules table
 
+// Define functions globally first
+function openAddRuleModal() {
+    document.getElementById('customRuleForm').reset();
+    openModal('addRuleModal');
+}
+
+function openTemplateModal() {
+    openModal('templateModal');
+}
+
+function openModal(id) {
+    const modal = document.getElementById(id);
+    if (modal) {
+        modal.style.display = 'flex';
+    }
+}
+
+function closeModal(id) {
+    const modal = document.getElementById(id);
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+async function toggleRuleActive(id, isActive) {
+    const { error } = await supabase
+        .from('trading_rules')
+        .update({ is_active: isActive })
+        .eq('id', id);
+    
+    if (error) {
+        console.error('Error updating rule:', error);
+        alert('Failed to update rule status.');
+    }
+}
+
+async function saveCustomRule(event) {
+    event.preventDefault();
+    
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            alert('Please log in to add rules.');
+            return;
+        }
+        
+        const category = document.getElementById('ruleCategory').value;
+        const ruleText = document.getElementById('ruleText').value;
+        
+        const { error } = await supabase
+            .from('trading_rules')
+            .insert({
+                user_id: user.id,
+                rule: ruleText,
+                category: category,
+                is_active: true
+            });
+        
+        if (error) {
+            console.error('Error adding rule:', error);
+            alert('Failed to add rule. Please try again.');
+        } else {
+            closeModal('addRuleModal');
+            document.getElementById('customRuleForm').reset();
+            await loadRules();
+            alert('Custom rule added successfully!');
+        }
+    } catch (error) {
+        console.error('Error saving rule:', error);
+        alert('An error occurred. Please try again.');
+    }
+}
+
+// Export to global immediately
+window.toggleRuleActive = toggleRuleActive;
+window.saveCustomRule = saveCustomRule;
+window.openAddRuleModal = openAddRuleModal;
+window.openTemplateModal = openTemplateModal;
+window.openModal = openModal;
+window.closeModal = closeModal;
+
 document.addEventListener('DOMContentLoaded', async () => {
     const user = await checkAuth();
     if (!user) {
@@ -117,77 +198,3 @@ async function loadRules() {
     }
 }
 
-async function toggleRuleActive(id, isActive) {
-    const { error } = await supabase
-        .from('trading_rules')
-        .update({ is_active: isActive })
-        .eq('id', id);
-    
-    if (error) {
-        console.error('Error updating rule:', error);
-        alert('Failed to update rule status.');
-    }
-}
-
-async function saveCustomRule(event) {
-    event.preventDefault();
-    
-    try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-            alert('Please log in to add rules.');
-            return;
-        }
-        
-        const category = document.getElementById('ruleCategory').value;
-        const ruleText = document.getElementById('ruleText').value;
-        
-        const { error } = await supabase
-            .from('trading_rules')
-            .insert({
-                user_id: user.id,
-                rule: ruleText,
-                category: category,
-                is_active: true
-            });
-        
-        if (error) {
-            console.error('Error adding rule:', error);
-            alert('Failed to add rule. Please try again.');
-        } else {
-            closeModal('addRuleModal');
-            document.getElementById('customRuleForm').reset();
-            await loadRules();
-            alert('Custom rule added successfully!');
-        }
-    } catch (error) {
-        console.error('Error saving rule:', error);
-        alert('An error occurred. Please try again.');
-    }
-}
-
-function openAddRuleModal() {
-    document.getElementById('customRuleForm').reset();
-    openModal('addRuleModal');
-}
-
-function openModal(id) {
-    const modal = document.getElementById(id);
-    if (modal) {
-        modal.style.display = 'flex';
-    }
-}
-
-function closeModal(id) {
-    const modal = document.getElementById(id);
-    if (modal) {
-        modal.style.display = 'none';
-    }
-}
-
-// Export to global
-window.toggleRuleActive = toggleRuleActive;
-window.saveCustomRule = saveCustomRule;
-window.openAddRuleModal = openAddRuleModal;
-window.openModal = openModal;
-window.closeModal = closeModal;
