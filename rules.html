@@ -203,7 +203,25 @@
                     visibility: window.getComputedStyle(modal).visibility
                 });
             }
+            
+            // Test if button click works
+            console.log('🔍 Testing button click...');
+            const btn = document.getElementById('addCustomRuleBtn');
+            if (btn) {
+                btn.click();
+            }
         };
+        
+        // Also test immediately if DOM is already loaded
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                console.log('🚀 DOM loaded, testing modal...');
+                setTimeout(() => {
+                    console.log('🔍 Quick test - modal element:', !!document.getElementById('addRuleModal'));
+                    console.log('🔍 Quick test - button element:', !!document.getElementById('addCustomRuleBtn'));
+                }, 100);
+            });
+        }
         
         console.log('✅ Modal functions loaded inline');
         
@@ -216,24 +234,32 @@
             const addTemplateBtn = document.getElementById('addTemplateBtn');
             
             if (addCustomBtn) {
-                console.log('Found Add Custom Rule button:', addCustomBtn);
+                console.log('✅ Found Add Custom Rule button:', addCustomBtn);
                 addCustomBtn.addEventListener('click', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    console.log('Add Custom Rule button clicked!');
+                    console.log('🎯 Add Custom Rule button clicked!');
                     openAddRuleModal();
                 });
+                console.log('✅ Event listener attached to Add Custom Rule button');
+            } else {
+                console.error('❌ Add Custom Rule button not found!');
             }
             
             if (addTemplateBtn) {
-                console.log('Found Add Template button:', addTemplateBtn);
+                console.log('✅ Found Add Template button:', addTemplateBtn);
                 addTemplateBtn.addEventListener('click', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    console.log('Add Template button clicked!');
+                    console.log('🎯 Add Template button clicked!');
                     openTemplateModal();
                 });
+                console.log('✅ Event listener attached to Add Template button');
+            } else {
+                console.error('❌ Add Template button not found!');
             }
+
+            console.log('✅ All event listeners attached successfully');
         });
     </script>
     
