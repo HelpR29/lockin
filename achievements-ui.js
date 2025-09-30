@@ -123,16 +123,26 @@ function renderRewardShop(rewards) {
     }
 
     container.innerHTML = rewards.map(reward => `
-        <div class="achievement-card">
-            <div class="achievement-icon">${reward.icon}</div>
-            <div class="achievement-name">${reward.name}</div>
-            <div class="achievement-description">${reward.description}</div>
-            <div style="text-align: center; margin: 1rem 0;">
-                <span style="font-size: 1.5rem; font-weight: 700; color: var(--primary);">⭐ ${reward.cost_stars}</span>
+        <div class="shop-item-card">
+            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                <div style="font-size: 3rem;">${reward.icon}</div>
+                <div style="flex: 1;">
+                    <div style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.25rem;">
+                        ${reward.name}
+                    </div>
+                    <div style="font-size: 0.875rem; color: var(--text-secondary);">
+                        ${reward.description}
+                    </div>
+                </div>
             </div>
-            <button class="cta-primary" onclick="purchaseReward('${reward.id}')" style="width: 100%;">
-                Purchase
-            </button>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 1rem; border-top: 1px solid var(--glass-border);">
+                <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary);">
+                    ⭐ ${reward.cost_stars}
+                </div>
+                <button class="cta-primary" onclick="purchaseReward('${reward.id}')" style="padding: 0.75rem 1.5rem;">
+                    Purchase
+                </button>
+            </div>
         </div>
     `).join('');
 }
