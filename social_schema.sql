@@ -4,6 +4,7 @@
 CREATE TABLE IF NOT EXISTS user_customization (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL UNIQUE,
+    avatar_url TEXT, -- Profile picture URL (from Supabase Storage or external)
     active_token TEXT DEFAULT '🍺', -- Current token style (beer, wine, donut, diamond, pizza, dragon, rocket)
     name_color TEXT DEFAULT 'white', -- Name color from rewards
     name_color_hex TEXT DEFAULT '#FFFFFF',

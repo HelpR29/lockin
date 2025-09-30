@@ -16,6 +16,7 @@ async function generateShareCard(type, data) {
 
     const token = customization?.active_token || '🍺';
     const nameColor = customization?.name_color_hex || '#FFFFFF';
+    const avatarUrl = customization?.avatar_url;
 
     // Background gradient
     const gradient = ctx.createLinearGradient(0, 0, 1200, 630);
@@ -45,6 +46,11 @@ async function generateShareCard(type, data) {
     ctx.font = 'bold 48px Inter, sans-serif';
     ctx.fillText('🔒 LockIn', 50, 80);
 
+    // Load and draw profile picture if available
+    if (avatarUrl) {
+        await drawProfilePicture(ctx, avatarUrl);
+    }
+
     switch (type) {
         case 'completion':
             renderCompletionCard(ctx, data, token, nameColor);
@@ -66,6 +72,48 @@ async function generateShareCard(type, data) {
     ctx.fillText('Track your discipline journey at lockin.app', 50, 590);
 
     return canvas.toDataURL('image/png');
+}
+
+// Helper function to draw circular profile picture
+async function drawProfilePicture(ctx, imageUrl) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous'; // Handle CORS
+        
+        img.onload = () => {
+            const size = 120;
+            const x = 1050;
+            const y = 60;
+            
+            // Draw circular mask
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(x + size/2, y + size/2, size/2, 0, Math.PI * 2);
+            ctx.closePath();
+            ctx.clip();
+            
+            // Draw image
+            ctx.drawImage(img, x, y, size, size);
+            
+            ctx.restore();
+            
+            // Draw border
+            ctx.strokeStyle = '#FF9F1C';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.arc(x + size/2, y + size/2, size/2, 0, Math.PI * 2);
+            ctx.stroke();
+            
+            resolve();
+        };
+        
+        img.onerror = () => {
+            console.warn('Failed to load profile picture');
+            resolve(); // Continue without image
+        };
+        
+        img.src = imageUrl;
+    });
 }
 
 function renderCompletionCard(ctx, data, token, nameColor) {
