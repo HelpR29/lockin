@@ -50,41 +50,97 @@
                     <p class="dashboard-subtitle">Your discipline journey starts here</p>
                 </div>
 
-                <!-- Beer Wall Progress -->
-                <div class="beer-wall-overview">
-                    <div class="beer-wall-header">
-                        <div class="wall-icon" id="wallIcon">🍺</div>
-                        <div class="wall-info">
-                            <h3 class="wall-title">Bottles on the Wall</h3>
-                            <div class="wall-count">
-                                <span class="bottles-remaining" id="bottlesRemaining">50</span>
-                                <span class="bottles-separator">of</span>
-                                <span class="bottles-total" id="bottlesTotal">50</span>
+                <!-- View Toggle -->
+                <div class="view-toggle">
+                    <button class="toggle-btn active" data-view="wall" onclick="switchView('wall')">
+                        <span>🍺 Beer Wall</span>
+                    </button>
+                    <button class="toggle-btn" data-view="chart" onclick="switchView('chart')">
+                        <span>📈 Growth Chart</span>
+                    </button>
+                    <button class="toggle-btn" data-view="grid" onclick="switchView('grid')">
+                        <span>🗂️ All Bottles</span>
+                    </button>
+                </div>
+
+                <!-- View: Beer Wall (Main) -->
+                <div class="view-content active" id="view-wall">
+                    <div class="hero-beer-display">
+                        <div class="beer-icon-large" id="heroBeerIcon">🍺</div>
+                        <div class="beer-main-info">
+                            <div class="beer-count-display">
+                                <div class="count-remaining" id="bottlesRemainingLarge">50</div>
+                                <div class="count-label">Bottles on the Wall</div>
+                            </div>
+                            <div class="beer-status">
+                                <div class="status-item">
+                                    <span class="status-label">Cracked:</span>
+                                    <span class="status-value success" id="beersCrackedMain">0</span>
+                                </div>
+                                <div class="status-item">
+                                    <span class="status-label">Spilled:</span>
+                                    <span class="status-value danger" id="beersSpilledMain">0</span>
+                                </div>
+                                <div class="status-item">
+                                    <span class="status-label">Progress:</span>
+                                    <span class="status-value" id="progressPercentMain">0%</span>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="beer-progress">
-                        <div class="progress-label">
-                            <span>Beers Cracked: <span id="beersCracked">0</span></span>
-                            <span id="progressPercent">0%</span>
-                        </div>
-                        <div class="progress-bar-container">
-                            <div class="progress-bar-fill" id="progressBarFill" style="width: 0%"></div>
-                        </div>
-                        <div class="progress-stats">
-                            <div class="stat-item">
-                                <span class="stat-label">Target per beer:</span>
-                                <span class="stat-value" id="targetPercent">+8%</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-label">Current balance:</span>
-                                <span class="stat-value" id="currentBalance">$5,000</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-label">Projected final:</span>
-                                <span class="stat-value" id="projectedFinal">$234,000</span>
+                    <div class="progress-bar-large-container">
+                        <div class="progress-bar-large-fill" id="progressBarLarge"></div>
+                    </div>
+                    <div class="beer-stats-grid">
+                        <div class="beer-stat-card">
+                            <div class="stat-icon">🎯</div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="targetPercentWall">+8%</div>
+                                <div class="stat-label">Target per Beer</div>
                             </div>
                         </div>
+                        <div class="beer-stat-card">
+                            <div class="stat-icon">💰</div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="currentBalanceWall">$5,000</div>
+                                <div class="stat-label">Current Balance</div>
+                            </div>
+                        </div>
+                        <div class="beer-stat-card">
+                            <div class="stat-icon">🚀</div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="projectedFinalWall">$234,000</div>
+                                <div class="stat-label">Projected Final</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- View: Growth Chart -->
+                <div class="view-content" id="view-chart">
+                    <div class="chart-container">
+                        <canvas id="portfolioChart"></canvas>
+                    </div>
+                    <div class="chart-stats">
+                        <div class="chart-stat">
+                            <span class="chart-stat-label">Total Gain:</span>
+                            <span class="chart-stat-value" id="totalGain">$0</span>
+                        </div>
+                        <div class="chart-stat">
+                            <span class="chart-stat-label">Total Gain %:</span>
+                            <span class="chart-stat-value" id="totalGainPercent">0%</span>
+                        </div>
+                        <div class="chart-stat">
+                            <span class="chart-stat-label">Avg per Beer:</span>
+                            <span class="chart-stat-value" id="avgPerBeer">$0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- View: All Bottles Grid -->
+                <div class="view-content" id="view-grid">
+                    <div class="bottles-grid" id="bottlesGrid">
+                        <!-- Bottles will be dynamically generated -->
                     </div>
                 </div>
 
