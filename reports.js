@@ -33,35 +33,26 @@ async function generateReports() {
         return;
     }
 
+    console.log(`📊 Reports: Loaded ${trades.length} closed trades`, trades);
+    
     if (trades.length === 0) {
-        // Handle no data case
+        console.warn('No closed trades found for reports');
+        document.querySelector('.reports-grid').innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: var(--text-secondary);">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">📊</div>
+                <p>No closed trades yet. Close some trades to see your reports!</p>
+            </div>
+        `;
         return;
     }
 
     // Calculate KPIs (always available)
     calculateAndDisplayKPIs(trades);
 
-    // Gate advanced analytics by feature flag
-    const unlocked = await assertFeature('advanced_analytics', () => {
-        // Show CTA if not unlocked
-        const container = document.querySelector('.reports-grid');
-        const cta = document.createElement('div');
-        cta.className = 'chart-card';
-        cta.innerHTML = `
-            <h3>Advanced Analytics</h3>
-            <p style="color: var(--text-secondary); margin-bottom: 1rem;">Unlock advanced charts and insights with Premium ($9/mo).</p>
-            <button class="cta-primary" onclick="window.location.href='pricing.html'">Upgrade to Premium</button>
-        `;
-        container.appendChild(cta);
-    });
-
-    // Basic chart always
+    // Render all charts (always available)
     renderPlChart(trades);
-
-        if (unlocked) {
-            renderWinLossChart(trades);
-            renderDailyPlChart(trades);
-        }
+    renderWinLossChart(trades);
+    renderDailyPlChart(trades);
     } catch (error) {
         console.error('Error generating reports:', error);
         throw error;
@@ -78,7 +69,10 @@ function calculateAndDisplayKPIs(trades) {
     let grossLoss = 0;
 
     trades.forEach(trade => {
-        const pnl = (trade.exit_price - trade.entry_price) * trade.position_size * (trade.direction === 'short' ? -1 : 1);
+        // Account for options contract multiplier (100 shares per contract)
+        const isOption = trade.trade_type === 'call' || trade.trade_type === 'put';
+        const multiplier = isOption ? 100 : 1;
+        const pnl = (trade.exit_price - trade.entry_price) * trade.position_size * multiplier * (trade.direction === 'short' ? -1 : 1);
         totalPl += pnl;
         if (pnl > 0) {
             totalWins++;
@@ -143,7 +137,10 @@ function renderWinLossChart(trades) {
     let wins = 0;
     let losses = 0;
     trades.forEach(trade => {
-        const pnl = (trade.exit_price - trade.entry_price) * trade.position_size * (trade.direction === 'short' ? -1 : 1);
+        // Account for options contract multiplier (100 shares per contract)
+        const isOption = trade.trade_type === 'call' || trade.trade_type === 'put';
+        const multiplier = isOption ? 100 : 1;
+        const pnl = (trade.exit_price - trade.entry_price) * trade.position_size * multiplier * (trade.direction === 'short' ? -1 : 1);
         if (pnl > 0) wins++;
         else if (pnl < 0) losses++;
     });
@@ -173,7 +170,10 @@ function renderDailyPlChart(trades) {
 
     trades.forEach(trade => {
         const dayIndex = new Date(trade.created_at).getDay();
-        const pnl = (trade.exit_price - trade.entry_price) * trade.position_size * (trade.direction === 'short' ? -1 : 1);
+        // Account for options contract multiplier (100 shares per contract)
+        const isOption = trade.trade_type === 'call' || trade.trade_type === 'put';
+        const multiplier = isOption ? 100 : 1;
+        const pnl = (trade.exit_price - trade.entry_price) * trade.position_size * multiplier * (trade.direction === 'short' ? -1 : 1);
         dailyPl[dayIndex] += pnl;
     });
 
@@ -186,6 +186,20 @@ function renderDailyPlChart(trades) {
                 data: dailyPl,
                 backgroundColor: dailyPl.map(pnl => pnl >= 0 ? '#34C759' : '#FF453A')
             }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value.toLocaleString();
+                        }
+                    }
+                }
+            }
         }
     });
 }

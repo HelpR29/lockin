@@ -219,7 +219,7 @@ async function openSettingsModal() {
                 <div style="background: var(--card-bg); border: 1px solid var(--glass-border); border-radius: 12px; padding: 1rem;">
                     <label style="display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
                         <span>Browser Notifications</span>
-                        <input type="checkbox" checked onchange="toggleNotifications(this.checked)" style="width: 20px; height: 20px; cursor: pointer;">
+                        <input type="checkbox" checked onchange="toggleNotificationSettings(this.checked)" style="width: 20px; height: 20px; cursor: pointer;">
                     </label>
                 </div>
             </div>
@@ -237,11 +237,11 @@ async function openSettingsModal() {
     document.body.appendChild(modal);
 }
 
-function toggleNotifications(enabled) {
+function toggleNotificationSettings(enabled) {
     if (enabled) {
         requestNotificationPermission();
     } else {
-        alert('Notifications disabled');
+        console.log('Notifications disabled in settings');
     }
 }
 

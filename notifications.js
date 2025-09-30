@@ -232,10 +232,18 @@ async function initNotifications() {
         // Load initial notifications
         await loadNotifications();
         
-        // Request permission for browser notifications
-        const hasPermission = await requestNotificationPermission();
-        if (hasPermission) {
-            console.log('Browser notifications enabled ✅');
+        // Only request permission if not already decided (don't annoy users)
+        if (Notification.permission === 'default') {
+            const hasPermission = await requestNotificationPermission();
+            if (hasPermission) {
+                console.log('Browser notifications enabled ✅');
+            } else {
+                console.log('Browser notifications declined - using in-app only');
+            }
+        } else if (Notification.permission === 'granted') {
+            console.log('Browser notifications already enabled ✅');
+        } else {
+            console.log('Browser notifications blocked - using in-app only');
         }
         
         // Poll for new notifications every 30 seconds

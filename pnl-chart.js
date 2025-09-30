@@ -238,14 +238,21 @@ async function updateProgressTracker(cumulativePnL) {
         const xpPerGlass = 50;
         const xpToAdd = newGlassesCracked * xpPerGlass;
         
-        // Update user_progress
-        await supabase
+        // Update user_progress with XP
+        const newTotalXP = (currentProgress?.total_check_ins || 0) + xpToAdd;
+        const { error: progressError } = await supabase
             .from('user_progress')
             .update({
                 beers_cracked: Math.min(beersCracked, goals.total_bottles),
-                total_check_ins: (currentProgress?.total_check_ins || 0) + xpToAdd
+                total_check_ins: newTotalXP
             })
             .eq('user_id', user.id);
+        
+        if (progressError) {
+            console.error('Error updating XP:', progressError);
+        } else {
+            console.log(`✅ XP Updated: ${currentProgress?.total_check_ins || 0} → ${newTotalXP} (+${xpToAdd})`);
+        }
         
         // Send notifications for each new glass cracked
         if (newGlassesCracked > 0 && typeof createNotification === 'function') {
@@ -256,6 +263,13 @@ async function updateProgressTracker(cumulativePnL) {
                 '🍷',
                 '/dashboard.html'
             );
+            
+            // Force refresh dashboard to show new XP
+            if (window.location.pathname.includes('dashboard')) {
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+            }
         }
         
         console.log(`Progress updated: ${beersCracked} glasses cracked (+${newGlassesCracked} new), +${xpToAdd} XP, Current capital: $${currentCapital}`);
