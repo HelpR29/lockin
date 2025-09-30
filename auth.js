@@ -51,10 +51,16 @@ async function signUp(email, password, fullName) {
 
         if (error) throw error;
 
-        // Show success message
-        alert('Account created successfully! Please check your email to verify your account.');
+        // Check if email confirmation is required
+        if (data.user && !data.session) {
+            // Email confirmation required
+            alert('Account created! Please check your email and click the confirmation link to verify your account before logging in.');
+            window.location.href = 'login.html';
+            return data;
+        }
         
-        // Redirect to onboarding for first-time users
+        // If session exists, user is already logged in (no email confirmation required)
+        alert('Account created successfully!');
         window.location.href = 'onboarding.html';
         
         return data;
@@ -97,7 +103,17 @@ async function signIn(email, password) {
         return data;
     } catch (error) {
         console.error('Error signing in:', error);
-        alert(error.message || 'Invalid email or password.');
+        
+        // Provide more helpful error messages
+        let errorMessage = error.message || 'Invalid email or password.';
+        
+        if (error.message?.includes('Email not confirmed')) {
+            errorMessage = 'Please verify your email address before logging in. Check your inbox for the confirmation link.';
+        } else if (error.message?.includes('Invalid login credentials')) {
+            errorMessage = 'Invalid email or password. If you just signed up, please check your email to verify your account first.';
+        }
+        
+        alert(errorMessage);
         return null;
     }
 }
