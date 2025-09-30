@@ -1,12 +1,11 @@
-// Journal Chart Integration
-// Add this to the end of journal.js or include as separate file
+// P&L Chart Integration
+// Tracks profit/loss over time
 
-let journalChart = null;
-let currentTradeForChart = null;
+let pnlChart = null;
 
 // Initialize chart on page load
 document.addEventListener('DOMContentLoaded', async () => {
-    await initializeJournalChart();
+    await initializePnLChart();
 });
 
 async function initializeJournalChart() {

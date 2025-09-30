@@ -177,32 +177,28 @@
                     </div>
                     
                     <div class="chart-section">
-                        <h3 style="margin: 0 0 1rem 0;">📈 Trade Chart</h3>
-                        <div id="chartInfo" class="chart-info" style="display: none;">
-                            <p><strong id="chartSymbol"></strong> - <span id="chartDirection"></span></p>
-                            <div class="trade-levels-legend">
-                                <div class="legend-item">
-                                    <div class="legend-color" style="background: #4CAF50;"></div>
-                                    <span>Entry</span>
-                                </div>
-                                <div class="legend-item">
-                                    <div class="legend-color" style="background: #2196F3;"></div>
-                                    <span>Exit</span>
-                                </div>
-                                <div class="legend-item">
-                                    <div class="legend-color" style="background: #F44336;"></div>
-                                    <span>Stop Loss</span>
-                                </div>
-                                <div class="legend-item">
-                                    <div class="legend-color" style="background: #FFC107;"></div>
-                                    <span>Target</span>
-                                </div>
+                        <h3 style="margin: 0 0 1rem 0;">📊 P&L Performance</h3>
+                        
+                        <!-- P&L Stats Summary -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                            <div style="background: rgba(76, 175, 80, 0.1); padding: 1rem; border-radius: 12px; border-left: 3px solid #4CAF50;">
+                                <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.25rem;">Total Wins</div>
+                                <div style="font-size: 1.5rem; font-weight: 700; color: #4CAF50;" id="totalWins">$0</div>
+                            </div>
+                            <div style="background: rgba(244, 67, 54, 0.1); padding: 1rem; border-radius: 12px; border-left: 3px solid #F44336;">
+                                <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.25rem;">Total Losses</div>
+                                <div style="font-size: 1.5rem; font-weight: 700; color: #F44336;" id="totalLosses">$0</div>
                             </div>
                         </div>
-                        <div id="chartContainerJournal" class="chart-container-journal">
-                            <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text-secondary);">
-                                <p>Select a trade to view its chart</p>
-                            </div>
+                        
+                        <div style="background: rgba(255, 149, 0, 0.1); padding: 1rem; border-radius: 12px; border-left: 3px solid var(--primary); margin-bottom: 1.5rem;">
+                            <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.25rem;">Net P&L</div>
+                            <div style="font-size: 2rem; font-weight: 700; color: var(--primary);" id="netPnl">$0</div>
+                        </div>
+                        
+                        <!-- P&L Chart -->
+                        <div style="width: 100%; height: 300px; position: relative;">
+                            <canvas id="pnlChart"></canvas>
                         </div>
                     </div>
                 </div>
