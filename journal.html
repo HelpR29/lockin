@@ -8,6 +8,73 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Orbitron:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    
+    <!-- TradeX Chart CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tradex-chart@latest/dist/style.css">
+    
+    <style>
+        .journal-layout {
+            display: grid;
+            grid-template-columns: 1fr 450px;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .chart-section {
+            background: var(--card-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            min-height: 600px;
+        }
+        
+        .chart-container-journal {
+            width: 100%;
+            height: 500px;
+            background: var(--dark-bg);
+            border-radius: 12px;
+            margin-top: 1rem;
+            position: relative;
+        }
+        
+        .chart-info {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: rgba(255, 149, 0, 0.05);
+            border-radius: 8px;
+            border-left: 3px solid var(--primary);
+        }
+        
+        .chart-info p {
+            margin: 0.25rem 0;
+            font-size: 0.875rem;
+        }
+        
+        .trade-levels-legend {
+            display: flex;
+            gap: 1rem;
+            margin-top: 0.75rem;
+            flex-wrap: wrap;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 3px;
+        }
+        
+        @media (max-width: 1200px) {
+            .journal-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="bg-animation">
@@ -81,6 +148,14 @@
                     <div class="form-group">
                         <label for="exitPrice">Exit Price</label>
                         <input type="number" id="exitPrice" step="any">
+                    </div>
+                    <div class="form-group">
+                        <label for="stopLoss">Stop Loss</label>
+                        <input type="number" id="stopLoss" step="any" placeholder="Optional">
+                    </div>
+                    <div class="form-group">
+                        <label for="targetPrice">Target Price</label>
+                        <input type="number" id="targetPrice" step="any" placeholder="Optional">
                     </div>
                     <div class="form-group">
                         <label for="positionSize">Position Size</label>
