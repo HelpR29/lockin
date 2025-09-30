@@ -50,27 +50,61 @@
                     <p class="dashboard-subtitle">Your discipline journey starts here</p>
                 </div>
 
+                <!-- Progress Overview -->
+                <div class="progress-overview">
+                    <div class="current-object-display">
+                        <div class="object-emoji" id="currentObjectEmoji">🍺</div>
+                        <div class="object-info">
+                            <div class="object-name" id="currentObjectName">Beer</div>
+                            <div class="object-tier">Tier <span id="currentObjectTier">1</span></div>
+                        </div>
+                    </div>
+                    <div class="progress-to-next">
+                        <div class="progress-label">
+                            <span>Progress to <span id="nextObjectName">Wine</span></span>
+                            <span id="progressPercent">0%</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill" id="progressBarFill" style="width: 0%"></div>
+                        </div>
+                        <div class="progress-detail">
+                            <span id="currentCompletions">0</span> / <span id="nextObjectRequirement">10</span> completions
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Stats Cards -->
                 <div class="dashboard-stats">
                     <div class="stat-card">
-                        <div class="stat-card-icon">🍺</div>
-                        <div class="stat-card-value">0</div>
+                        <div class="stat-card-icon">🎯</div>
+                        <div class="stat-card-value" id="completionsValue">0</div>
                         <div class="stat-card-label">Completions</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-card-icon">📈</div>
-                        <div class="stat-card-value">$0</div>
-                        <div class="stat-card-label">Account Value</div>
-                    </div>
-                    <div class="stat-card">
                         <div class="stat-card-icon">🔥</div>
-                        <div class="stat-card-value">0</div>
+                        <div class="stat-card-value" id="streakValue">0</div>
                         <div class="stat-card-label">Day Streak</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-card-icon">✅</div>
-                        <div class="stat-card-value">0%</div>
-                        <div class="stat-card-label">Success Rate</div>
+                        <div class="stat-card-icon">⭐</div>
+                        <div class="stat-card-value" id="levelValue">1</div>
+                        <div class="stat-card-label">Level</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-icon">⚡</div>
+                        <div class="stat-card-value" id="multiplierValue">1.0x</div>
+                        <div class="stat-card-label">Growth Multiplier</div>
+                    </div>
+                </div>
+
+                <!-- Level Progress -->
+                <div class="level-progress-section">
+                    <div class="level-info">
+                        <span>Level <span id="currentLevel">1</span></span>
+                        <span id="xpProgress">0 / 100 XP</span>
+                    </div>
+                    <div class="xp-bar-container">
+                        <div class="xp-bar-fill" id="xpBarFill" style="width: 0%"></div>
                     </div>
                 </div>
 
@@ -113,8 +147,9 @@
     <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="auth.js"></script>
+    <script src="progress.js"></script>
     <script>
-        // Check if user is logged in
+        // Check if user is logged in and load progress
         async function initDashboard() {
             const user = await checkAuth();
             
@@ -126,6 +161,46 @@
             // Display user name
             const userName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Trader';
             document.getElementById('userName').textContent = userName;
+            
+            // Load user progress
+            await loadUserProgress(user.id);
+        }
+        
+        // Load and display user progress
+        async function loadUserProgress(userId) {
+            const progressSummary = await getUserProgressSummary(userId);
+            
+            if (!progressSummary) return;
+            
+            // Update current object display
+            document.getElementById('currentObjectEmoji').textContent = progressSummary.currentObject.emoji;
+            document.getElementById('currentObjectName').textContent = progressSummary.currentObject.name;
+            document.getElementById('currentObjectTier').textContent = progressSummary.currentObject.tier;
+            
+            // Update progress to next
+            if (progressSummary.nextObject) {
+                document.getElementById('nextObjectName').textContent = progressSummary.nextObject.name;
+                document.getElementById('nextObjectRequirement').textContent = progressSummary.nextObject.minCompletions;
+                document.getElementById('progressPercent').textContent = `${Math.floor(progressSummary.progressToNext)}%`;
+                document.getElementById('progressBarFill').style.width = `${progressSummary.progressToNext}%`;
+            } else {
+                document.getElementById('nextObjectName').textContent = 'MAX';
+                document.querySelector('.progress-to-next').style.display = 'none';
+            }
+            
+            document.getElementById('currentCompletions').textContent = progressSummary.completions;
+            
+            // Update stats cards
+            document.getElementById('completionsValue').textContent = progressSummary.completions;
+            document.getElementById('streakValue').textContent = progressSummary.streak;
+            document.getElementById('levelValue').textContent = progressSummary.level;
+            document.getElementById('multiplierValue').textContent = `${progressSummary.totalGrowthMultiplier.toFixed(2)}x`;
+            
+            // Update level progress
+            document.getElementById('currentLevel').textContent = progressSummary.level;
+            document.getElementById('xpProgress').textContent = `${progressSummary.experience} / ${progressSummary.next_level_xp} XP`;
+            const xpPercent = (progressSummary.experience / progressSummary.next_level_xp) * 100;
+            document.getElementById('xpBarFill').style.width = `${xpPercent}%`;
         }
         
         // Initialize dashboard

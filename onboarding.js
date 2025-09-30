@@ -215,6 +215,28 @@ async function completeOnboarding() {
         
         if (rulesError) throw rulesError;
         
+        // Initialize user progress system
+        const { error: progressError } = await supabase
+            .from('user_progress')
+            .insert({
+                user_id: user.id,
+                completions: 0,
+                streak: 0,
+                longest_streak: 0,
+                discipline_score: 0,
+                level: 1,
+                experience: 0,
+                next_level_xp: 100,
+                current_progress_object: onboardingData.token,
+                total_check_ins: 0,
+                streak_multiplier: 1.0,
+                level_bonus: 1.0,
+                achievement_bonus: 1.0,
+                total_growth_multiplier: 1.0
+            });
+        
+        if (progressError) console.warn('Progress init warning:', progressError);
+        
         // Success! Redirect to dashboard
         window.location.href = 'dashboard.html';
         
