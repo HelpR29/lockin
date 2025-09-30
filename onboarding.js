@@ -222,6 +222,13 @@ async function completeOnboarding() {
         
         console.log('Saving onboarding data:', onboardingData);
         
+        // Update auth user metadata with full name
+        await supabase.auth.updateUser({
+            data: {
+                full_name: onboardingData.profile.username
+            }
+        });
+        
         // Save all onboarding data to Supabase
         const { error: profileError } = await supabase
             .from('user_profiles')
