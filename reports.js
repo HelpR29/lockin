@@ -28,13 +28,30 @@ async function generateReports() {
         return;
     }
 
-    // Calculate KPIs
+    // Calculate KPIs (always available)
     calculateAndDisplayKPIs(trades);
 
-    // Render Charts
+    // Gate advanced analytics by feature flag
+    const unlocked = await assertFeature('advanced_analytics', () => {
+        // Show CTA if not unlocked
+        const container = document.querySelector('.reports-grid');
+        const cta = document.createElement('div');
+        cta.className = 'chart-card';
+        cta.innerHTML = `
+            <h3>Advanced Analytics</h3>
+            <p style="color: var(--text-secondary); margin-bottom: 1rem;">Unlock advanced charts and insights with Premium ($9/mo).</p>
+            <button class="cta-primary" onclick="window.location.href='pricing.html'">Upgrade to Premium</button>
+        `;
+        container.appendChild(cta);
+    });
+
+    // Basic chart always
     renderPlChart(trades);
-    renderWinLossChart(trades);
-    renderDailyPlChart(trades);
+
+    if (unlocked) {
+        renderWinLossChart(trades);
+        renderDailyPlChart(trades);
+    }
 }
 
 function calculateAndDisplayKPIs(trades) {
@@ -83,7 +100,7 @@ function renderPlChart(trades) {
             datasets: [{
                 label: 'Cumulative P/L',
                 data: data,
-                borderColor: 'var(--primary-orange)',
+                borderColor: '#FF9500',
                 backgroundColor: 'rgba(255, 149, 0, 0.1)',
                 fill: true
             }]
@@ -108,8 +125,8 @@ function renderWinLossChart(trades) {
             labels: ['Wins', 'Losses'],
             datasets: [{
                 data: [wins, losses],
-                backgroundColor: ['var(--accent-green)', '#FF453A'],
-                borderColor: 'var(--card-bg)',
+                backgroundColor: ['#34C759', '#FF453A'],
+                borderColor: '#2C2C2E',
                 borderWidth: 4
             }]
         },
@@ -135,7 +152,7 @@ function renderDailyPlChart(trades) {
             datasets: [{
                 label: 'Total P/L',
                 data: dailyPl,
-                backgroundColor: dailyPl.map(pnl => pnl >= 0 ? 'var(--accent-green)' : '#FF453A')
+                backgroundColor: dailyPl.map(pnl => pnl >= 0 ? '#34C759' : '#FF453A')
             }]
         }
     });
