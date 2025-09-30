@@ -329,6 +329,13 @@
             const userName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Trader';
             document.getElementById('userName').textContent = userName;
             
+            // Display avatar on dashboard
+            const avatarEl = document.getElementById('dashboardAvatar');
+            if (avatarEl) {
+                avatarEl.textContent = userName;
+                avatarEl.title = `Click to view ${userName}'s profile`;
+            }
+            
             // Load user progress
             await loadUserProgress(user.id);
             
