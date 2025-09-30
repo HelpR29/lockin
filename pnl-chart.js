@@ -221,15 +221,41 @@ async function updateProgressTracker(cumulativePnL) {
             .eq('user_id', user.id)
             .eq('is_active', true);
         
+        // Get current progress to check if we leveled up
+        const { data: currentProgress } = await supabase
+            .from('user_progress')
+            .select('beers_cracked, level, total_check_ins')
+            .eq('user_id', user.id)
+            .single();
+        
+        const previousGlasses = currentProgress?.beers_cracked || 0;
+        const newGlassesCracked = beersCracked - previousGlasses;
+        
+        // Award XP for each new glass cracked (50 XP per glass)
+        const xpPerGlass = 50;
+        const xpToAdd = newGlassesCracked * xpPerGlass;
+        
         // Update user_progress
         await supabase
             .from('user_progress')
             .update({
-                beers_cracked: Math.min(beersCracked, goals.total_bottles)
+                beers_cracked: Math.min(beersCracked, goals.total_bottles),
+                total_check_ins: (currentProgress?.total_check_ins || 0) + xpToAdd
             })
             .eq('user_id', user.id);
         
-        console.log(`Progress updated: ${beersCracked} items cracked, Current capital: $${currentCapital}`);
+        // Send notifications for each new glass cracked
+        if (newGlassesCracked > 0 && typeof createNotification === 'function') {
+            await createNotification(
+                'goal_reached',
+                `${newGlassesCracked} Glass${newGlassesCracked > 1 ? 'es' : ''} Cracked!`,
+                `You've cracked ${newGlassesCracked} glass${newGlassesCracked > 1 ? 'es' : ''}! +${xpToAdd} XP earned. Current: ${beersCracked}/${goals.total_bottles}`,
+                '🍷',
+                '/dashboard.html'
+            );
+        }
+        
+        console.log(`Progress updated: ${beersCracked} glasses cracked (+${newGlassesCracked} new), +${xpToAdd} XP, Current capital: $${currentCapital}`);
         
     } catch (error) {
         console.error('Error updating progress tracker:', error);
