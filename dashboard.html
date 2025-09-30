@@ -320,10 +320,19 @@
             
             currentProgressData = progressSummary;
             
+            // Debug logging
+            console.log('Progress Summary:', progressSummary);
+            console.log('Token:', progressSummary.token);
+            console.log('Token Type:', progressSummary.token.type);
+            
             // Get token info
             const tokenType = progressSummary.token.type || 'beer';
             const tokenInfo = tokenNames[tokenType] || tokenNames['beer'];
             const tokenEmoji = progressSummary.token.emoji;
+            
+            console.log('Using Token Type:', tokenType);
+            console.log('Token Info:', tokenInfo);
+            console.log('Token Emoji:', tokenEmoji);
             
             // Update all dynamic text with token name
             document.getElementById('viewToggleWall').innerHTML = `${tokenEmoji} ${tokenInfo.singular} Wall`;
