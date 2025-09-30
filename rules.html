@@ -129,11 +129,29 @@
             console.log('Modal element:', modal);
             if (modal) {
                 console.log('Setting display to flex...');
-                modal.style.display = 'flex';
-                modal.style.visibility = 'visible';
-                modal.style.opacity = '1';
+                modal.setAttribute('style', `
+                    display: flex !important;
+                    position: fixed !important;
+                    z-index: 999999 !important;
+                    left: 0 !important;
+                    top: 0 !important;
+                    right: 0 !important;
+                    bottom: 0 !important;
+                    width: 100vw !important;
+                    height: 100vh !important;
+                    background: rgba(0, 0, 0, 0.95) !important;
+                    justify-content: center !important;
+                    align-items: center !important;
+                    visibility: visible !important;
+                    opacity: 1 !important;
+                `);
                 document.getElementById('customRuleForm')?.reset();
-                console.log('Modal should be visible now');
+                console.log('✅ Modal forcibly opened with inline styles');
+                
+                // Also log computed style to debug
+                const computed = window.getComputedStyle(modal);
+                console.log('Computed display:', computed.display);
+                console.log('Computed z-index:', computed.zIndex);
             } else {
                 console.error('❌ addRuleModal not found!');
             }
