@@ -35,33 +35,42 @@ document.addEventListener('DOMContentLoaded', async () => {
 // Navigation Functions
 function nextStep() {
     if (currentStep < totalSteps) {
-        document.getElementById(`step${currentStep}`).classList.remove('active');
+        const currentStepEl = document.getElementById(`step${currentStep}`);
+        const nextStepEl = document.getElementById(`step${currentStep + 1}`);
+        
+        if (currentStepEl) currentStepEl.classList.remove('active');
         currentStep++;
-        document.getElementById(`step${currentStep}`).classList.add('active');
+        if (nextStepEl) nextStepEl.classList.add('active');
         updateProgress();
     }
 }
 
 function prevStep() {
     if (currentStep > 1) {
-        document.getElementById(`step${currentStep}`).classList.remove('active');
+        const currentStepEl = document.getElementById(`step${currentStep}`);
+        const prevStepEl = document.getElementById(`step${currentStep - 1}`);
+        
+        if (currentStepEl) currentStepEl.classList.remove('active');
         currentStep--;
-        document.getElementById(`step${currentStep}`).classList.add('active');
+        if (prevStepEl) prevStepEl.classList.add('active');
         updateProgress();
     }
 }
 
 function updateProgress() {
     const progress = (currentStep / totalSteps) * 100;
-    document.getElementById('progressFill').style.width = `${progress}%`;
-    document.getElementById('currentStep').textContent = currentStep;
+    const progressFill = document.getElementById('progressFill');
+    const currentStepEl = document.getElementById('currentStep');
+    
+    if (progressFill) progressFill.style.width = `${progress}%`;
+    if (currentStepEl) currentStepEl.textContent = currentStep;
 }
 
 // Step 2: Save Profile
 async function saveProfile() {
     const form = document.getElementById('profileForm');
-    if (!form.checkValidity()) {
-        form.reportValidity();
+    if (!form || !form.checkValidity()) {
+        if (form) form.reportValidity();
         return;
     }
     
@@ -77,16 +86,25 @@ async function saveProfile() {
 
 // Step 3: Save Goals & Calculate Projection
 function calculateProjection() {
-    const starting = parseFloat(document.getElementById('startingCapital').value) || 0;
-    const percentPerBeer = parseFloat(document.getElementById('targetPercentPerBeer').value) || 0;
-    const totalBottles = parseInt(document.getElementById('totalBottles').value) || 0;
+    const startingCapitalEl = document.getElementById('startingCapital');
+    const targetPercentEl = document.getElementById('targetPercentPerBeer');
+    const totalBottlesEl = document.getElementById('totalBottles');
+    
+    if (!startingCapitalEl || !targetPercentEl || !totalBottlesEl) return;
+    
+    const starting = parseFloat(startingCapitalEl.value) || 0;
+    const percentPerBeer = parseFloat(targetPercentEl.value) || 0;
+    const totalBottles = parseInt(totalBottlesEl.value) || 0;
     
     if (starting > 0 && percentPerBeer > 0 && totalBottles > 0) {
         const multiplier = 1 + (percentPerBeer / 100);
         const finalValue = starting * Math.pow(multiplier, totalBottles);
         
-        document.getElementById('goalPreview').style.display = 'block';
-        document.getElementById('projectedValue').textContent = `$${finalValue.toLocaleString('en-US', { maximumFractionDigits: 2 })}`;
+        const goalPreviewEl = document.getElementById('goalPreview');
+        const projectedValueEl = document.getElementById('projectedValue');
+        
+        if (goalPreviewEl) goalPreviewEl.style.display = 'block';
+        if (projectedValueEl) projectedValueEl.textContent = `$${finalValue.toLocaleString('en-US', { maximumFractionDigits: 2 })}`;
     }
 }
 
@@ -102,8 +120,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function saveGoals() {
     const form = document.getElementById('goalsForm');
-    if (!form.checkValidity()) {
-        form.reportValidity();
+    if (!form || !form.checkValidity()) {
+        if (form) form.reportValidity();
         return;
     }
     
@@ -120,8 +138,8 @@ async function saveGoals() {
 // Step 4: Save Rules
 async function saveRules() {
     const form = document.getElementById('rulesForm');
-    if (!form.checkValidity()) {
-        form.reportValidity();
+    if (!form || !form.checkValidity()) {
+        if (form) form.reportValidity();
         return;
     }
     
@@ -145,13 +163,14 @@ function selectToken(token) {
     
     // Add selection to clicked token
     const selectedElement = document.querySelector(`[data-token="${token}"]`);
-    selectedElement.classList.add('selected');
+    if (selectedElement) selectedElement.classList.add('selected');
     
     selectedToken = token;
     onboardingData.token = token;
     
     // Enable finish button
-    document.getElementById('finishButton').disabled = false;
+    const finishButton = document.getElementById('finishButton');
+    if (finishButton) finishButton.disabled = false;
 }
 
 // Complete Onboarding
@@ -162,9 +181,9 @@ async function completeOnboarding() {
     }
     
     const button = document.getElementById('finishButton');
-    const buttonText = button.querySelector('span');
-    buttonText.textContent = 'Saving...';
-    button.disabled = true;
+    const buttonText = button?.querySelector('span');
+    if (buttonText) buttonText.textContent = 'Saving...';
+    if (button) button.disabled = true;
     
     try {
         const { data: { user } } = await supabase.auth.getUser();
@@ -248,7 +267,17 @@ async function completeOnboarding() {
     } catch (error) {
         console.error('Error saving onboarding data:', error);
         alert('Error saving your settings. Please try again.');
-        buttonText.textContent = 'Complete Setup';
-        button.disabled = false;
+        if (buttonText) buttonText.textContent = 'Complete Setup';
+        if (button) button.disabled = false;
     }
 }
+
+// Export functions to global scope for HTML onclick handlers
+window.nextStep = nextStep;
+window.prevStep = prevStep;
+window.saveProfile = saveProfile;
+window.calculateProjection = calculateProjection;
+window.saveGoals = saveGoals;
+window.saveRules = saveRules;
+window.selectToken = selectToken;
+window.completeOnboarding = completeOnboarding;
