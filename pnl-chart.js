@@ -203,10 +203,12 @@ async function updateProgressTracker(cumulativePnL) {
         // Calculate current capital
         const currentCapital = goals.starting_capital + cumulativePnL;
         
-        // Calculate how many "beers" have been cracked
+        // Calculate how many "glasses" have been cracked using COMPOUND formula
+        // Formula: current = starting × (1 + percent)^n
+        // Solve for n: n = log(current/starting) / log(1 + percent)
         const targetPercentPerBeer = goals.target_percent_per_beer / 100;
-        const totalGrowthPercent = (currentCapital - goals.starting_capital) / goals.starting_capital;
-        const beersCracked = Math.floor(totalGrowthPercent / targetPercentPerBeer);
+        const growthRatio = currentCapital / goals.starting_capital;
+        const beersCracked = Math.floor(Math.log(growthRatio) / Math.log(1 + targetPercentPerBeer));
         
         // Update user_goals with current capital
         await supabase
