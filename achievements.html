@@ -39,36 +39,51 @@
         <section class="dashboard-section">
             <div class="dashboard-container">
                 <div class="dashboard-header">
-                    <h1 class="dashboard-title">Achievements & Rewards</h1>
-                    <p class="dashboard-subtitle">Track your accomplishments and unlock rewards.</p>
-                </div>
-
-                <div class="view-toggle">
-                    <button class="toggle-btn active" onclick="switchAchievementView('all')">All Achievements</button>
-                    <button class="toggle-btn" onclick="switchAchievementView('my')">My Rewards</button>
-                </div>
-
-                <!-- All Achievements View -->
-                <div class="achievement-view active" id="view-all-achievements">
-                    <div class="achievements-grid" id="achievementsGrid">
-                        <!-- Achievements will be loaded here -->
-                    </div>
-                </div>
-
-                <!-- My Rewards View -->
-                <div class="achievement-view" id="view-my-rewards">
-                    <div class="rewards-section">
-                        <h3>My Titles</h3>
-                        <div class="rewards-grid" id="titlesGrid">
-                            <p class="no-rewards">No titles unlocked yet.</p>
+                    <h1 class="dashboard-title">🏆 Achievements & Rewards</h1>
+                    <p class="dashboard-subtitle">Earn achievements, collect stars, and unlock exclusive rewards.</p>
+                    
+                    <!-- Star Balance -->
+                    <div style="text-align: center; margin-top: 1.5rem;">
+                        <div style="display: inline-block; background: var(--card-bg); padding: 1rem 2rem; border-radius: 12px; border: 2px solid var(--primary);">
+                            <span style="font-size: 1.5rem; font-weight: 700; color: var(--primary);" id="starBalance">⭐ 0</span>
+                            <span style="color: var(--text-secondary); margin-left: 0.5rem;">stars available</span>
                         </div>
                     </div>
-                    <div class="rewards-section">
-                        <h3>My Badges</h3>
-                        <div class="rewards-grid" id="badgesGrid">
-                            <p class="no-rewards">No badges unlocked yet.</p>
-                        </div>
+                </div>
+
+                <!-- Tabs -->
+                <div class="view-toggle" style="margin-bottom: 2rem;">
+                    <button class="toggle-btn active" onclick="switchTab('achievements')">🏆 Achievements</button>
+                    <button class="toggle-btn" onclick="switchTab('shop')">🛒 Reward Shop</button>
+                    <button class="toggle-btn" onclick="switchTab('leaderboard')">📊 Leaderboard</button>
+                </div>
+
+                <!-- Tab 1: Achievements -->
+                <div class="tab-content active" id="tab-achievements">
+                    <h2 style="margin-bottom: 1rem; color: var(--primary);">🆓 Free Achievements</h2>
+                    <div class="achievements-grid" id="freeAchievementsGrid"></div>
+                    
+                    <h2 style="margin: 2rem 0 1rem; color: var(--primary);">💎 Premium Achievements</h2>
+                    <div class="achievements-grid" id="premiumAchievementsGrid"></div>
+                </div>
+
+                <!-- Tab 2: Reward Shop -->
+                <div class="tab-content" id="tab-shop">
+                    <h2 style="margin-bottom: 1rem; color: var(--primary);">🛒 Spend Your Stars</h2>
+                    <div class="shop-grid" id="shopGrid"></div>
+                </div>
+
+                <!-- Tab 3: Leaderboard -->
+                <div class="tab-content" id="tab-leaderboard">
+                    <h2 style="margin-bottom: 1rem; color: var(--primary);">👑 Top Traders</h2>
+                    
+                    <!-- Top 3 Podium -->
+                    <div class="podium" id="podium">
+                        <!-- Podium will be rendered here -->
                     </div>
+                    
+                    <!-- Full Leaderboard Table -->
+                    <div class="leaderboard-table" id="leaderboardTable"></div>
                 </div>
 
             </div>
@@ -77,7 +92,211 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="auth.js"></script>
-    <script src="achievements.js"></script>
+    <script src="achievement-tracker.js"></script>
+    <script src="achievements-ui.js"></script>
     <script src="script.js"></script>
+    
+    <style>
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        
+        .achievements-grid, .shop-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .achievement-card {
+            background: var(--card-bg);
+            border: 2px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .achievement-card.locked {
+            opacity: 0.6;
+            filter: grayscale(1);
+        }
+        
+        .achievement-card.earned {
+            border-color: var(--primary);
+            box-shadow: 0 0 20px rgba(255, 159, 28, 0.3);
+        }
+        
+        .achievement-icon {
+            font-size: 3rem;
+            display: block;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        
+        .achievement-name {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .achievement-description {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        
+        .achievement-rewards {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--glass-border);
+        }
+        
+        .reward-badge {
+            background: rgba(255, 159, 28, 0.1);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+        
+        /* Leaderboard Styles */
+        .podium {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            gap: 1rem;
+            margin: 2rem 0;
+            height: 300px;
+        }
+        
+        .podium-place {
+            flex: 1;
+            max-width: 200px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .podium-user {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .podium-rank {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .podium-name {
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .podium-stats {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+        
+        .podium-base {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 8px 8px 0 0;
+            padding: 1rem;
+            font-weight: 700;
+            color: white;
+        }
+        
+        .podium-place:nth-child(1) .podium-base { height: 180px; }
+        .podium-place:nth-child(2) .podium-base { height: 140px; }
+        .podium-place:nth-child(3) .podium-base { height: 100px; }
+        
+        .leaderboard-table {
+            background: var(--card-bg);
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--glass-border);
+        }
+        
+        .leaderboard-row {
+            display: grid;
+            grid-template-columns: 60px 1fr 120px 120px 100px;
+            padding: 1rem;
+            border-bottom: 1px solid var(--glass-border);
+            align-items: center;
+        }
+        
+        .leaderboard-row:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+        
+        .leaderboard-header {
+            font-weight: 700;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+        
+        .achievement-notification {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            z-index: 9999;
+            opacity: 0;
+            transform: translateX(400px);
+            transition: all 0.3s ease-out;
+        }
+        
+        .achievement-notification.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        .achievement-badge {
+            background: var(--card-bg);
+            border: 2px solid var(--primary);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            min-width: 300px;
+        }
+        
+        .achievement-badge .achievement-icon {
+            font-size: 3rem;
+            margin: 0;
+        }
+        
+        .achievement-title {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+        }
+        
+        .achievement-badge .achievement-name {
+            font-size: 1.25rem;
+            margin: 0;
+            text-align: left;
+        }
+        
+        .achievement-badge .achievement-rewards {
+            border: none;
+            padding: 0;
+            margin-top: 0.5rem;
+            justify-content: flex-start;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+    </style>
 </body>
 </html>
