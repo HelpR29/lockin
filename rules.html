@@ -127,40 +127,73 @@
     <script>
         function openAddRuleModal() {
             console.log('🔥 openAddRuleModal called!');
-            const modal = document.getElementById('addRuleModal');
-            console.log('Modal element:', modal);
+            let modal = document.getElementById('addRuleModal');
+            
             if (modal) {
-                console.log('Setting display to flex...');
-                modal.style.cssText = `
-                    display: flex !important;
-                    position: fixed !important;
-                    z-index: 9999999 !important;
-                    top: 0 !important;
-                    left: 0 !important;
-                    width: 100vw !important;
-                    height: 100vh !important;
-                    background: rgba(0, 0, 0, 0.95) !important;
-                    justify-content: center !important;
-                    align-items: center !important;
-                    visibility: visible !important;
-                    opacity: 1 !important;
-                    transform: translateZ(0) !important;
-                `;
-                document.getElementById('customRuleForm')?.reset();
-                console.log('✅ Modal opened with inline styles');
-
-                // Debug computed style
-                const computed = window.getComputedStyle(modal);
-                console.log('Computed display:', computed.display);
-                console.log('Computed z-index:', computed.zIndex);
-                console.log('Modal offsetHeight:', modal.offsetHeight);
-                console.log('Modal rect:', modal.getBoundingClientRect());
-                
-                // Force repaint
-                modal.offsetHeight;
+                console.log('Modal element found, using existing');
             } else {
-                console.error('❌ addRuleModal not found!');
+                console.log('Modal not found, creating new one');
+                // Create modal if it doesn't exist
+                modal = document.createElement('div');
+                modal.id = 'addRuleModal';
+                modal.className = 'modal';
+                modal.innerHTML = `
+                    <div class="modal-content" style="background: white !important; border: 5px solid red !important; color: black !important;">
+                        <span class="close-button" onclick="document.getElementById('addRuleModal').style.display='none'" style="color: black !important;">&times;</span>
+                        <h2>Add Custom Rule</h2>
+                        <form id="customRuleForm" onsubmit="window.saveCustomRule(event)">
+                            <div class="form-group">
+                                <label for="ruleCategory">Category</label>
+                                <select id="ruleCategory" required>
+                                    <option value="Risk Management">⚠️ Risk Management</option>
+                                    <option value="Entry Rules">📥 Entry Rules</option>
+                                    <option value="Exit Rules">📤 Exit Rules</option>
+                                    <option value="Psychology">🧠 Psychology</option>
+                                    <option value="General">📋 General</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="ruleText">Rule Description</label>
+                                <textarea id="ruleText" rows="3" placeholder="e.g., Never trade more than 3 times per day" required></textarea>
+                            </div>
+                            <button type="submit" class="cta-primary-large">Add Rule</button>
+                        </form>
+                    </div>
+                `;
+                document.body.appendChild(modal);
             }
+            
+            // Apply styles regardless of whether it existed or was created
+            modal.style.cssText = `
+                display: flex !important;
+                position: fixed !important;
+                z-index: 9999999 !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                background: rgba(0, 0, 0, 0.95) !important;
+                justify-content: center !important;
+                align-items: center !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                transform: translateZ(0) !important;
+            `;
+            
+            console.log('✅ Modal opened');
+            
+            // Force repaint
+            modal.offsetHeight;
+            document.body.offsetHeight;
+            
+            // Debug info
+            const computed = window.getComputedStyle(modal);
+            console.log('Modal computed:', {
+                display: computed.display,
+                zIndex: computed.zIndex,
+                visibility: computed.visibility
+            });
+            console.log('Modal rect:', modal.getBoundingClientRect());
         }
         
         function openTemplateModal() {
