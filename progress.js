@@ -511,7 +511,11 @@ async function getUserProgressSummary(userId) {
             .select('*, achievements(*)')
             .eq('user_id', userId);
         
-        const token = PROGRESS_TOKENS[progress.progress_token] || PROGRESS_TOKENS.beer;
+        const tokenType = progress.progress_token || 'beer';
+        const token = {
+            type: tokenType,
+            ...PROGRESS_TOKENS[tokenType]
+        } || { type: 'beer', ...PROGRESS_TOKENS.beer };
         
         const totalGrowth = calculateTotalGrowth(
             1.0,
