@@ -54,6 +54,7 @@ async function loadTrades() {
 
         const tradeEl = document.createElement('div');
         tradeEl.className = 'trade-item';
+        tradeEl.style.cursor = 'pointer';
         tradeEl.innerHTML = `
             <div class="trade-header">
                 <span class="trade-symbol">${trade.symbol}</span>
@@ -69,11 +70,18 @@ async function loadTrades() {
             <div class="trade-footer">
                 <div class="trade-notes">${trade.notes || ''}</div>
                 <div class="trade-actions">
-                    <button class="edit-btn" onclick="editTrade('${trade.id}')">Edit</button>
-                    <button class="delete-btn" onclick="deleteTrade('${trade.id}')">Delete</button>
+                    <button class="view-chart-btn" onclick="event.stopPropagation(); viewTradeOnChart('${trade.id}')">📈 Chart</button>
+                    <button class="edit-btn" onclick="event.stopPropagation(); editTrade('${trade.id}')">Edit</button>
+                    <button class="delete-btn" onclick="event.stopPropagation(); deleteTrade('${trade.id}')">Delete</button>
                 </div>
             </div>
         `;
+        
+        // Click anywhere on trade to view chart
+        tradeEl.addEventListener('click', () => {
+            viewTradeOnChart(trade.id);
+        });
+        
         container.appendChild(tradeEl);
         }
     } catch (error) {
@@ -149,6 +157,8 @@ async function editTrade(id) {
     document.getElementById('direction').value = trade.direction;
     document.getElementById('entryPrice').value = trade.entry_price;
     document.getElementById('exitPrice').value = trade.exit_price;
+    document.getElementById('stopLoss').value = trade.stop_loss || '';
+    document.getElementById('targetPrice').value = trade.target_price || '';
     document.getElementById('positionSize').value = trade.position_size;
     document.getElementById('status').value = trade.status;
     document.getElementById('notes').value = trade.notes;
@@ -201,9 +211,27 @@ function closeModal(id) {
     }
 }
 
+async function viewTradeOnChart(tradeId) {
+    try {
+        const { data: trade, error } = await supabase.from('trades').select('*').eq('id', tradeId).single();
+        if (error || !trade) {
+            console.error('Error fetching trade:', error);
+            return;
+        }
+        
+        // Load chart with trade markers
+        if (typeof loadTradeChart === 'function') {
+            await loadTradeChart(trade);
+        }
+    } catch (error) {
+        console.error('Error viewing trade on chart:', error);
+    }
+}
+
 // Export functions to global scope for HTML onclick handlers
 window.openLogTradeModal = openLogTradeModal;
 window.editTrade = editTrade;
 window.deleteTrade = deleteTrade;
 window.openModal = openModal;
 window.closeModal = closeModal;
+window.viewTradeOnChart = viewTradeOnChart;
