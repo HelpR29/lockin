@@ -69,10 +69,8 @@ async function loadTrades() {
             </div>
             <div class="trade-footer">
                 <div class="trade-notes">${trade.notes || ''}</div>
-                <div class="trade-actions">
-                    <button class="view-chart-btn" onclick="event.stopPropagation(); viewTradeOnChart('${trade.id}')">📈 Chart</button>
-                    <button class="edit-btn" onclick="event.stopPropagation(); editTrade('${trade.id}')">Edit</button>
-                    <button class="delete-btn" onclick="event.stopPropagation(); deleteTrade('${trade.id}')">Delete</button>
+                <div class="trade-timestamp" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">
+                    ${new Date(trade.created_at).toLocaleString()}
                 </div>
             </div>
         `;
@@ -83,6 +81,11 @@ async function loadTrades() {
         });
         
         container.appendChild(tradeEl);
+        }
+        
+        // Update P&L chart after loading trades
+        if (typeof updatePnLChart === 'function') {
+            await updatePnLChart();
         }
     } catch (error) {
         console.error('Error loading trades:', error);
@@ -129,6 +132,11 @@ async function saveTrade(e) {
         } else {
             closeModal('tradeModal');
             await loadTrades();
+            
+            // Update progress tracker immediately after saving
+            if (typeof updatePnLChart === 'function') {
+                await updatePnLChart();
+            }
         }
     } catch (error) {
         console.error('Error saving trade:', error);

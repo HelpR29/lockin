@@ -211,6 +211,18 @@
         <div class="modal-content">
             <span class="close-button" onclick="closeModal('tradeModal')">&times;</span>
             <h2 id="tradeModalTitle">Log New Trade</h2>
+            
+            <!-- Discipline Warning -->
+            <div style="background: rgba(244, 67, 54, 0.15); border: 2px solid #F44336; border-radius: 12px; padding: 1rem; margin-bottom: 1.5rem;">
+                <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+                    <span style="font-size: 1.5rem;">⚠️</span>
+                    <strong style="color: #F44336; font-size: 1.125rem;">Discipline Warning</strong>
+                </div>
+                <p style="margin: 0; font-size: 0.875rem; color: var(--text-secondary); line-height: 1.5;">
+                    Once submitted, <strong style="color: var(--text-primary);">trades CANNOT be edited or deleted</strong>. This enforces trading discipline and prevents emotional changes to your trading history. Double-check all details before saving.
+                </p>
+            </div>
+            
             <form id="tradeForm">
                 <input type="hidden" id="tradeId">
                 <div class="form-grid">
@@ -220,8 +232,19 @@
                         <div id="symbolSuggestions" class="symbol-suggestions" style="display: none;"></div>
                     </div>
                     <div class="form-group">
+                        <label for="tradeType">Trade Type</label>
+                        <select id="tradeType" required onchange="handleTradeTypeChange()">
+                            <option value="stock">Stock/Crypto</option>
+                            <option value="call">Call Option</option>
+                            <option value="put">Put Option</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
                         <label for="direction">Direction</label>
-                        <select id="direction" required><option value="long">Long</option><option value="short">Short</option></select>
+                        <select id="direction" required>
+                            <option value="long">Long (Buy)</option>
+                            <option value="short">Short (Sell)</option>
+                        </select>
                     </div>
                     <div class="form-group">
                         <label for="entryPrice">Entry Price</label>
@@ -240,12 +263,22 @@
                         <input type="number" id="targetPrice" step="any" placeholder="Optional">
                     </div>
                     <div class="form-group">
-                        <label for="positionSize">Position Size</label>
+                        <label for="positionSize">Position Size (Contracts)</label>
                         <input type="number" id="positionSize" step="any" required>
                     </div>
                     <div class="form-group">
                         <label for="status">Status</label>
                         <select id="status"><option value="open">Open</option><option value="closed">Closed</option></select>
+                    </div>
+                    
+                    <!-- Options-specific fields (hidden by default) -->
+                    <div class="form-group" id="strikeGroup" style="display: none;">
+                        <label for="strikePrice">Strike Price</label>
+                        <input type="number" id="strikePrice" step="any" placeholder="Optional">
+                    </div>
+                    <div class="form-group" id="expiryGroup" style="display: none;">
+                        <label for="expiryDate">Expiry Date</label>
+                        <input type="date" id="expiryDate" placeholder="Optional">
                     </div>
                 </div>
                 <div class="form-group">
@@ -267,14 +300,33 @@
         </div>
     </div>
 
-    <!-- TradeX Chart Library -->
-    <script src="https://cdn.jsdelivr.net/npm/tradex-chart@latest/dist/tradex-chart.js"></script>
+    <!-- Chart.js for P&L Chart -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="auth.js"></script>
     <script src="journal.js"></script>
-    <script src="journal-chart.js"></script>
+    <script src="pnl-chart.js"></script>
     <script src="symbol-autocomplete.js"></script>
     <script src="script.js"></script>
+    
+    <script>
+        // Handle trade type change to show/hide options fields
+        function handleTradeTypeChange() {
+            const tradeType = document.getElementById('tradeType').value;
+            const strikeGroup = document.getElementById('strikeGroup');
+            const expiryGroup = document.getElementById('expiryGroup');
+            
+            if (tradeType === 'call' || tradeType === 'put') {
+                strikeGroup.style.display = 'block';
+                expiryGroup.style.display = 'block';
+            } else {
+                strikeGroup.style.display = 'none';
+                expiryGroup.style.display = 'none';
+            }
+        }
+        
+        window.handleTradeTypeChange = handleTradeTypeChange;
+    </script>
 </body>
 </html>
