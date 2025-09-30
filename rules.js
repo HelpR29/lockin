@@ -42,25 +42,45 @@ async function loadRules() {
         const categoryEl = document.createElement('div');
         categoryEl.className = 'rule-category';
         categoryEl.innerHTML = `
-            <h3 class="category-title">${category.name}</h3>
+            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+                <span style="font-size: 2rem;">${category.icon || '📋'}</span>
+                <div>
+                    <h3 class="category-title" style="margin: 0;">${category.name}</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.875rem; margin: 0;">${category.description || ''}</p>
+                </div>
+            </div>
             <div class="rule-list" id="category-${category.id}">
-                ${categoryRules.length === 0 ? '<p class="no-rules">No rules defined for this category.</p>' : ''}
+                ${categoryRules.length === 0 ? '<p class="no-rules">No rules in this category yet. Add from templates below!</p>' : ''}
             </div>
         `;
         container.appendChild(categoryEl);
 
         const ruleListEl = document.getElementById(`category-${category.id}`);
         for (const rule of categoryRules) {
+            const adherencePercent = rule.times_followed + rule.times_violated > 0 
+                ? Math.round((rule.times_followed / (rule.times_followed + rule.times_violated)) * 100)
+                : 100;
+            const adherenceColor = adherencePercent >= 90 ? 'var(--success)' : adherencePercent >= 70 ? 'var(--warning)' : 'var(--danger)';
+            
             const ruleEl = document.createElement('div');
             ruleEl.className = 'rule-item';
+            ruleEl.style.borderLeft = rule.is_active ? '3px solid var(--primary)' : '3px solid var(--text-muted)';
             ruleEl.innerHTML = `
-                <p class="rule-text">${rule.rule_text}</p>
-                <div class="rule-actions">
+                <div style="flex: 1;">
+                    <p class="rule-text" style="font-weight: 500; margin-bottom: 0.5rem;">${rule.rule_text}</p>
+                    ${rule.numeric_value ? `<span style="display: inline-block; padding: 0.25rem 0.75rem; background: rgba(255, 149, 0, 0.1); color: var(--primary); border-radius: 12px; font-size: 0.875rem; font-weight: 600;">${rule.numeric_value}${rule.numeric_unit || ''}</span>` : ''}
+                    <div style="display: flex; gap: 1rem; margin-top: 0.5rem; font-size: 0.875rem;">
+                        <span style="color: var(--text-secondary);">✓ Followed: ${rule.times_followed}</span>
+                        <span style="color: var(--text-secondary);">✗ Violated: ${rule.times_violated}</span>
+                        <span style="color: ${adherenceColor}; font-weight: 600;">Adherence: ${adherencePercent}%</span>
+                    </div>
+                </div>
+                <div class="rule-actions" style="display: flex; gap: 0.5rem; align-items: center;">
                     <label class="switch">
                         <input type="checkbox" ${rule.is_active ? 'checked' : ''} onchange="toggleRuleActive('${rule.id}', this.checked)">
                         <span class="slider round"></span>
                     </label>
-                    <button class="edit-btn" onclick="editRule('${rule.id}', '${rule.rule_text}', '${rule.category_id}')">Edit</button>
+                    <button class="edit-btn" onclick="editRule('${rule.id}', '${rule.rule_text.replace(/'/g, "\\'")}'  , '${rule.category_id}')">Edit</button>
                     <button class="delete-btn" onclick="deleteRule('${rule.id}')">Delete</button>
                 </div>
             `;
@@ -133,6 +153,11 @@ function openAddRuleModal() {
     openModal('ruleModal');
 }
 
+function openTemplateModal() {
+    populateTemplateModal();
+    openModal('templateModal');
+}
+
 function editRule(id, text, categoryId) {
     document.getElementById('ruleForm').reset();
     document.getElementById('ruleId').value = id;
@@ -165,12 +190,15 @@ async function toggleRuleActive(id, isActive) {
 async function populateTemplateModal() {
     const { data: templates, error } = await supabase
         .from('rule_templates')
-        .select('*, rule_categories(name)');
+        .select('*, rule_categories(name, icon)');
 
-    if (error) return;
+    if (error) {
+        console.error('Error loading templates:', error);
+        return;
+    }
 
     const templateList = document.getElementById('templateList');
-    templateList.innerHTML = '';
+    templateList.innerHTML = '<div style="max-height: 60vh; overflow-y: auto;">';
 
     const groupedTemplates = templates.reduce((acc, t) => {
         const category = t.rule_categories.name;
@@ -180,48 +208,77 @@ async function populateTemplateModal() {
     }, {});
 
     for (const category in groupedTemplates) {
+        const categoryData = templates.find(t => t.rule_categories.name === category).rule_categories;
         const categoryEl = document.createElement('div');
         categoryEl.className = 'template-category';
-        categoryEl.innerHTML = `<h4>${category}</h4>`;
+        categoryEl.style.marginBottom = '2rem';
+        categoryEl.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--border);">
+                <span style="font-size: 1.5rem;">${categoryData.icon || '📋'}</span>
+                <h4 style="margin: 0; color: var(--primary);">${category}</h4>
+            </div>
+        `;
         
         groupedTemplates[category].forEach(template => {
             const templateEl = document.createElement('div');
             templateEl.className = 'template-item';
+            templateEl.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 1rem; margin-bottom: 0.5rem; background: rgba(255, 149, 0, 0.05); border-radius: 12px; border: 1px solid rgba(255, 149, 0, 0.2);';
             templateEl.innerHTML = `
-                <p>${template.name}</p>
-                <button onclick="addRuleFromTemplate('${template.id}')">Add</button>
+                <div style="flex: 1;">
+                    <p style="font-weight: 500; margin-bottom: 0.25rem;">${template.name}</p>
+                    ${template.description ? `<p style="font-size: 0.875rem; color: var(--text-secondary); margin: 0;">${template.description}</p>` : ''}
+                    ${template.is_numeric && template.numeric_value ? `<span style="display: inline-block; margin-top: 0.5rem; padding: 0.25rem 0.75rem; background: var(--primary); color: var(--bg-primary); border-radius: 8px; font-size: 0.875rem; font-weight: 600;">${template.numeric_value}${template.numeric_unit || ''}</span>` : ''}
+                </div>
+                <button class="cta-secondary" onclick="addRuleFromTemplate('${template.id}')" style="margin-left: 1rem; white-space: nowrap;">+ Add</button>
             `;
             categoryEl.appendChild(templateEl);
         });
         templateList.appendChild(categoryEl);
     }
+    templateList.innerHTML += '</div>';
 }
 
 async function addRuleFromTemplate(templateId) {
-    const { data: template } = await supabase
-        .from('rule_templates')
-        .select('*')
-        .eq('id', templateId)
-        .single();
+    try {
+        const { data: template } = await supabase
+            .from('rule_templates')
+            .select('*')
+            .eq('id', templateId)
+            .single();
 
-    if (!template) return;
+        if (!template) {
+            alert('Template not found.');
+            return;
+        }
 
-    const user = (await supabase.auth.getUser()).data.user;
-    const ruleData = {
-        user_id: user.id,
-        rule_text: template.name,
-        category_id: template.category_id,
-        template_id: template.id
-    };
+        const user = (await supabase.auth.getUser()).data.user;
+        if (!user) {
+            alert('Please log in.');
+            return;
+        }
+        
+        const ruleData = {
+            user_id: user.id,
+            rule_text: template.name,
+            category_id: template.category_id,
+            template_id: template.id,
+            is_numeric: template.is_numeric || false,
+            numeric_value: template.numeric_value,
+            numeric_unit: template.numeric_unit
+        };
 
-    const { error } = await supabase.from('user_defined_rules').insert(ruleData);
+        const { error } = await supabase.from('user_defined_rules').insert(ruleData);
 
-    if (error) {
+        if (error) {
+            console.error('Error adding rule from template:', error);
+            alert('Could not add the rule.');
+        } else {
+            closeModal('templateModal');
+            await loadRules();
+        }
+    } catch (error) {
         console.error('Error adding rule from template:', error);
-        alert('Could not add the rule.');
-    } else {
-        closeModal('templateModal');
-        await loadRules();
+        alert('An error occurred. Please try again.');
     }
 }
 
@@ -247,6 +304,7 @@ window.onclick = function(event) {
 
 // Export functions to global scope for HTML onclick handlers
 window.openAddRuleModal = openAddRuleModal;
+window.openTemplateModal = openTemplateModal;
 window.editRule = editRule;
 window.deleteRule = deleteRule;
 window.toggleRuleActive = toggleRuleActive;

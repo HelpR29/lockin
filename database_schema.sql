@@ -438,7 +438,182 @@ INSERT INTO progress_tokens (token_type, display_name, emoji, display_order) VAL
 ('diamond', 'Diamond', '💎', 4),
 ('trophy', 'Trophy', '🏆', 5);
 
--- 17. Add indexes for progress system
+-- 17. Rule Categories Table (for organizing rules)
+CREATE TABLE rule_categories (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    name TEXT NOT NULL UNIQUE,
+    description TEXT,
+    icon TEXT,
+    display_order INTEGER NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Insert default rule categories
+INSERT INTO rule_categories (name, description, icon, display_order) VALUES
+('Risk Management', 'Rules for managing risk and protecting capital', '🛡️', 1),
+('Trade Limits', 'Rules for limiting trading activity', '📊', 2),
+('Setup Quality', 'Rules for ensuring high-quality trade setups', '✨', 3),
+('Emotional Discipline', 'Rules for maintaining emotional control', '🧘', 4),
+('Journaling & Review', 'Rules for tracking and reviewing performance', '📝', 5);
+
+-- 18. Rule Templates Table (pre-defined rule templates)
+CREATE TABLE rule_templates (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    category_id UUID REFERENCES rule_categories NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT,
+    default_enabled BOOLEAN DEFAULT true,
+    is_numeric BOOLEAN DEFAULT false,
+    numeric_value NUMERIC,
+    numeric_unit TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Insert comprehensive rule templates
+
+-- Risk Management Rules
+INSERT INTO rule_templates (category_id, name, description, is_numeric, numeric_value, numeric_unit) 
+SELECT id, 'Never risk more than 1-2% of account per trade', 'Limit risk per trade to protect capital', true, 2.0, '%'
+FROM rule_categories WHERE name = 'Risk Management';
+
+INSERT INTO rule_templates (category_id, name, description) 
+SELECT id, 'Always set a stop loss before entry', 'Never enter a trade without a predetermined stop loss'
+FROM rule_categories WHERE name = 'Risk Management';
+
+INSERT INTO rule_templates (category_id, name, description, is_numeric, numeric_value) 
+SELECT id, 'Minimum Risk-to-Reward ratio = 1:2', 'Only take trades with at least 1:2 R:R', true, 2.0, NULL
+FROM rule_categories WHERE name = 'Risk Management';
+
+INSERT INTO rule_templates (category_id, name, description, is_numeric, numeric_value, numeric_unit) 
+SELECT id, 'Stop trading if account drawdown > 8% in a week', 'Pause trading to reassess after significant drawdown', true, 8.0, '%'
+FROM rule_categories WHERE name = 'Risk Management';
+
+-- Trade Limits Rules
+INSERT INTO rule_templates (category_id, name, description, is_numeric, numeric_value) 
+SELECT id, 'Max 3 trades per day', 'Limit daily trades to avoid overtrading', true, 3, 'trades'
+FROM rule_categories WHERE name = 'Trade Limits';
+
+INSERT INTO rule_templates (category_id, name, description, is_numeric, numeric_value) 
+SELECT id, 'Max 10 trades per week', 'Weekly trading limit for quality over quantity', true, 10, 'trades'
+FROM rule_categories WHERE name = 'Trade Limits';
+
+INSERT INTO rule_templates (category_id, name, description, is_numeric, numeric_value) 
+SELECT id, 'Stop trading after 2 consecutive losses', 'Take a break after losing streak', true, 2, 'losses'
+FROM rule_categories WHERE name = 'Trade Limits';
+
+INSERT INTO rule_templates (category_id, name, description) 
+SELECT id, 'No more than 1 open position per asset at a time', 'Avoid over-concentration in single assets'
+FROM rule_categories WHERE name = 'Trade Limits';
+
+-- Setup Quality Rules
+INSERT INTO rule_templates (category_id, name, description) 
+SELECT id, 'Only take trades with clear confirmation', 'Require multiple indicators: trendline + RSI, volume spike, MA cross, etc.'
+FROM rule_categories WHERE name = 'Setup Quality';
+
+INSERT INTO rule_templates (category_id, name, description) 
+SELECT id, 'No trading during high-impact news', 'Avoid trading during major economic announcements'
+FROM rule_categories WHERE name = 'Setup Quality';
+
+INSERT INTO rule_templates (category_id, name, description) 
+SELECT id, 'Only trade during optimal market hours', 'Trade only during your defined active hours'
+FROM rule_categories WHERE name = 'Setup Quality';
+
+INSERT INTO rule_templates (category_id, name, description) 
+SELECT id, 'Avoid counter-trend trades unless setup is A+ quality', 'Only take counter-trend trades with exceptional confirmation'
+FROM rule_categories WHERE name = 'Setup Quality';
+
+-- Emotional Discipline Rules
+INSERT INTO rule_templates (category_id, name, description) 
+SELECT id, 'No revenge trading after a loss', 'Never trade to make up for a losing trade'
+FROM rule_categories WHERE name = 'Emotional Discipline';
+
+INSERT INTO rule_templates (category_id, name, description) 
+SELECT id, 'No increasing size after a losing trade', 'Maintain consistent position sizing'
+FROM rule_categories WHERE name = 'Emotional Discipline';
+
+INSERT INTO rule_templates (category_id, name, description) 
+SELECT id, 'Stop for the day once daily goal is hit', 'Lock in profits when target is reached'
+FROM rule_categories WHERE name = 'Emotional Discipline';
+
+INSERT INTO rule_templates (category_id, name, description, is_numeric, numeric_value) 
+SELECT id, 'Walk away after 3 straight losing trades', 'Take a break to reset mentally', true, 3, 'losses'
+FROM rule_categories WHERE name = 'Emotional Discipline';
+
+-- Journaling & Review Rules
+INSERT INTO rule_templates (category_id, name, description) 
+SELECT id, 'Log every trade with: entry, exit, result, notes', 'Complete documentation for every trade'
+FROM rule_categories WHERE name = 'Journaling & Review';
+
+INSERT INTO rule_templates (category_id, name, description) 
+SELECT id, 'Write 1 lesson learned after each session', 'Reflect on what was learned from trading session'
+FROM rule_categories WHERE name = 'Journaling & Review';
+
+INSERT INTO rule_templates (category_id, name, description) 
+SELECT id, 'End of day: review all trades before logging off', 'Daily review of all executed trades'
+FROM rule_categories WHERE name = 'Journaling & Review';
+
+INSERT INTO rule_templates (category_id, name, description) 
+SELECT id, 'End of week: review journal & rule adherence %', 'Weekly performance and discipline review'
+FROM rule_categories WHERE name = 'Journaling & Review';
+
+-- 19. User Defined Rules Table (user's personal rules)
+CREATE TABLE user_defined_rules (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users NOT NULL,
+    category_id UUID REFERENCES rule_categories NOT NULL,
+    template_id UUID REFERENCES rule_templates,
+    rule_text TEXT NOT NULL,
+    is_active BOOLEAN DEFAULT true,
+    is_numeric BOOLEAN DEFAULT false,
+    numeric_value NUMERIC,
+    numeric_unit TEXT,
+    times_violated INTEGER DEFAULT 0,
+    times_followed INTEGER DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE user_defined_rules ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own rules"
+    ON user_defined_rules FOR SELECT
+    USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own rules"
+    ON user_defined_rules FOR INSERT
+    WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own rules"
+    ON user_defined_rules FOR UPDATE
+    USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own rules"
+    ON user_defined_rules FOR DELETE
+    USING (auth.uid() = user_id);
+
+-- 20. Rule Violations Log Table (track when rules are broken)
+CREATE TABLE rule_violations (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users NOT NULL,
+    rule_id UUID REFERENCES user_defined_rules NOT NULL,
+    trade_id UUID REFERENCES trades,
+    violation_date TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    notes TEXT,
+    severity TEXT DEFAULT 'medium' CHECK (severity IN ('low', 'medium', 'high')),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE rule_violations ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own violations"
+    ON rule_violations FOR SELECT
+    USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own violations"
+    ON rule_violations FOR INSERT
+    WITH CHECK (auth.uid() = user_id);
+
+-- 21. Add indexes for performance
 CREATE INDEX idx_user_progress_user_id ON user_progress(user_id);
 CREATE INDEX idx_user_achievements_user_id ON user_achievements(user_id);
 CREATE INDEX idx_daily_check_ins_user_id ON daily_check_ins(user_id);
@@ -447,6 +622,10 @@ CREATE INDEX idx_beer_completions_user_id ON beer_completions(user_id);
 CREATE INDEX idx_beer_completions_date ON beer_completions(completion_date DESC);
 CREATE INDEX idx_beer_spills_user_id ON beer_spills(user_id);
 CREATE INDEX idx_beer_spills_date ON beer_spills(spill_date DESC);
+CREATE INDEX idx_user_defined_rules_user_id ON user_defined_rules(user_id);
+CREATE INDEX idx_user_defined_rules_category ON user_defined_rules(category_id);
+CREATE INDEX idx_rule_violations_user_id ON rule_violations(user_id);
+CREATE INDEX idx_rule_violations_date ON rule_violations(violation_date DESC);
 
 -- 18. Add trigger for user_progress
 CREATE TRIGGER update_user_progress_updated_at BEFORE UPDATE ON user_progress

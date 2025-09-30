@@ -19,7 +19,7 @@
     <div class="container">
         <!-- Header Section -->
         <header class="header">
-            <div class="logo" onclick="window.location.href='index.html'" style="cursor: pointer;">
+            <div class="logo" onclick="window.location.href='dashboard.html'" style="cursor: pointer;">
                 <div class="logo-icon-wrapper">
                     <svg class="logo-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <!-- Outer circle -->
@@ -35,8 +35,13 @@
                 </div>
                 <span class="logo-text">LockIn</span>
             </div>
-            <nav class="nav">
-                <button class="cta-secondary" onclick="signOut()" style="padding: 0.6rem 1.5rem;">
+            <nav class="nav" style="display: flex; gap: 1rem; align-items: center;">
+                <a href="journal.html" style="color: var(--text-primary); text-decoration: none; padding: 0.5rem 1rem; border-radius: 8px; transition: background 0.3s;" onmouseover="this.style.background='rgba(255,149,0,0.1)'" onmouseout="this.style.background='transparent'">📝 Journal</a>
+                <a href="rules.html" style="color: var(--text-primary); text-decoration: none; padding: 0.5rem 1rem; border-radius: 8px; transition: background 0.3s;" onmouseover="this.style.background='rgba(255,149,0,0.1)'" onmouseout="this.style.background='transparent'">⚙️ Rules</a>
+                <a href="reports.html" style="color: var(--text-primary); text-decoration: none; padding: 0.5rem 1rem; border-radius: 8px; transition: background 0.3s;" onmouseover="this.style.background='rgba(255,149,0,0.1)'" onmouseout="this.style.background='transparent'">📊 Reports</a>
+                <a href="achievements.html" style="color: var(--text-primary); text-decoration: none; padding: 0.5rem 1rem; border-radius: 8px; transition: background 0.3s;" onmouseover="this.style.background='rgba(255,149,0,0.1)'" onmouseout="this.style.background='transparent'">🏆 Achievements</a>
+                <a href="friends.html" style="color: var(--text-primary); text-decoration: none; padding: 0.5rem 1rem; border-radius: 8px; transition: background 0.3s;" onmouseover="this.style.background='rgba(255,149,0,0.1)'" onmouseout="this.style.background='transparent'">👥 Friends</a>
+                <button class="cta-secondary" onclick="signOut()" style="padding: 0.6rem 1.5rem; margin-left: 1rem;">
                     <span>Sign Out</span>
                 </button>
             </nav>
@@ -183,21 +188,29 @@
                 <div class="dashboard-actions">
                     <h2 class="section-title" style="font-size: 1.5rem; margin-bottom: 1.5rem;">Quick Actions</h2>
                     <div class="action-buttons">
-                        <button class="action-button">
+                        <button class="action-button" onclick="window.location.href='journal.html'">
                             <span class="action-icon">📝</span>
                             <span>Log Trade</span>
                         </button>
-                        <button class="action-button">
+                        <button class="action-button" onclick="window.location.href='rules.html'">
                             <span class="action-icon">⚙️</span>
                             <span>Set Rules</span>
                         </button>
-                        <button class="action-button">
+                        <button class="action-button" onclick="window.location.href='reports.html'">
                             <span class="action-icon">📊</span>
                             <span>View Reports</span>
                         </button>
-                        <button class="action-button">
-                            <span class="action-icon">🎯</span>
-                            <span>Set Goals</span>
+                        <button class="action-button" onclick="window.location.href='achievements.html'">
+                            <span class="action-icon">🏆</span>
+                            <span>Achievements</span>
+                        </button>
+                        <button class="action-button" onclick="window.location.href='friends.html'">
+                            <span class="action-icon">👥</span>
+                            <span>Friends</span>
+                        </button>
+                        <button class="action-button" onclick="window.location.href='pricing.html'">
+                            <span class="action-icon">💎</span>
+                            <span>Upgrade Plan</span>
                         </button>
                     </div>
                 </div>
