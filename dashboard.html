@@ -50,25 +50,40 @@
                     <p class="dashboard-subtitle">Your discipline journey starts here</p>
                 </div>
 
-                <!-- Progress Overview -->
-                <div class="progress-overview">
-                    <div class="current-object-display">
-                        <div class="object-emoji" id="currentObjectEmoji">🍺</div>
-                        <div class="object-info">
-                            <div class="object-name" id="currentObjectName">Beer</div>
-                            <div class="object-tier">Tier <span id="currentObjectTier">1</span></div>
+                <!-- Beer Wall Progress -->
+                <div class="beer-wall-overview">
+                    <div class="beer-wall-header">
+                        <div class="wall-icon" id="wallIcon">🍺</div>
+                        <div class="wall-info">
+                            <h3 class="wall-title">Bottles on the Wall</h3>
+                            <div class="wall-count">
+                                <span class="bottles-remaining" id="bottlesRemaining">50</span>
+                                <span class="bottles-separator">of</span>
+                                <span class="bottles-total" id="bottlesTotal">50</span>
+                            </div>
                         </div>
                     </div>
-                    <div class="progress-to-next">
+                    <div class="beer-progress">
                         <div class="progress-label">
-                            <span>Progress to <span id="nextObjectName">Wine</span></span>
+                            <span>Beers Cracked: <span id="beersCracked">0</span></span>
                             <span id="progressPercent">0%</span>
                         </div>
                         <div class="progress-bar-container">
                             <div class="progress-bar-fill" id="progressBarFill" style="width: 0%"></div>
                         </div>
-                        <div class="progress-detail">
-                            <span id="currentCompletions">0</span> / <span id="nextObjectRequirement">10</span> completions
+                        <div class="progress-stats">
+                            <div class="stat-item">
+                                <span class="stat-label">Target per beer:</span>
+                                <span class="stat-value" id="targetPercent">+8%</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Current balance:</span>
+                                <span class="stat-value" id="currentBalance">$5,000</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Projected final:</span>
+                                <span class="stat-value" id="projectedFinal">$234,000</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -76,9 +91,14 @@
                 <!-- Stats Cards -->
                 <div class="dashboard-stats">
                     <div class="stat-card">
-                        <div class="stat-card-icon">🎯</div>
-                        <div class="stat-card-value" id="completionsValue">0</div>
-                        <div class="stat-card-label">Completions</div>
+                        <div class="stat-card-icon">🍺</div>
+                        <div class="stat-card-value" id="beersCrackedValue">0</div>
+                        <div class="stat-card-label">Beers Cracked</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-icon">🚨</div>
+                        <div class="stat-card-value" id="beersSpilledValue">0</div>
+                        <div class="stat-card-label">Beers Spilled</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-card-icon">🔥</div>
@@ -89,11 +109,6 @@
                         <div class="stat-card-icon">⭐</div>
                         <div class="stat-card-value" id="levelValue">1</div>
                         <div class="stat-card-label">Level</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-card-icon">⚡</div>
-                        <div class="stat-card-value" id="multiplierValue">1.0x</div>
-                        <div class="stat-card-label">Growth Multiplier</div>
                     </div>
                 </div>
 
@@ -172,29 +187,24 @@
             
             if (!progressSummary) return;
             
-            // Update current object display
-            document.getElementById('currentObjectEmoji').textContent = progressSummary.currentObject.emoji;
-            document.getElementById('currentObjectName').textContent = progressSummary.currentObject.name;
-            document.getElementById('currentObjectTier').textContent = progressSummary.currentObject.tier;
+            // Update beer wall display
+            document.getElementById('wallIcon').textContent = progressSummary.token.emoji;
+            document.getElementById('bottlesRemaining').textContent = progressSummary.goals?.bottles_remaining || 0;
+            document.getElementById('bottlesTotal').textContent = progressSummary.goals?.total_bottles || 0;
+            document.getElementById('beersCracked').textContent = progressSummary.beers_cracked;
+            document.getElementById('progressPercent').textContent = `${Math.floor(progressSummary.progressPercent)}%`;
+            document.getElementById('progressBarFill').style.width = `${progressSummary.progressPercent}%`;
             
-            // Update progress to next
-            if (progressSummary.nextObject) {
-                document.getElementById('nextObjectName').textContent = progressSummary.nextObject.name;
-                document.getElementById('nextObjectRequirement').textContent = progressSummary.nextObject.minCompletions;
-                document.getElementById('progressPercent').textContent = `${Math.floor(progressSummary.progressToNext)}%`;
-                document.getElementById('progressBarFill').style.width = `${progressSummary.progressToNext}%`;
-            } else {
-                document.getElementById('nextObjectName').textContent = 'MAX';
-                document.querySelector('.progress-to-next').style.display = 'none';
-            }
-            
-            document.getElementById('currentCompletions').textContent = progressSummary.completions;
+            // Update beer progress stats
+            document.getElementById('targetPercent').textContent = `+${progressSummary.goals?.target_percent_per_beer || 8}%`;
+            document.getElementById('currentBalance').textContent = `$${(progressSummary.goals?.current_capital || 0).toLocaleString()}`;
+            document.getElementById('projectedFinal').textContent = `$${(progressSummary.projectedBalance || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
             
             // Update stats cards
-            document.getElementById('completionsValue').textContent = progressSummary.completions;
+            document.getElementById('beersCrackedValue').textContent = progressSummary.beers_cracked;
+            document.getElementById('beersSpilledValue').textContent = progressSummary.beers_spilled;
             document.getElementById('streakValue').textContent = progressSummary.streak;
             document.getElementById('levelValue').textContent = progressSummary.level;
-            document.getElementById('multiplierValue').textContent = `${progressSummary.totalGrowthMultiplier.toFixed(2)}x`;
             
             // Update level progress
             document.getElementById('currentLevel').textContent = progressSummary.level;
