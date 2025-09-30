@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - LockIn</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Orbitron:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="bg-animation">
+        <div class="grid-overlay"></div>
+        <canvas id="particle-canvas"></canvas>
+    </div>
+    
+    <div class="container">
+        <!-- Header Section -->
+        <header class="header">
+            <div class="logo" onclick="window.location.href='index.html'" style="cursor: pointer;">
+                <div class="logo-icon-wrapper">
+                    <svg class="logo-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Outer circle -->
+                        <circle cx="50" cy="50" r="40" stroke="currentColor" stroke-width="6"/>
+                        <!-- Lock body -->
+                        <rect x="32" y="42" width="36" height="36" rx="4" fill="currentColor"/>
+                        <!-- Lock shackle -->
+                        <path d="M38 42V30C38 23.3726 43.3726 18 50 18C56.6274 18 62 23.3726 62 30V42" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>
+                        <!-- Keyhole -->
+                        <circle cx="50" cy="58" r="4" fill="#2C2C2E"/>
+                        <rect x="48" y="58" width="4" height="10" rx="2" fill="#2C2C2E"/>
+                    </svg>
+                </div>
+                <span class="logo-text">LockIn</span>
+            </div>
+            <nav class="nav">
+                <!-- Navigation menu removed -->
+            </nav>
+        </header>
+
+        <!-- Signup Form Section -->
+        <section class="signup-section">
+            <div class="signup-container">
+                <div class="signup-box">
+                    <h1 class="signup-title">Start Your Challenge</h1>
+                    <p class="signup-subtitle">Lock in your discipline. Build consistency.</p>
+                    
+                    <form class="signup-form">
+                        <div class="form-group">
+                            <label for="name">Full Name</label>
+                            <input type="text" id="name" name="name" placeholder="John Doe" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="email">Email Address</label>
+                            <input type="email" id="email" name="email" placeholder="you@example.com" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="password">Password</label>
+                            <input type="password" id="password" name="password" placeholder="Create a strong password" required>
+                        </div>
+                        
+                        <button type="submit" class="cta-primary-large">
+                            <span>Create Account</span>
+                            <div class="button-glow"></div>
+                        </button>
+                        
+                        <p class="signup-footer">
+                            Already have an account? <a href="#" class="signup-link">Log In</a>
+                        </p>
+                        
+                        <div class="trust-badges" style="margin-top: 2rem;">
+                            <div class="trust-badge">✓ No credit card required</div>
+                            <div class="trust-badge">✓ Start free</div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

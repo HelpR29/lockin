@@ -148,38 +148,12 @@ body {
 }
 
 .logo-text {
-    background: linear-gradient(135deg, var(--primary-orange) 0%, var(--primary-mint) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: var(--text-primary);
     letter-spacing: 1px;
+    font-weight: 600;
 }
 
-.nav-toggle {
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    border-radius: 8px;
-    cursor: pointer;
-    padding: 0.6rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-    transition: all 0.3s ease;
-}
-
-.nav-toggle:hover {
-    background: rgba(255, 149, 0, 0.1);
-    border-color: var(--primary-orange);
-    box-shadow: 0 0 20px rgba(255, 149, 0, 0.2);
-}
-
-.nav-toggle span {
-    width: 1.5rem;
-    height: 2px;
-    background: var(--primary-orange);
-    transition: all 0.3s ease;
-    box-shadow: 0 0 5px rgba(255, 149, 0, 0.3);
-}
+/* Navigation removed */
 
 /* Hero Section */
 .hero {
@@ -394,15 +368,21 @@ body {
     position: relative;
     width: 100%;
     height: 100%;
-    animation: lockFloat 3s ease-in-out infinite;
+    animation: lockRotateFloat 8s ease-in-out infinite;
 }
 
-@keyframes lockFloat {
+@keyframes lockRotateFloat {
     0%, 100% {
-        transform: translateY(0px);
+        transform: translateY(0px) rotateY(0deg);
+    }
+    25% {
+        transform: translateY(-10px) rotateY(180deg);
     }
     50% {
-        transform: translateY(-15px);
+        transform: translateY(-15px) rotateY(360deg);
+    }
+    75% {
+        transform: translateY(-10px) rotateY(180deg);
     }
 }
 
@@ -413,47 +393,66 @@ body {
 }
 
 .lock-body {
-    animation: lockGlow 2s ease-in-out infinite;
+    animation: lockGlow 3s ease-in-out infinite;
 }
 
 @keyframes lockGlow {
     0%, 100% {
-        filter: drop-shadow(0 0 10px rgba(255, 149, 0, 0.5));
+        filter: drop-shadow(0 0 15px rgba(255, 149, 0, 0.6));
     }
     50% {
-        filter: drop-shadow(0 0 25px rgba(255, 149, 0, 0.8));
+        filter: drop-shadow(0 0 30px rgba(255, 149, 0, 1));
+    }
+}
+
+.lock-shackle-group {
+    transform-origin: 100px 100px;
+    animation: shackleUnlock 8s ease-in-out infinite;
+}
+
+@keyframes shackleUnlock {
+    0%, 15% {
+        transform: translate(0, 0) rotate(0deg);
+    }
+    25%, 35% {
+        transform: translate(-15px, -5px) rotate(-15deg);
+    }
+    45%, 100% {
+        transform: translate(0, 0) rotate(0deg);
     }
 }
 
 .lock-shackle {
-    animation: shacklePulse 2s ease-in-out infinite;
-    transform-origin: 100px 100px;
+    stroke-width: 8;
+    animation: shackleGlow 3s ease-in-out infinite;
 }
 
-@keyframes shacklePulse {
+@keyframes shackleGlow {
     0%, 100% {
         stroke-width: 8;
+        filter: drop-shadow(0 0 8px rgba(255, 149, 0, 0.5));
     }
     50% {
-        stroke-width: 10;
+        stroke-width: 9;
+        filter: drop-shadow(0 0 15px rgba(255, 149, 0, 0.9));
     }
 }
 
-.keyhole-top, .keyhole-bottom {
-    animation: keyholeGlow 2s ease-in-out infinite;
+.keyhole-group {
+    animation: keyholeGlow 3s ease-in-out infinite;
 }
 
 @keyframes keyholeGlow {
     0%, 100% {
-        filter: drop-shadow(0 0 5px rgba(180, 231, 206, 0.5));
+        filter: drop-shadow(0 0 8px rgba(180, 231, 206, 0.6));
     }
     50% {
-        filter: drop-shadow(0 0 15px rgba(180, 231, 206, 0.9));
+        filter: drop-shadow(0 0 20px rgba(180, 231, 206, 1));
     }
 }
 
 .glow-circle {
-    animation: glowPulse 3s ease-in-out infinite;
+    animation: glowPulse 4s ease-in-out infinite;
 }
 
 .glow-1 {
@@ -461,11 +460,11 @@ body {
 }
 
 .glow-2 {
-    animation-delay: 0.5s;
+    animation-delay: 0.8s;
 }
 
 .glow-3 {
-    animation-delay: 1s;
+    animation-delay: 1.6s;
 }
 
 @keyframes glowPulse {
@@ -474,7 +473,7 @@ body {
         opacity: 0.3;
     }
     50% {
-        transform: scale(1.1);
+        transform: scale(1.15);
         opacity: 0.6;
     }
 }
@@ -733,10 +732,8 @@ body {
 }
 
 .footer-logo .logo-text {
-    background: linear-gradient(135deg, var(--primary-orange) 0%, var(--primary-mint) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: var(--text-primary);
+    font-weight: 600;
 }
 
 .footer-links {
@@ -1011,4 +1008,122 @@ body {
     .feature-card {
         border-width: 2px;
     }
+}
+
+/* Signup Page Styles */
+.signup-section {
+    min-height: 90vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+}
+
+.signup-container {
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.signup-box {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 3rem 2.5rem;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.signup-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    text-align: center;
+    background: linear-gradient(135deg, var(--primary-orange), var(--primary-mint));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.signup-subtitle {
+    color: var(--text-secondary);
+    text-align: center;
+    margin-bottom: 2rem;
+    font-size: 1rem;
+}
+
+.signup-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-group label {
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.form-group input {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    padding: 1rem;
+    color: var(--text-primary);
+    font-size: 1rem;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.3s ease;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--primary-orange);
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 20px rgba(255, 149, 0, 0.2);
+}
+
+.form-group input::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.signup-footer {
+    text-align: center;
+    color: var(--text-secondary);
+    margin-top: 1.5rem;
+    font-size: 0.9rem;
+}
+
+.signup-link {
+    color: var(--primary-orange);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.3s ease;
+}
+
+.signup-link:hover {
+    color: var(--primary-mint);
+}
+
+.signup-box .cta-primary-large {
+    width: 100%;
+    margin-top: 1rem;
+}
+
+.signup-box .trust-badges {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.signup-box .trust-badge {
+    font-size: 0.85rem;
 }
