@@ -56,7 +56,10 @@ function calculateTradeStats(trades) {
     const closedTrades = trades.filter(t => t.status === 'closed' && t.exit_price);
     
     closedTrades.forEach(trade => {
-        const pnl = (trade.exit_price - trade.entry_price) * trade.position_size * (trade.direction === 'short' ? -1 : 1);
+        // Calculate P&L - for options, multiply by 100
+        const isOption = trade.trade_type === 'call' || trade.trade_type === 'put';
+        const multiplier = isOption ? 100 : 1;
+        const pnl = (trade.exit_price - trade.entry_price) * trade.position_size * multiplier * (trade.direction === 'short' ? -1 : 1);
         totalPnL += pnl;
         if (pnl > 0) wins++;
         else if (pnl < 0) losses++;

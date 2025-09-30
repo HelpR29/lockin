@@ -27,7 +27,13 @@ async function loadRecentActivity() {
         }
         
         activityList.innerHTML = trades.map(trade => {
-            const pnl = trade.exit_price ? (trade.exit_price - trade.entry_price) * trade.position_size * (trade.direction === 'short' ? -1 : 1) : 0;
+            // Calculate P&L - for options, multiply by 100
+            let pnl = 0;
+            if (trade.exit_price) {
+                const isOption = trade.trade_type === 'call' || trade.trade_type === 'put';
+                const multiplier = isOption ? 100 : 1;
+                pnl = (trade.exit_price - trade.entry_price) * trade.position_size * multiplier * (trade.direction === 'short' ? -1 : 1);
+            }
             const pnlClass = pnl >= 0 ? 'profit' : 'loss';
             const time = new Date(trade.created_at).toLocaleString();
             
@@ -67,14 +73,21 @@ async function openProfileModal() {
         .eq('user_id', user.id)
         .single();
     
-    // Fetch avatar from onboarding
-    const { data: onboardingData } = await supabase
-        .from('user_onboarding')
-        .select('avatar')
-        .eq('user_id', user.id)
-        .single();
-    
-    const avatarEmoji = onboardingData?.avatar || '👤';
+    // Fetch avatar from onboarding (with error handling)
+    let avatarEmoji = '👤'; // default
+    try {
+        const { data: onboardingData, error } = await supabase
+            .from('user_onboarding')
+            .select('avatar')
+            .eq('user_id', user.id)
+            .single();
+        
+        if (!error && onboardingData?.avatar) {
+            avatarEmoji = onboardingData.avatar;
+        }
+    } catch (err) {
+        console.log('No onboarding data, using default avatar');
+    }
     
     const modal = document.createElement('div');
     modal.className = 'modal';

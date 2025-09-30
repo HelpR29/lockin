@@ -127,7 +127,10 @@ async function updatePnLChart() {
         let totalLosses = 0;
         
         trades.forEach((trade, index) => {
-            const pnl = (trade.exit_price - trade.entry_price) * trade.position_size * (trade.direction === 'short' ? -1 : 1);
+            // Calculate P&L - for options, multiply by 100
+            const isOption = trade.trade_type === 'call' || trade.trade_type === 'put';
+            const multiplier = isOption ? 100 : 1;
+            const pnl = (trade.exit_price - trade.entry_price) * trade.position_size * multiplier * (trade.direction === 'short' ? -1 : 1);
             cumulativePnL += pnl;
             
             // Track wins and losses

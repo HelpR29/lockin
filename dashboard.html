@@ -329,14 +329,22 @@
             const userName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Trader';
             document.getElementById('userName').textContent = userName;
             
-            // Fetch and display avatar from onboarding
-            const { data: onboardingData } = await supabase
-                .from('user_onboarding')
-                .select('avatar')
-                .eq('user_id', user.id)
-                .single();
+            // Fetch and display avatar from onboarding (with error handling)
+            let avatarEmoji = '👤'; // default
+            try {
+                const { data: onboardingData, error } = await supabase
+                    .from('user_onboarding')
+                    .select('avatar')
+                    .eq('user_id', user.id)
+                    .single();
+                
+                if (!error && onboardingData?.avatar) {
+                    avatarEmoji = onboardingData.avatar;
+                }
+            } catch (err) {
+                console.log('No onboarding data yet, using default avatar');
+            }
             
-            const avatarEmoji = onboardingData?.avatar || '👤';
             const avatarEl = document.getElementById('dashboardAvatar');
             if (avatarEl) {
                 avatarEl.textContent = avatarEmoji;

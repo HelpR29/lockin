@@ -49,7 +49,16 @@ async function loadTrades() {
     }
 
     for (const trade of trades) {
-        const pnl = trade.status === 'closed' ? (trade.exit_price - trade.entry_price) * trade.position_size * (trade.direction === 'short' ? -1 : 1) : 0;
+        // Calculate P&L - for options, multiply by 100 (contract multiplier)
+        let pnl = 0;
+        if (trade.status === 'closed' && trade.exit_price) {
+            const isOption = trade.trade_type === 'call' || trade.trade_type === 'put';
+            const multiplier = isOption ? 100 : 1; // Options = 100 shares per contract
+            pnl = (trade.exit_price - trade.entry_price) * trade.position_size * multiplier * (trade.direction === 'short' ? -1 : 1);
+            console.log(`Trade ${trade.symbol}: type=${trade.trade_type}, status=${trade.status}, entry=${trade.entry_price}, exit=${trade.exit_price}, size=${trade.position_size}, multiplier=${multiplier}, pnl=$${pnl}`);
+        } else {
+            console.log(`Trade ${trade.symbol}: status=${trade.status}, exit_price=${trade.exit_price} - P&L not calculated (trade not closed or no exit)`);
+        }
         const pnlClass = pnl >= 0 ? 'profit' : 'loss';
 
         const tradeEl = document.createElement('div');
