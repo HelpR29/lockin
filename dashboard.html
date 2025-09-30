@@ -41,7 +41,7 @@
                 <a href="reports.html" style="color: var(--text-primary); text-decoration: none; padding: 0.5rem 1rem; border-radius: 8px; transition: background 0.3s;" onmouseover="this.style.background='rgba(255,149,0,0.1)'" onmouseout="this.style.background='transparent'">📊 Reports</a>
                 <a href="achievements.html" style="color: var(--text-primary); text-decoration: none; padding: 0.5rem 1rem; border-radius: 8px; transition: background 0.3s;" onmouseover="this.style.background='rgba(255,149,0,0.1)'" onmouseout="this.style.background='transparent'">🏆 Achievements</a>
                 <a href="friends.html" style="color: var(--text-primary); text-decoration: none; padding: 0.5rem 1rem; border-radius: 8px; transition: background 0.3s;" onmouseover="this.style.background='rgba(255,149,0,0.1)'" onmouseout="this.style.background='transparent'">👥 Friends</a>
-                <button class="cta-secondary" onclick="signOut()" style="padding: 0.6rem 1.5rem; margin-left: 1rem;">
+                <button class="cta-secondary" id="signOutBtn" style="padding: 0.6rem 1.5rem; margin-left: 1rem;">
                     <span>Sign Out</span>
                 </button>
             </nav>
@@ -460,7 +460,33 @@
         }
         
         // Initialize dashboard
-        document.addEventListener('DOMContentLoaded', initDashboard);
+        document.addEventListener('DOMContentLoaded', () => {
+            initDashboard();
+            
+            // Setup sign out button
+            const signOutBtn = document.getElementById('signOutBtn');
+            if (signOutBtn) {
+                signOutBtn.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    console.log('Sign out button clicked');
+                    try {
+                        if (typeof signOut === 'function') {
+                            console.log('Calling signOut function...');
+                            await signOut();
+                        } else {
+                            console.error('signOut function not found!');
+                            // Fallback: redirect manually
+                            await supabase.auth.signOut();
+                            window.location.replace('/index.html');
+                        }
+                    } catch (error) {
+                        console.error('Error in sign out:', error);
+                        // Force redirect even on error
+                        window.location.replace('/index.html');
+                    }
+                });
+            }
+        });
     </script>
     <script src="script.js"></script>
 </body>

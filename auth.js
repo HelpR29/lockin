@@ -108,10 +108,17 @@ async function signOut() {
         const { error } = await supabase.auth.signOut();
         if (error) throw error;
         
-        window.location.href = 'index.html';
+        // Clear any local storage/session storage
+        localStorage.clear();
+        sessionStorage.clear();
+        
+        // Force redirect to landing page
+        window.location.replace('/index.html');
     } catch (error) {
         console.error('Error signing out:', error);
         alert('Error signing out. Please try again.');
+        // Even if there's an error, try to redirect
+        window.location.replace('/index.html');
     }
 }
 
