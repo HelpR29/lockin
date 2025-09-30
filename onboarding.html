@@ -60,9 +60,54 @@
                         
                         <form class="onboarding-form" id="profileForm">
                             <div class="form-group">
+                                <label>Choose Profile Picture</label>
+                                <div class="profile-pic-selector" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
+                                    <div class="profile-pic-option" data-avatar="👨‍💼" onclick="selectAvatar('👨‍💼')" style="cursor: pointer; padding: 1rem; background: rgba(255,149,0,0.1); border: 2px solid transparent; border-radius: 12px; text-align: center; font-size: 3rem; transition: all 0.3s;">
+                                        👨‍💼
+                                    </div>
+                                    <div class="profile-pic-option" data-avatar="👩‍💼" onclick="selectAvatar('👩‍💼')" style="cursor: pointer; padding: 1rem; background: rgba(255,149,0,0.1); border: 2px solid transparent; border-radius: 12px; text-align: center; font-size: 3rem; transition: all 0.3s;">
+                                        👩‍💼
+                                    </div>
+                                    <div class="profile-pic-option" data-avatar="🧑‍💼" onclick="selectAvatar('🧑‍💼')" style="cursor: pointer; padding: 1rem; background: rgba(255,149,0,0.1); border: 2px solid transparent; border-radius: 12px; text-align: center; font-size: 3rem; transition: all 0.3s;">
+                                        🧑‍💼
+                                    </div>
+                                    <div class="profile-pic-option" data-avatar="👨‍🚀" onclick="selectAvatar('👨‍🚀')" style="cursor: pointer; padding: 1rem; background: rgba(255,149,0,0.1); border: 2px solid transparent; border-radius: 12px; text-align: center; font-size: 3rem; transition: all 0.3s;">
+                                        👨‍🚀
+                                    </div>
+                                    <div class="profile-pic-option" data-avatar="👩‍🚀" onclick="selectAvatar('👩‍🚀')" style="cursor: pointer; padding: 1rem; background: rgba(255,149,0,0.1); border: 2px solid transparent; border-radius: 12px; text-align: center; font-size: 3rem; transition: all 0.3s;">
+                                        👩‍🚀
+                                    </div>
+                                    <div class="profile-pic-option" data-avatar="🧑‍🚀" onclick="selectAvatar('🧑‍🚀')" style="cursor: pointer; padding: 1rem; background: rgba(255,149,0,0.1); border: 2px solid transparent; border-radius: 12px; text-align: center; font-size: 3rem; transition: all 0.3s;">
+                                        🧑‍🚀
+                                    </div>
+                                    <div class="profile-pic-option" data-avatar="👨‍💻" onclick="selectAvatar('👨‍💻')" style="cursor: pointer; padding: 1rem; background: rgba(255,149,0,0.1); border: 2px solid transparent; border-radius: 12px; text-align: center; font-size: 3rem; transition: all 0.3s;">
+                                        👨‍💻
+                                    </div>
+                                    <div class="profile-pic-option" data-avatar="👩‍💻" onclick="selectAvatar('👩‍💻')" style="cursor: pointer; padding: 1rem; background: rgba(255,149,0,0.1); border: 2px solid transparent; border-radius: 12px; text-align: center; font-size: 3rem; transition: all 0.3s;">
+                                        👩‍💻
+                                    </div>
+                                    <div class="profile-pic-option" data-avatar="🧑‍💻" onclick="selectAvatar('🧑‍💻')" style="cursor: pointer; padding: 1rem; background: rgba(255,149,0,0.1); border: 2px solid transparent; border-radius: 12px; text-align: center; font-size: 3rem; transition: all 0.3s;">
+                                        🧑‍💻
+                                    </div>
+                                </div>
+                                <input type="hidden" id="profileAvatar" value="" required>
+                            </div>
+                            
+                            <div class="form-group">
                                 <label>Username</label>
                                 <input type="text" id="username" placeholder="e.g., trader_joe" minlength="3" maxlength="24" pattern="[A-Za-z0-9_]+" required>
                                 <small style="color: var(--text-secondary);">Letters, numbers, underscore</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Gender</label>
+                                <select id="gender" required>
+                                    <option value="">Select gender</option>
+                                    <option value="male">Male</option>
+                                    <option value="female">Female</option>
+                                    <option value="non-binary">Non-binary</option>
+                                    <option value="prefer-not-to-say">Prefer not to say</option>
+                                </select>
                             </div>
                             <div class="form-group">
                                 <label>Trading Experience</label>
