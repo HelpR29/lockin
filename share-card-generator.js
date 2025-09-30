@@ -41,10 +41,12 @@ async function generateShareCard(type, data) {
         ctx.stroke();
     }
 
-    // Logo and branding
+    // Logo and branding (huge and centered at top)
     ctx.fillStyle = '#FF9F1C';
-    ctx.font = 'bold 48px Inter, sans-serif';
-    ctx.fillText('🔒 LockIn', 50, 80);
+    ctx.font = 'bold 120px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('🔒 LockIn', 600, 120);
+    ctx.textAlign = 'left'; // Reset alignment
 
     // Load and draw profile picture if available
     if (avatarUrl) {
@@ -76,39 +78,76 @@ async function generateShareCard(type, data) {
 
 // Helper function to draw circular profile picture
 async function drawProfilePicture(ctx, imageUrl) {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
+        // Skip if no URL provided
+        if (!imageUrl || imageUrl.trim() === '') {
+            console.log('No profile picture URL provided');
+            resolve();
+            return;
+        }
+
         const img = new Image();
-        img.crossOrigin = 'anonymous'; // Handle CORS
+        
+        // Try with crossOrigin first
+        img.crossOrigin = 'anonymous';
         
         img.onload = () => {
+            try {
+                const size = 120;
+                const x = 1050;
+                const y = 60;
+                
+                // Draw circular mask
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(x + size/2, y + size/2, size/2, 0, Math.PI * 2);
+                ctx.closePath();
+                ctx.clip();
+                
+                // Draw image
+                ctx.drawImage(img, x, y, size, size);
+                
+                ctx.restore();
+                
+                // Draw border
+                ctx.strokeStyle = '#FF9F1C';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.arc(x + size/2, y + size/2, size/2, 0, Math.PI * 2);
+                ctx.stroke();
+                
+                console.log('✅ Profile picture loaded');
+                resolve();
+            } catch (err) {
+                console.warn('Error drawing profile picture:', err);
+                resolve();
+            }
+        };
+        
+        img.onerror = (err) => {
+            console.warn('Failed to load profile picture:', err);
+            // Draw placeholder circle instead
             const size = 120;
             const x = 1050;
             const y = 60;
             
-            // Draw circular mask
-            ctx.save();
+            ctx.fillStyle = 'rgba(255, 159, 28, 0.2)';
             ctx.beginPath();
             ctx.arc(x + size/2, y + size/2, size/2, 0, Math.PI * 2);
-            ctx.closePath();
-            ctx.clip();
+            ctx.fill();
             
-            // Draw image
-            ctx.drawImage(img, x, y, size, size);
-            
-            ctx.restore();
-            
-            // Draw border
             ctx.strokeStyle = '#FF9F1C';
             ctx.lineWidth = 4;
-            ctx.beginPath();
             ctx.arc(x + size/2, y + size/2, size/2, 0, Math.PI * 2);
             ctx.stroke();
             
-            resolve();
-        };
-        
-        img.onerror = () => {
-            console.warn('Failed to load profile picture');
+            // Draw emoji placeholder
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = '60px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('👤', x + size/2, y + size/2 + 20);
+            ctx.textAlign = 'left';
+            
             resolve(); // Continue without image
         };
         
