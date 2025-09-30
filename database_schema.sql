@@ -433,7 +433,8 @@ INSERT INTO progress_tokens (token_type, display_name, emoji, display_order) VAL
 ('beer', 'Beer', '🍺', 1),
 ('wine', 'Wine', '🍷', 2),
 ('donut', 'Donut', '🍩', 3),
-('diamond', 'Diamond', '💎', 4);
+('diamond', 'Diamond', '💎', 4),
+('trophy', 'Trophy', '🏆', 5);
 
 -- 17. Add indexes for progress system
 CREATE INDEX idx_user_progress_user_id ON user_progress(user_id);
@@ -552,3 +553,91 @@ CREATE INDEX idx_leaderboards_longest_streak ON leaderboards(longest_streak DESC
 
 -- Success message
 SELECT 'Database schema with Social Features created successfully!' as message;
+
+-- 25. Monetization: Plans
+CREATE TABLE plans (
+    code TEXT PRIMARY KEY, -- 'free', 'premium_monthly', 'premium_yearly', 'lifetime'
+    name TEXT NOT NULL,
+    price_cents INTEGER DEFAULT 0,
+    interval TEXT, -- 'month', 'year', NULL for lifetime
+    is_lifetime BOOLEAN DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+INSERT INTO plans (code, name, price_cents, interval, is_lifetime) VALUES
+('free', 'Free', 0, NULL, false)
+ON CONFLICT (code) DO NOTHING;
+
+INSERT INTO plans (code, name, price_cents, interval, is_lifetime) VALUES
+('premium_monthly', 'Premium Monthly', 900, 'month', false),
+('premium_yearly', 'Premium Yearly', 9999, 'year', false),
+('lifetime', 'Lifetime Access', 19999, NULL, true)
+ON CONFLICT (code) DO NOTHING;
+
+-- 26. Monetization: User Subscriptions
+CREATE TABLE user_subscriptions (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users NOT NULL,
+    plan_code TEXT REFERENCES plans(code) NOT NULL,
+    status TEXT NOT NULL DEFAULT 'active', -- 'active', 'canceled', 'expired'
+    started_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    expires_at TIMESTAMP WITH TIME ZONE,
+    is_lifetime BOOLEAN DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE user_subscriptions ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can view own subscriptions" ON user_subscriptions FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own subscriptions" ON user_subscriptions FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own subscriptions" ON user_subscriptions FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE TRIGGER update_user_subscriptions_updated_at BEFORE UPDATE ON user_subscriptions
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE INDEX idx_user_subscriptions_user_id ON user_subscriptions(user_id);
+CREATE INDEX idx_user_subscriptions_status ON user_subscriptions(status);
+
+-- 27. Monetization: Feature Flags per plan
+CREATE TABLE plan_features (
+    plan_code TEXT REFERENCES plans(code) NOT NULL,
+    feature_key TEXT NOT NULL,
+    enabled BOOLEAN DEFAULT true,
+    PRIMARY KEY (plan_code, feature_key)
+);
+
+INSERT INTO plan_features (plan_code, feature_key, enabled) VALUES
+('free', 'basic_analytics', true),
+('free', 'advanced_analytics', false),
+('free', 'lifetime_access', false)
+ON CONFLICT DO NOTHING;
+
+INSERT INTO plan_features (plan_code, feature_key, enabled) VALUES
+('premium_monthly', 'advanced_analytics', true),
+('premium_yearly', 'advanced_analytics', true),
+('lifetime', 'advanced_analytics', true),
+('lifetime', 'lifetime_access', true)
+ON CONFLICT DO NOTHING;
+
+-- 28. Privacy & Security settings
+CREATE TABLE privacy_settings (
+    user_id UUID PRIMARY KEY REFERENCES auth.users,
+    share_with_friends BOOLEAN DEFAULT false,
+    data_retention_days INTEGER, -- NULL means indefinite
+    gdpr_consent BOOLEAN DEFAULT false,
+    consent_date TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE privacy_settings ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users manage own privacy" ON privacy_settings FOR ALL USING (auth.uid() = user_id);
+CREATE TRIGGER update_privacy_settings_updated_at BEFORE UPDATE ON privacy_settings
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- 29. Security hardening notes
+-- Ensure RLS is enabled (done throughout). Use Supabase policies.
+-- For sensitive content encryption, store client-side encrypted blobs in future iterations.
+
+-- Success message
+SELECT 'Database schema with Monetization & Privacy created successfully!' as message;

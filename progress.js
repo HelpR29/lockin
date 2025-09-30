@@ -220,7 +220,7 @@ async function performDailyCheckIn(userId, checkInData) {
             check_ins: progress.total_check_ins + 1,
             streak: newStreak,
             level: levelInfo.level,
-            beers_cracked: progress.beers_cracked,
+            completions: progress.beers_cracked,
             discipline_score: newDisciplineScore
         });
         
