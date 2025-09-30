@@ -1737,14 +1737,16 @@ body {
 
 .modal-content {
     background: var(--card-bg);
-    margin: auto;
-    padding: 2.5rem;
+    margin: 2rem auto;
+    padding: 2rem 2.5rem 2.5rem 2.5rem;
     border: 1px solid var(--glass-border);
     border-radius: 20px;
     width: 90%;
-    max-width: 600px;
+    max-width: 650px;
+    max-height: 90vh;
     position: relative;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    overflow-y: auto;
 }
 
 .close-button {
@@ -1765,6 +1767,12 @@ body {
     text-align: center;
     margin-bottom: 2rem;
     font-family: 'Orbitron', sans-serif;
+}
+
+.modal-content h2 {
+    margin: 0 0 2rem 0;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.75rem;
 }
 
 #templateList {
@@ -2103,7 +2111,7 @@ input:checked + .slider:before {
 .form-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
+    gap: 1rem 1.5rem;
     margin-bottom: 1.5rem;
 }
 
