@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign Up - LockIn</title>
+    <title>Log In - LockIn</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -40,19 +40,14 @@
             </nav>
         </header>
 
-        <!-- Signup Form Section -->
+        <!-- Login Form Section -->
         <section class="signup-section">
             <div class="signup-container">
                 <div class="signup-box">
-                    <h1 class="signup-title">Start Your Challenge</h1>
-                    <p class="signup-subtitle">Lock in your discipline. Build consistency.</p>
+                    <h1 class="signup-title">Welcome Back</h1>
+                    <p class="signup-subtitle">Log in to continue your discipline journey.</p>
                     
-                    <form class="signup-form" id="signupForm">
-                        <div class="form-group">
-                            <label for="name">Full Name</label>
-                            <input type="text" id="name" name="name" placeholder="John Doe" required>
-                        </div>
-                        
+                    <form class="signup-form" id="loginForm">
                         <div class="form-group">
                             <label for="email">Email Address</label>
                             <input type="email" id="email" name="email" placeholder="you@example.com" required>
@@ -60,22 +55,21 @@
                         
                         <div class="form-group">
                             <label for="password">Password</label>
-                            <input type="password" id="password" name="password" placeholder="Create a strong password (min 6 characters)" required minlength="6">
+                            <input type="password" id="password" name="password" placeholder="Enter your password" required>
                         </div>
                         
                         <button type="submit" class="cta-primary-large">
-                            <span id="signupButtonText">Create Account</span>
+                            <span id="loginButtonText">Log In</span>
                             <div class="button-glow"></div>
                         </button>
                         
                         <p class="signup-footer">
-                            Already have an account? <a href="login.html" class="signup-link">Log In</a>
+                            <a href="#" class="signup-link" id="forgotPassword">Forgot Password?</a>
                         </p>
                         
-                        <div class="trust-badges" style="margin-top: 2rem;">
-                            <div class="trust-badge">✓ No credit card required</div>
-                            <div class="trust-badge">✓ Start free</div>
-                        </div>
+                        <p class="signup-footer">
+                            Don't have an account? <a href="signup.html" class="signup-link">Sign Up</a>
+                        </p>
                     </form>
                 </div>
             </div>
@@ -86,20 +80,29 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="auth.js"></script>
     <script>
-        // Signup form handler
-        document.getElementById('signupForm').addEventListener('submit', async (e) => {
+        // Login form handler
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const name = document.getElementById('name').value;
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            const buttonText = document.getElementById('signupButtonText');
+            const buttonText = document.getElementById('loginButtonText');
             
-            buttonText.textContent = 'Creating account...';
+            buttonText.textContent = 'Logging in...';
             
-            await signUp(email, password, name);
+            await signIn(email, password);
             
-            buttonText.textContent = 'Create Account';
+            buttonText.textContent = 'Log In';
+        });
+
+        // Forgot password handler
+        document.getElementById('forgotPassword').addEventListener('click', async (e) => {
+            e.preventDefault();
+            
+            const email = prompt('Enter your email address:');
+            if (email) {
+                await resetPassword(email);
+            }
         });
     </script>
     <script src="script.js"></script>
