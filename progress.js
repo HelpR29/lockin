@@ -437,6 +437,11 @@ async function checkAndUnlockAchievements(userId, stats) {
                 case 'streak':
                     unlocked = stats.streak >= achievement.requirement_value;
                     break;
+                case 'completions':
+                    // Generic completions metric to stay token-agnostic
+                    // If not provided, fallback to beers_cracked
+                    unlocked = (stats.completions ?? stats.beers_cracked ?? 0) >= achievement.requirement_value;
+                    break;
                 case 'beers_cracked':
                     unlocked = stats.beers_cracked >= achievement.requirement_value;
                     break;
