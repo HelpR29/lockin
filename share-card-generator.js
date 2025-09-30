@@ -71,16 +71,12 @@ async function generateShareCard(type, data) {
 function renderCompletionCard(ctx, data, token, nameColor) {
     const { username, completions, streak, discipline } = data;
 
-    // Giant token
-    ctx.font = '180px sans-serif';
-    ctx.fillText(token, 500, 300);
-
     // User name with custom color
     ctx.fillStyle = nameColor;
     ctx.font = 'bold 56px Inter, sans-serif';
     ctx.fillText(username, 50, 200);
 
-    // Stats
+    // Stats (left side)
     ctx.fillStyle = '#FFFFFF';
     ctx.font = 'bold 64px Inter, sans-serif';
     ctx.fillText('Glass Cracked!', 50, 320);
@@ -90,6 +86,10 @@ function renderCompletionCard(ctx, data, token, nameColor) {
     ctx.fillText(`${completions} Total Completions`, 50, 390);
     ctx.fillText(`${streak} Day Streak 🔥`, 50, 440);
     ctx.fillText(`${discipline}% Discipline Score`, 50, 490);
+
+    // Giant token (moved to right side)
+    ctx.font = '220px sans-serif';
+    ctx.fillText(token, 850, 380);
 }
 
 function renderAchievementCard(ctx, data, token, nameColor) {
