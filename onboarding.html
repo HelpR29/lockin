@@ -60,6 +60,11 @@
                         
                         <form class="onboarding-form" id="profileForm">
                             <div class="form-group">
+                                <label>Username</label>
+                                <input type="text" id="username" placeholder="e.g., trader_joe" minlength="3" maxlength="24" pattern="[A-Za-z0-9_]+" required>
+                                <small style="color: var(--text-secondary);">Letters, numbers, underscore</small>
+                            </div>
+                            <div class="form-group">
                                 <label>Trading Experience</label>
                                 <select id="experience" required>
                                     <option value="">Select your experience level</option>
