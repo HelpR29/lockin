@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Friends & Community - LockIn</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Orbitron:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="bg-animation">
+        <div class="grid-overlay"></div>
+        <canvas id="particle-canvas"></canvas>
+    </div>
+    
+    <div class="container">
+        <header class="header">
+            <div class="logo" onclick="window.location.href='index.html'" style="cursor: pointer;">
+                <div class="logo-icon-wrapper">
+                    <svg class="logo-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="50" cy="50" r="40" stroke="currentColor" stroke-width="6"/>
+                        <rect x="32" y="42" width="36" height="36" rx="4" fill="currentColor"/>
+                        <path d="M38 42V30C38 23.3726 43.3726 18 50 18C56.6274 18 62 23.3726 62 30V42" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>
+                        <circle cx="50" cy="58" r="4" fill="#2C2C2E"/>
+                        <rect x="48" y="58" width="4" height="10" rx="2" fill="#2C2C2E"/>
+                    </svg>
+                </div>
+                <span class="logo-text">LockIn</span>
+            </div>
+            <nav class="nav">
+                <button class="cta-secondary" onclick="window.location.href='dashboard.html'" style="padding: 0.7rem 1.8rem;">
+                    <span>Dashboard</span>
+                </button>
+            </nav>
+        </header>
+
+        <section class="dashboard-section">
+            <div class="dashboard-container">
+                <div class="dashboard-header">
+                    <h1 class="dashboard-title">Friends & Community</h1>
+                    <p class="dashboard-subtitle">Connect with other traders and stay accountable.</p>
+                </div>
+
+                <div class="social-grid">
+                    <!-- Friend Requests -->
+                    <div class="social-card">
+                        <h3>Friend Requests</h3>
+                        <div id="friendRequestsList" class="user-list">
+                            <!-- Friend requests will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Find Friends -->
+                    <div class="social-card">
+                        <h3>Find Friends</h3>
+                        <div class="search-box">
+                            <input type="text" id="searchUser" placeholder="Search by username or email">
+                            <button onclick="searchUsers()">Search</button>
+                        </div>
+                        <div id="searchResultsList" class="user-list">
+                            <!-- Search results will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Friends List -->
+                    <div class="social-card full-width">
+                        <h3>My Friends</h3>
+                        <div id="friendsList" class="user-list">
+                            <!-- Friends will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="auth.js"></script>
+    <script src="friends.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

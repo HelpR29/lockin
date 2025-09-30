@@ -515,5 +515,39 @@ CREATE POLICY "Users can view their own violations" ON trade_rule_violations FOR
 CREATE INDEX idx_user_defined_rules_user_id ON user_defined_rules(user_id);
 CREATE INDEX idx_trade_rule_violations_trade_id ON trade_rule_violations(trade_id);
 
+-- 23. Friends Table
+CREATE TABLE friends (
+    user_id_1 UUID REFERENCES auth.users NOT NULL,
+    user_id_2 UUID REFERENCES auth.users NOT NULL,
+    status TEXT NOT NULL, -- 'requested', 'accepted'
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    PRIMARY KEY (user_id_1, user_id_2)
+);
+
+ALTER TABLE friends ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can see their own friendships" ON friends FOR SELECT USING (auth.uid() = user_id_1 OR auth.uid() = user_id_2);
+CREATE POLICY "Users can manage their own friendships" ON friends FOR ALL USING (auth.uid() = user_id_1 OR auth.uid() = user_id_2);
+
+-- 24. Leaderboard Table (can be a materialized view for performance)
+-- For simplicity, we'll create a basic table. In production, this would be updated periodically.
+CREATE TABLE leaderboards (
+    user_id UUID REFERENCES auth.users NOT NULL PRIMARY KEY,
+    username TEXT,
+    beers_cracked INTEGER, 
+    longest_streak INTEGER,
+    discipline_score NUMERIC,
+    last_updated TIMESTAMP WITH TIME ZONE
+);
+
+ALTER TABLE leaderboards ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public can read leaderboards" ON leaderboards FOR SELECT USING (true);
+
+-- Add indexes for social features
+CREATE INDEX idx_friends_user_id_1 ON friends(user_id_1);
+CREATE INDEX idx_friends_user_id_2 ON friends(user_id_2);
+CREATE INDEX idx_leaderboards_beers_cracked ON leaderboards(beers_cracked DESC);
+CREATE INDEX idx_leaderboards_longest_streak ON leaderboards(longest_streak DESC);
+
+
 -- Success message
-SELECT 'Database schema with Trading Discipline Core created successfully!' as message;
+SELECT 'Database schema with Social Features created successfully!' as message;
