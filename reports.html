@@ -42,6 +42,22 @@
                     <h1 class="dashboard-title">Reports & Analytics</h1>
                     <p class="dashboard-subtitle">Analyze your performance and find your edge.</p>
                 </div>
+                
+                <!-- Psychology & Discipline Section (Most Important!) -->
+                <div style="margin-bottom: 3rem;">
+                    <h2 style="font-size: 1.5rem; margin-bottom: 1.5rem; color: var(--primary);">🧠 Psychology & Discipline</h2>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+                        <div id="ruleAdherenceSection"></div>
+                        <div id="emotionalAnalysisSection"></div>
+                        <div id="disciplineScoreSection"></div>
+                        <div id="psychologyInsightsSection"></div>
+                    </div>
+                </div>
+                
+                <!-- Financial Performance Section -->
+                <div style="margin-bottom: 1rem;">
+                    <h2 style="font-size: 1.5rem; margin-bottom: 1.5rem; color: var(--text-secondary);">💰 Financial Performance</h2>
+                </div>
 
                 <div class="reports-grid">
                     <!-- KPI Summary -->
@@ -86,7 +102,47 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="auth.js"></script>
     <script src="features.js"></script>
+    <script src="psychology-report.js"></script>
     <script src="reports.js"></script>
     <script src="script.js"></script>
+    
+    <style>
+        .psychology-card {
+            background: var(--card-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+        }
+        
+        .psychology-card h3 {
+            margin: 0 0 1.5rem 0;
+            font-size: 1.25rem;
+            color: var(--text-primary);
+        }
+        
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+    </style>
 </body>
 </html>

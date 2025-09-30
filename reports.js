@@ -46,6 +46,11 @@ async function generateReports() {
         return;
     }
 
+    // Generate psychology report FIRST (most important!)
+    if (typeof generatePsychologyReport === 'function') {
+        await generatePsychologyReport();
+    }
+
     // Calculate KPIs (always available)
     calculateAndDisplayKPIs(trades);
 
