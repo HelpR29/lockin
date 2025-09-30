@@ -1,4 +1,6 @@
 -- LockIn Database Schema
+-- Ensure required extensions
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 -- Run this SQL in your Supabase SQL Editor
 
 -- 1. User Profiles Table
@@ -591,6 +593,7 @@ ALTER TABLE user_subscriptions ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view own subscriptions" ON user_subscriptions FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can insert own subscriptions" ON user_subscriptions FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update own subscriptions" ON user_subscriptions FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete own subscriptions" ON user_subscriptions FOR DELETE USING (auth.uid() = user_id);
 
 CREATE TRIGGER update_user_subscriptions_updated_at BEFORE UPDATE ON user_subscriptions
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
