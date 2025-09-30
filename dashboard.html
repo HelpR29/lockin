@@ -58,13 +58,13 @@
                 <!-- View Toggle -->
                 <div class="view-toggle">
                     <button class="toggle-btn active" data-view="wall" onclick="switchView('wall')">
-                        <span>🍺 Beer Wall</span>
+                        <span id="viewToggleWall">🍺 Progress Wall</span>
                     </button>
                     <button class="toggle-btn" data-view="chart" onclick="switchView('chart')">
                         <span>📈 Growth Chart</span>
                     </button>
                     <button class="toggle-btn" data-view="grid" onclick="switchView('grid')">
-                        <span>🗂️ All Bottles</span>
+                        <span id="viewToggleGrid">🗂️ All Items</span>
                     </button>
                 </div>
 
@@ -75,7 +75,7 @@
                         <div class="beer-main-info">
                             <div class="beer-count-display">
                                 <div class="count-remaining" id="bottlesRemainingLarge">50</div>
-                                <div class="count-label">Bottles on the Wall</div>
+                                <div class="count-label" id="countLabel">Items on the Wall</div>
                             </div>
                             <div class="beer-status">
                                 <div class="status-item">
@@ -101,7 +101,7 @@
                             <div class="stat-icon">🎯</div>
                             <div class="stat-content">
                                 <div class="stat-value" id="targetPercentWall">+8%</div>
-                                <div class="stat-label">Target per Beer</div>
+                                <div class="stat-label" id="targetLabel">Target per Item</div>
                             </div>
                         </div>
                         <div class="beer-stat-card">
@@ -152,14 +152,14 @@
                 <!-- Stats Cards -->
                 <div class="dashboard-stats">
                     <div class="stat-card">
-                        <div class="stat-card-icon">🍺</div>
+                        <div class="stat-card-icon" id="crackedIcon">🍺</div>
                         <div class="stat-card-value" id="beersCrackedValue">0</div>
-                        <div class="stat-card-label">Beers Cracked</div>
+                        <div class="stat-card-label" id="crackedLabel">Items Completed</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-card-icon">🚨</div>
                         <div class="stat-card-value" id="beersSpilledValue">0</div>
-                        <div class="stat-card-label">Beers Spilled</div>
+                        <div class="stat-card-label" id="spilledLabel">Items Failed</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-card-icon">🔥</div>
@@ -303,6 +303,15 @@
             }
         }
         
+        // Token name mappings
+        const tokenNames = {
+            'beer': { singular: 'Beer', plural: 'Beers', container: 'Bottles' },
+            'wine': { singular: 'Glass', plural: 'Glasses', container: 'Glasses' },
+            'donut': { singular: 'Donut', plural: 'Donuts', container: 'Donuts' },
+            'diamond': { singular: 'Diamond', plural: 'Diamonds', container: 'Diamonds' },
+            'trophy': { singular: 'Trophy', plural: 'Trophies', container: 'Trophies' }
+        };
+        
         // Load and display user progress
         async function loadUserProgress(userId) {
             const progressSummary = await getUserProgressSummary(userId);
@@ -311,8 +320,22 @@
             
             currentProgressData = progressSummary;
             
+            // Get token info
+            const tokenType = progressSummary.token.type || 'beer';
+            const tokenInfo = tokenNames[tokenType] || tokenNames['beer'];
+            const tokenEmoji = progressSummary.token.emoji;
+            
+            // Update all dynamic text with token name
+            document.getElementById('viewToggleWall').innerHTML = `${tokenEmoji} ${tokenInfo.singular} Wall`;
+            document.getElementById('viewToggleGrid').innerHTML = `🗂️ All ${tokenInfo.container}`;
+            document.getElementById('countLabel').textContent = `${tokenInfo.container} on the Wall`;
+            document.getElementById('targetLabel').textContent = `Target per ${tokenInfo.singular}`;
+            document.getElementById('crackedLabel').textContent = `${tokenInfo.plural} Cracked`;
+            document.getElementById('spilledLabel').textContent = `${tokenInfo.plural} Spilled`;
+            document.getElementById('crackedIcon').textContent = tokenEmoji;
+            
             // Update hero beer display
-            document.getElementById('heroBeerIcon').textContent = progressSummary.token.emoji;
+            document.getElementById('heroBeerIcon').textContent = tokenEmoji;
             document.getElementById('bottlesRemainingLarge').textContent = progressSummary.goals?.bottles_remaining || 0;
             document.getElementById('beersCrackedMain').textContent = progressSummary.beers_cracked;
             document.getElementById('beersSpilledMain').textContent = progressSummary.beers_spilled;
