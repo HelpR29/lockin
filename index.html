@@ -21,9 +21,12 @@
         <header class="header">
             <div class="logo">
                 <div class="logo-icon-wrapper">
-                    <svg class="logo-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 2L4 6V11C4 16.55 7.84 21.74 12 23C16.16 21.74 20 16.55 20 11V6L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M12 8V12L14 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <svg class="logo-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="50" cy="55" r="35" stroke="currentColor" stroke-width="8"/>
+                        <rect x="35" y="45" width="30" height="30" rx="3" fill="currentColor"/>
+                        <path d="M38 45V35C38 28.3726 43.3726 23 50 23C56.6274 23 62 28.3726 62 35V45" stroke="currentColor" stroke-width="8" stroke-linecap="round"/>
+                        <circle cx="50" cy="60" r="3" fill="#2C2C2E"/>
+                        <rect x="48.5" y="60" width="3" height="8" fill="#2C2C2E"/>
                     </svg>
                 </div>
                 <span class="logo-text">LockIn</span>
@@ -64,31 +67,64 @@
                 </div>
                 <div class="hero-stats">
                     <div class="stat">
-                        <div class="stat-value">🍺</div>
+                        <div class="stat-icon">
+                            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M16 48H48V28H16V48Z" fill="currentColor"/>
+                                <path d="M20 28V20C20 13.3726 25.3726 8 32 8C38.6274 8 44 13.3726 44 20V28" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+                                <rect x="16" y="28" width="32" height="20" stroke="currentColor" stroke-width="3" rx="2"/>
+                                <path d="M32 38V42" stroke="#2C2C2E" stroke-width="3" stroke-linecap="round"/>
+                                <circle cx="32" cy="36" r="2" fill="#2C2C2E"/>
+                            </svg>
+                        </div>
                         <div class="stat-label">Progress Tokens</div>
                     </div>
                     <div class="stat">
-                        <div class="stat-value">📈</div>
+                        <div class="stat-icon">
+                            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="8" y="12" width="48" height="44" rx="2" stroke="currentColor" stroke-width="3"/>
+                                <path d="M8 20H56" stroke="currentColor" stroke-width="3"/>
+                                <path d="M16 28H48M16 36H48M16 44H36" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                            </svg>
+                        </div>
                         <div class="stat-label">Live Tracking</div>
                     </div>
                     <div class="stat">
-                        <div class="stat-value">🤖</div>
+                        <div class="stat-icon">
+                            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M32 8L16 16V28C16 40 24 50 32 54C40 50 48 40 48 28V16L32 8Z" fill="currentColor" stroke="currentColor" stroke-width="2"/>
+                                <path d="M26 30L30 34L38 26" stroke="#2C2C2E" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
                         <div class="stat-label">AI Enforced</div>
                     </div>
                 </div>
             </div>
             <div class="hero-visual">
                 <div class="holographic-container">
-                    <div class="cyber-shield">
-                        <div class="shield-core"></div>
-                        <div class="shield-ring ring-1"></div>
-                        <div class="shield-ring ring-2"></div>
-                        <div class="shield-ring ring-3"></div>
-                        <div class="data-streams">
-                            <div class="data-stream"></div>
-                            <div class="data-stream"></div>
-                            <div class="data-stream"></div>
-                        </div>
+                    <div class="animated-lock">
+                        <svg class="lock-svg" viewBox="0 0 200 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Lock Body -->
+                            <rect class="lock-body" x="40" y="100" width="120" height="120" rx="10" fill="url(#lockGradient)" stroke="var(--primary-orange)" stroke-width="4"/>
+                            
+                            <!-- Lock Shackle -->
+                            <path class="lock-shackle" d="M70 100V70C70 53.4315 83.4315 40 100 40C116.569 40 130 53.4315 130 70V100" stroke="var(--primary-orange)" stroke-width="8" stroke-linecap="round"/>
+                            
+                            <!-- Keyhole -->
+                            <circle class="keyhole-top" cx="100" cy="145" r="8" fill="var(--primary-mint)"/>
+                            <rect class="keyhole-bottom" x="96" y="145" width="8" height="25" rx="4" fill="var(--primary-mint)"/>
+                            
+                            <!-- Glow circles -->
+                            <circle class="glow-circle glow-1" cx="100" cy="160" r="60" stroke="var(--primary-orange)" stroke-width="2" opacity="0.3"/>
+                            <circle class="glow-circle glow-2" cx="100" cy="160" r="80" stroke="var(--primary-mint)" stroke-width="2" opacity="0.2"/>
+                            <circle class="glow-circle glow-3" cx="100" cy="160" r="100" stroke="var(--primary-blue)" stroke-width="2" opacity="0.1"/>
+                            
+                            <defs>
+                                <linearGradient id="lockGradient" x1="40" y1="100" x2="160" y2="220">
+                                    <stop offset="0%" stop-color="var(--primary-orange)" stop-opacity="0.8"/>
+                                    <stop offset="100%" stop-color="var(--primary-orange)" stop-opacity="0.4"/>
+                                </linearGradient>
+                            </defs>
+                        </svg>
                     </div>
                 </div>
             </div>
