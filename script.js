@@ -45,11 +45,11 @@ function initScrollEffects() {
         // Enhanced header effect with glassmorphism
         if (header) {
             if (scrollY > 50) {
-                header.style.background = 'rgba(15, 6, 40, 0.9)';
+                header.style.background = 'rgba(44, 44, 46, 0.95)';
                 header.style.backdropFilter = 'blur(20px) saturate(180%)';
-                header.style.boxShadow = '0 8px 32px rgba(0, 240, 255, 0.1)';
+                header.style.boxShadow = '0 8px 32px rgba(255, 149, 0, 0.08)';
             } else {
-                header.style.background = 'rgba(15, 6, 40, 0.7)';
+                header.style.background = 'rgba(44, 44, 46, 0.85)';
                 header.style.backdropFilter = 'blur(20px) saturate(180%)';
                 header.style.boxShadow = '0 4px 30px rgba(0, 0, 0, 0.5)';
             }
@@ -236,7 +236,8 @@ function initParticleCanvas() {
             this.speedX = Math.random() * 0.5 - 0.25;
             this.speedY = Math.random() * 0.5 - 0.25;
             this.opacity = Math.random() * 0.5 + 0.2;
-            this.color = Math.random() > 0.5 ? '#00f0ff' : '#a855f7';
+            const colors = ['#FF9500', '#B4E7CE', '#9CD7E8'];
+            this.color = colors[Math.floor(Math.random() * colors.length)];
         }
         
         update() {
@@ -280,8 +281,8 @@ function initParticleCanvas() {
                 const distance = Math.sqrt(dx * dx + dy * dy);
                 
                 if (distance < 120) {
-                    ctx.strokeStyle = '#00f0ff';
-                    ctx.globalAlpha = (1 - distance / 120) * 0.15;
+                    ctx.strokeStyle = '#FF9500';
+                    ctx.globalAlpha = (1 - distance / 120) * 0.12;
                     ctx.lineWidth = 1;
                     ctx.beginPath();
                     ctx.moveTo(particles[i].x, particles[i].y);
