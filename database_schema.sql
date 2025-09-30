@@ -5,6 +5,7 @@
 CREATE TABLE user_profiles (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id UUID REFERENCES auth.users NOT NULL UNIQUE,
+    username TEXT,
     experience TEXT NOT NULL,
     trading_style TEXT NOT NULL,
     markets TEXT NOT NULL,
@@ -106,7 +107,7 @@ CREATE TABLE trades (
     exit_time TIMESTAMP WITH TIME ZONE,
     setup_type TEXT,
     notes TEXT,
-    emotions TEXT,
+    emotions TEXT[],
     mistakes TEXT,
     lessons TEXT,
     images TEXT[],
@@ -228,13 +229,13 @@ CREATE POLICY "Users can update own daily stats"
 
 -- 7. Create indexes for better performance
 CREATE INDEX idx_user_profiles_user_id ON user_profiles(user_id);
+CREATE INDEX idx_user_profiles_username ON user_profiles(username);
 CREATE INDEX idx_user_goals_user_id ON user_goals(user_id);
 CREATE INDEX idx_trading_rules_user_id ON trading_rules(user_id);
 CREATE INDEX idx_trades_user_id ON trades(user_id);
 CREATE INDEX idx_trades_status ON trades(status);
 CREATE INDEX idx_trades_created_at ON trades(created_at DESC);
-CREATE INDEX idx_completions_user_id ON completions(user_id);
-CREATE INDEX idx_completions_date ON completions(completion_date DESC);
+-- removed legacy completions indexes (replaced by beer_completions)
 CREATE INDEX idx_daily_stats_user_id ON daily_stats(user_id);
 CREATE INDEX idx_daily_stats_date ON daily_stats(stat_date DESC);
 
