@@ -233,5 +233,157 @@ CREATE TRIGGER update_trades_updated_at BEFORE UPDATE ON trades
 CREATE TRIGGER update_daily_stats_updated_at BEFORE UPDATE ON daily_stats
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+-- 10. User Progress Table (Growth & Compounding System)
+CREATE TABLE user_progress (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users NOT NULL UNIQUE,
+    completions INTEGER DEFAULT 0,
+    streak INTEGER DEFAULT 0,
+    longest_streak INTEGER DEFAULT 0,
+    discipline_score NUMERIC DEFAULT 0,
+    level INTEGER DEFAULT 1,
+    experience INTEGER DEFAULT 0,
+    next_level_xp INTEGER DEFAULT 100,
+    current_progress_object TEXT DEFAULT 'beer',
+    total_check_ins INTEGER DEFAULT 0,
+    last_check_in_date DATE,
+    streak_multiplier NUMERIC DEFAULT 1.0,
+    level_bonus NUMERIC DEFAULT 1.0,
+    achievement_bonus NUMERIC DEFAULT 1.0,
+    total_growth_multiplier NUMERIC DEFAULT 1.0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE user_progress ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own progress"
+    ON user_progress FOR SELECT
+    USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own progress"
+    ON user_progress FOR INSERT
+    WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own progress"
+    ON user_progress FOR UPDATE
+    USING (auth.uid() = user_id);
+
+-- 11. Achievements Table
+CREATE TABLE achievements (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    name TEXT NOT NULL UNIQUE,
+    description TEXT NOT NULL,
+    category TEXT NOT NULL,
+    icon TEXT NOT NULL,
+    requirement_type TEXT NOT NULL,
+    requirement_value INTEGER NOT NULL,
+    xp_reward INTEGER DEFAULT 0,
+    bonus_multiplier NUMERIC DEFAULT 1.0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Insert default achievements
+INSERT INTO achievements (name, description, category, icon, requirement_type, requirement_value, xp_reward, bonus_multiplier) VALUES
+('First Step', 'Complete your first check-in', 'milestone', '🎯', 'check_ins', 1, 50, 1.05),
+('Week Warrior', 'Maintain a 7-day streak', 'streak', '🔥', 'streak', 7, 100, 1.1),
+('Month Master', 'Maintain a 30-day streak', 'streak', '💪', 'streak', 30, 500, 1.25),
+('Century Club', 'Complete 100 check-ins', 'milestone', '💯', 'check_ins', 100, 1000, 1.5),
+('Beer Beginner', 'Unlock your first beer bottle', 'progress', '🍺', 'completions', 1, 50, 1.05),
+('Wine Warrior', 'Unlock wine glass level', 'progress', '🍷', 'completions', 10, 200, 1.15),
+('Donut Dynasty', 'Reach donut tier', 'progress', '🍩', 'completions', 25, 500, 1.25),
+('Diamond Hands', 'Achieve diamond status', 'progress', '💎', 'completions', 50, 1000, 1.5),
+('Trophy Trader', 'Earn the trophy', 'progress', '🏆', 'completions', 75, 2000, 2.0),
+('Rising Star', 'Become a star trader', 'progress', '⭐', 'completions', 90, 3000, 2.5),
+('Medal of Honor', 'Earn the trading medal', 'progress', '🏅', 'completions', 95, 4000, 3.0),
+('Coin Master', 'Master level achieved', 'progress', '🪙', 'completions', 99, 5000, 4.0),
+('Level 5', 'Reach level 5', 'level', '🚀', 'level', 5, 200, 1.1),
+('Level 10', 'Reach level 10', 'level', '🌟', 'level', 10, 500, 1.2),
+('Level 25', 'Reach level 25', 'level', '👑', 'level', 25, 2000, 1.5),
+('Discipline Master', 'Achieve 95+ discipline score', 'discipline', '🎖️', 'discipline_score', 95, 1500, 1.4);
+
+-- 12. User Achievements Table (junction table)
+CREATE TABLE user_achievements (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users NOT NULL,
+    achievement_id UUID REFERENCES achievements NOT NULL,
+    unlocked_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    UNIQUE(user_id, achievement_id)
+);
+
+ALTER TABLE user_achievements ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own achievements"
+    ON user_achievements FOR SELECT
+    USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own achievements"
+    ON user_achievements FOR INSERT
+    WITH CHECK (auth.uid() = user_id);
+
+-- 13. Daily Check-ins Table
+CREATE TABLE daily_check_ins (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users NOT NULL,
+    check_in_date DATE NOT NULL,
+    discipline_rating INTEGER CHECK (discipline_rating >= 1 AND discipline_rating <= 10),
+    followed_rules BOOLEAN DEFAULT true,
+    traded_today BOOLEAN DEFAULT false,
+    trades_count INTEGER DEFAULT 0,
+    win_rate NUMERIC,
+    profit_loss NUMERIC,
+    notes TEXT,
+    emotions TEXT[],
+    xp_earned INTEGER DEFAULT 10,
+    streak_at_time INTEGER DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    UNIQUE(user_id, check_in_date)
+);
+
+ALTER TABLE daily_check_ins ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own check-ins"
+    ON daily_check_ins FOR SELECT
+    USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own check-ins"
+    ON daily_check_ins FOR INSERT
+    WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own check-ins"
+    ON daily_check_ins FOR UPDATE
+    USING (auth.uid() = user_id);
+
+-- 14. Progress Objects Configuration (Reference table)
+CREATE TABLE progress_objects (
+    id SERIAL PRIMARY KEY,
+    object_type TEXT NOT NULL UNIQUE,
+    display_name TEXT NOT NULL,
+    emoji TEXT NOT NULL,
+    min_completions INTEGER NOT NULL,
+    tier_level INTEGER NOT NULL,
+    multiplier_bonus NUMERIC DEFAULT 1.0
+);
+
+INSERT INTO progress_objects (object_type, display_name, emoji, min_completions, tier_level, multiplier_bonus) VALUES
+('beer', 'Beer', '🍺', 0, 1, 1.0),
+('wine', 'Wine', '🍷', 10, 2, 1.15),
+('donut', 'Donut', '🍩', 25, 3, 1.30),
+('diamond', 'Diamond', '💎', 50, 4, 1.50),
+('trophy', 'Trophy', '🏆', 75, 5, 2.0),
+('star', 'Star', '⭐', 90, 6, 2.5),
+('medal', 'Medal', '🏅', 95, 7, 3.0),
+('coin', 'Coin', '🪙', 99, 8, 4.0);
+
+-- 15. Add indexes for progress system
+CREATE INDEX idx_user_progress_user_id ON user_progress(user_id);
+CREATE INDEX idx_user_achievements_user_id ON user_achievements(user_id);
+CREATE INDEX idx_daily_check_ins_user_id ON daily_check_ins(user_id);
+CREATE INDEX idx_daily_check_ins_date ON daily_check_ins(check_in_date DESC);
+
+-- 16. Add trigger for user_progress
+CREATE TRIGGER update_user_progress_updated_at BEFORE UPDATE ON user_progress
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 -- Success message
-SELECT 'Database schema created successfully!' as message;
+SELECT 'Database schema with Growth & Compounding System created successfully!' as message;
