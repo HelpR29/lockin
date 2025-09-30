@@ -41,10 +41,30 @@
                 <a href="reports.html" style="color: var(--text-primary); text-decoration: none; padding: 0.5rem 1rem; border-radius: 8px; transition: background 0.3s;" onmouseover="this.style.background='rgba(255,149,0,0.1)'" onmouseout="this.style.background='transparent'">📊 Reports</a>
                 <a href="achievements.html" style="color: var(--text-primary); text-decoration: none; padding: 0.5rem 1rem; border-radius: 8px; transition: background 0.3s;" onmouseover="this.style.background='rgba(255,149,0,0.1)'" onmouseout="this.style.background='transparent'">🏆 Achievements</a>
                 <a href="friends.html" style="color: var(--text-primary); text-decoration: none; padding: 0.5rem 1rem; border-radius: 8px; transition: background 0.3s;" onmouseover="this.style.background='rgba(255,149,0,0.1)'" onmouseout="this.style.background='transparent'">👥 Friends</a>
+                
+                <!-- Notification Bell -->
+                <div class="notification-bell" style="position: relative; cursor: pointer; padding: 0.5rem;" onclick="toggleNotifications()">
+                    <span style="font-size: 1.5rem;">🔔</span>
+                    <span id="notificationBadge" class="notification-badge" style="display: none; position: absolute; top: 0; right: 0; background: var(--danger); color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 0.7rem; display: flex; align-items: center; justify-content: center; font-weight: bold;">0</span>
+                </div>
+                
                 <button class="cta-secondary" id="signOutBtn" onclick="handleSignOut();" style="padding: 0.6rem 1.5rem; margin-left: 1rem; cursor: pointer; pointer-events: auto; position: relative; z-index: 9999;">
                     <span>Sign Out</span>
                 </button>
             </nav>
+            
+            <!-- Notification Dropdown -->
+            <div id="notificationDropdown" class="notification-dropdown" style="display: none; position: absolute; top: 70px; right: 20px; width: 400px; max-height: 500px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); z-index: 10000; overflow: hidden;">
+                <div style="padding: 1rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+                    <h3 style="margin: 0; font-size: 1.125rem;">Notifications</h3>
+                    <button onclick="markAllAsRead()" style="background: none; border: none; color: var(--primary); cursor: pointer; font-size: 0.875rem;">Mark all read</button>
+                </div>
+                <div id="notificationList" style="max-height: 400px; overflow-y: auto;">
+                    <div style="padding: 2rem; text-align: center; color: var(--text-secondary);">
+                        No notifications yet
+                    </div>
+                </div>
+            </div>
         </header>
 
         <!-- Dashboard Section -->
@@ -235,6 +255,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="auth.js"></script>
     <script src="progress.js"></script>
+    <script src="notifications.js"></script>
     <script>
         // Simple sign out handler - defined globally
         function handleSignOut() {
@@ -275,6 +296,9 @@
             
             // Load user progress
             await loadUserProgress(user.id);
+            
+            // Initialize notifications
+            await initNotifications();
         }
         
         // Global variables
