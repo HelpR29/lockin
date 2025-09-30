@@ -183,17 +183,19 @@ async function completeOnboarding() {
         
         if (profileError) throw profileError;
         
-        // Save goals
+        // Save goals (Beer System)
         const { error: goalsError } = await supabase
             .from('user_goals')
             .insert({
                 user_id: user.id,
                 starting_capital: onboardingData.goals.starting_capital,
-                target_capital: onboardingData.goals.target_capital,
-                target_return_percent: onboardingData.goals.target_return,
-                target_completions: onboardingData.goals.target_completions,
                 current_capital: onboardingData.goals.starting_capital,
-                completions_count: 0,
+                target_percent_per_beer: onboardingData.goals.target_percent_per_beer,
+                total_bottles: onboardingData.goals.total_bottles,
+                bottles_remaining: onboardingData.goals.total_bottles,
+                bottles_cracked: 0,
+                max_loss_percent: onboardingData.goals.max_loss_percent,
+                beers_spilled: 0,
                 created_at: new Date().toISOString()
             });
         
