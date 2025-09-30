@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trade Journal - LockIn</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Orbitron:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="bg-animation">
+        <div class="grid-overlay"></div>
+        <canvas id="particle-canvas"></canvas>
+    </div>
+    
+    <div class="container">
+        <header class="header">
+            <div class="logo" onclick="window.location.href='index.html'" style="cursor: pointer;">
+                <div class="logo-icon-wrapper">
+                    <svg class="logo-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="50" cy="50" r="40" stroke="currentColor" stroke-width="6"/>
+                        <rect x="32" y="42" width="36" height="36" rx="4" fill="currentColor"/>
+                        <path d="M38 42V30C38 23.3726 43.3726 18 50 18C56.6274 18 62 23.3726 62 30V42" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>
+                        <circle cx="50" cy="58" r="4" fill="#2C2C2E"/>
+                        <rect x="48" y="58" width="4" height="10" rx="2" fill="#2C2C2E"/>
+                    </svg>
+                </div>
+                <span class="logo-text">LockIn</span>
+            </div>
+            <nav class="nav">
+                <button class="cta-secondary" onclick="window.location.href='dashboard.html'" style="padding: 0.7rem 1.8rem;">
+                    <span>Dashboard</span>
+                </button>
+            </nav>
+        </header>
+
+        <section class="dashboard-section">
+            <div class="dashboard-container">
+                <div class="dashboard-header">
+                    <h1 class="dashboard-title">Trade Journal</h1>
+                    <p class="dashboard-subtitle">Log, review, and analyze every trade to find your edge.</p>
+                </div>
+
+                <div class="journal-actions">
+                    <button class="cta-primary" onclick="openLogTradeModal()">+ Log New Trade</button>
+                    <div class="filter-sort-options">
+                        <select id="filterStatus" onchange="loadTrades()"><option value="all">All Statuses</option><option value="open">Open</option><option value="closed">Closed</option></select>
+                        <select id="sortOrder" onchange="loadTrades()"><option value="desc">Newest First</option><option value="asc">Oldest First</option></select>
+                    </div>
+                </div>
+
+                <div class="trade-list-container" id="tradeList">
+                    <!-- Trades will be loaded here -->
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Log/Edit Trade Modal -->
+    <div id="tradeModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeModal('tradeModal')">&times;</span>
+            <h2 id="tradeModalTitle">Log New Trade</h2>
+            <form id="tradeForm">
+                <input type="hidden" id="tradeId">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="symbol">Symbol</label>
+                        <input type="text" id="symbol" placeholder="e.g., AAPL, BTC/USD" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="direction">Direction</label>
+                        <select id="direction" required><option value="long">Long</option><option value="short">Short</option></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="entryPrice">Entry Price</label>
+                        <input type="number" id="entryPrice" step="any" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="exitPrice">Exit Price</label>
+                        <input type="number" id="exitPrice" step="any">
+                    </div>
+                    <div class="form-group">
+                        <label for="positionSize">Position Size</label>
+                        <input type="number" id="positionSize" step="any" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="status">Status</label>
+                        <select id="status"><option value="open">Open</option><option value="closed">Closed</option></select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Emotions</label>
+                    <div class="emotion-tags">
+                        <span class="tag" data-emotion="Confident">Confident</span>
+                        <span class="tag" data-emotion="Anxious">Anxious</span>
+                        <span class="tag" data-emotion="Greedy">Greedy</span>
+                        <span class="tag" data-emotion="Fearful">Fearful</span>
+                        <span class="tag" data-emotion="Neutral">Neutral</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="notes">Notes / Analysis</label>
+                    <textarea id="notes" rows="4"></textarea>
+                </div>
+                <button type="submit" class="cta-primary-large">Save Trade</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="auth.js"></script>
+    <script src="journal.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

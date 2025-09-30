@@ -1859,6 +1859,280 @@ input:checked + .slider:before {
 }
 
 
+/* Achievements Page Styles */
+.achievement-view {
+    display: none;
+}
+
+.achievement-view.active {
+    display: block;
+}
+
+.achievements-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.achievement-card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.achievement-card.locked {
+    opacity: 0.5;
+    filter: grayscale(80%);
+}
+
+.achievement-card.unlocked {
+    border-left: 5px solid var(--primary-mint);
+}
+
+.achievement-icon {
+    font-size: 3rem;
+}
+
+.achievement-info {
+    flex: 1;
+}
+
+.achievement-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.achievement-desc {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.achievement-rarity {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 0.3rem 1rem;
+    font-size: 0.75rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    border-bottom-left-radius: 16px;
+}
+
+.achievement-card.common .achievement-rarity {
+    background: #9E9E9E;
+    color: var(--dark-bg);
+}
+.achievement-card.rare .achievement-rarity {
+    background: #2196F3;
+    color: var(--text-primary);
+}
+.achievement-card.epic .achievement-rarity {
+    background: #9C27B0;
+    color: var(--text-primary);
+}
+.achievement-card.legendary .achievement-rarity {
+    background: linear-gradient(135deg, #FFC107, #FF9800);
+    color: var(--dark-bg);
+}
+
+.unlocked-check {
+    position: absolute;
+    bottom: 1rem;
+    right: 1rem;
+    font-size: 1.5rem;
+    color: var(--primary-mint);
+}
+
+.rewards-section {
+    margin-bottom: 3rem;
+}
+
+.rewards-section h3 {
+    font-family: 'Orbitron', sans-serif;
+    color: var(--primary-orange);
+    margin-bottom: 1.5rem;
+}
+
+.rewards-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.reward-item {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+}
+
+.no-rewards {
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+
+/* Journal Page Styles */
+.journal-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.filter-sort-options {
+    display: flex;
+    gap: 1rem;
+}
+
+.filter-sort-options select {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    color: var(--text-primary);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+}
+
+.trade-list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.trade-item {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 1.5rem;
+}
+
+.trade-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.trade-symbol {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.trade-direction {
+    padding: 0.2rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.trade-direction.long {
+    background: rgba(52, 199, 89, 0.2);
+    color: #34C759;
+}
+
+.trade-direction.short {
+    background: rgba(255, 69, 58, 0.2);
+    color: #FF453A;
+}
+
+.trade-status {
+    margin-left: auto;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.trade-body {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.trade-stat {
+    font-size: 0.95rem;
+}
+
+.trade-stat strong {
+    color: var(--text-secondary);
+    margin-right: 0.5rem;
+}
+
+.profit {
+    color: var(--accent-green);
+}
+
+.loss {
+    color: #FF453A;
+}
+
+.trade-footer {
+    padding-top: 1rem;
+    border-top: 1px solid var(--glass-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.trade-notes {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+.no-trades {
+    text-align: center;
+    padding: 4rem;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.emotion-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.emotion-tags .tag {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.emotion-tags .tag:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.emotion-tags .tag.selected {
+    background: var(--primary-orange);
+    color: var(--dark-bg);
+    border-color: var(--primary-orange);
+}
+
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
     .view-toggle {

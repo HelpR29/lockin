@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports & Analytics - LockIn</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Orbitron:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="bg-animation">
+        <div class="grid-overlay"></div>
+        <canvas id="particle-canvas"></canvas>
+    </div>
+    
+    <div class="container">
+        <header class="header">
+            <div class="logo" onclick="window.location.href='index.html'" style="cursor: pointer;">
+                <div class="logo-icon-wrapper">
+                    <svg class="logo-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="50" cy="50" r="40" stroke="currentColor" stroke-width="6"/>
+                        <rect x="32" y="42" width="36" height="36" rx="4" fill="currentColor"/>
+                        <path d="M38 42V30C38 23.3726 43.3726 18 50 18C56.6274 18 62 23.3726 62 30V42" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>
+                        <circle cx="50" cy="58" r="4" fill="#2C2C2E"/>
+                        <rect x="48" y="58" width="4" height="10" rx="2" fill="#2C2C2E"/>
+                    </svg>
+                </div>
+                <span class="logo-text">LockIn</span>
+            </div>
+            <nav class="nav">
+                <button class="cta-secondary" onclick="window.location.href='dashboard.html'" style="padding: 0.7rem 1.8rem;">
+                    <span>Dashboard</span>
+                </button>
+            </nav>
+        </header>
+
+        <section class="dashboard-section">
+            <div class="dashboard-container">
+                <div class="dashboard-header">
+                    <h1 class="dashboard-title">Reports & Analytics</h1>
+                    <p class="dashboard-subtitle">Analyze your performance and find your edge.</p>
+                </div>
+
+                <div class="reports-grid">
+                    <!-- KPI Summary -->
+                    <div class="kpi-summary-card stat-card">
+                        <div class="kpi-item"><span class="kpi-label">Total P/L</span><span id="kpiTotalPl" class="kpi-value">$0</span></div>
+                        <div class="kpi-item"><span class="kpi-label">Win Rate</span><span id="kpiWinRate" class="kpi-value">0%</span></div>
+                        <div class="kpi-item"><span class="kpi-label">Profit Factor</span><span id="kpiProfitFactor" class="kpi-value">0</span></div>
+                        <div class="kpi-item"><span class="kpi-label">Avg. Win</span><span id="kpiAvgWin" class="kpi-value">$0</span></div>
+                        <div class="kpi-item"><span class="kpi-label">Avg. Loss</span><span id="kpiAvgLoss" class="kpi-value">$0</span></div>
+                    </div>
+
+                    <!-- P/L Over Time Chart -->
+                    <div class="chart-card">
+                        <h3>Cumulative P/L</h3>
+                        <div class="chart-container-reports">
+                            <canvas id="plChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Win/Loss Chart -->
+                    <div class="chart-card">
+                        <h3>Win / Loss Ratio</h3>
+                        <div class="chart-container-reports chart-container-pie">
+                            <canvas id="winLossChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Performance by Day -->
+                    <div class="chart-card">
+                        <h3>P/L by Day of Week</h3>
+                        <div class="chart-container-reports">
+                            <canvas id="dailyPlChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="auth.js"></script>
+    <script src="reports.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
