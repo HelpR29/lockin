@@ -66,6 +66,7 @@ async function saveProfile() {
     }
     
     onboardingData.profile = {
+        username: document.getElementById('username').value.trim(),
         experience: document.getElementById('experience').value,
         trading_style: document.getElementById('tradingStyle').value,
         markets: document.getElementById('markets').value
@@ -173,6 +174,7 @@ async function completeOnboarding() {
             .from('user_profiles')
             .upsert({
                 user_id: user.id,
+                username: onboardingData.profile.username,
                 experience: onboardingData.profile.experience,
                 trading_style: onboardingData.profile.trading_style,
                 markets: onboardingData.profile.markets,
