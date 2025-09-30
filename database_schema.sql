@@ -300,40 +300,74 @@ CREATE POLICY "Users can update own progress"
     ON user_progress FOR UPDATE
     USING (auth.uid() = user_id);
 
--- 11. Achievements Table
+-- 11. Achievements Table (Revamped)
 CREATE TABLE achievements (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     name TEXT NOT NULL UNIQUE,
     description TEXT NOT NULL,
-    category TEXT NOT NULL,
+    category TEXT NOT NULL, -- 'milestone', 'streak', 'beer', 'level', 'discipline'
     icon TEXT NOT NULL,
+    rarity TEXT DEFAULT 'common' NOT NULL, -- 'common', 'rare', 'epic', 'legendary'
     requirement_type TEXT NOT NULL,
     requirement_value INTEGER NOT NULL,
-    xp_reward INTEGER DEFAULT 0,
-    bonus_multiplier NUMERIC DEFAULT 1.0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
 -- Insert default achievements
-INSERT INTO achievements (name, description, category, icon, requirement_type, requirement_value, xp_reward, bonus_multiplier) VALUES
-('First Step', 'Complete your first check-in', 'milestone', '🎯', 'check_ins', 1, 50, 1.05),
-('Week Warrior', 'Maintain a 7-day streak', 'streak', '🔥', 'streak', 7, 100, 1.1),
-('Month Master', 'Maintain a 30-day streak', 'streak', '💪', 'streak', 30, 500, 1.25),
-('Century Club', 'Complete 100 check-ins', 'milestone', '💯', 'check_ins', 100, 1000, 1.5),
-('First Beer', 'Crack your first beer', 'beer', '🍺', 'beers_cracked', 1, 50, 1.05),
-('5 Pack', 'Crack 5 beers', 'beer', '🍻', 'beers_cracked', 5, 100, 1.1),
-('Case Complete', 'Crack 10 beers', 'beer', '📦', 'beers_cracked', 10, 250, 1.15),
-('Quarter Way', 'Crack 25 beers', 'beer', '🎯', 'beers_cracked', 25, 500, 1.25),
-('Halfway Hero', 'Crack 50 beers', 'beer', '🏆', 'beers_cracked', 50, 1000, 1.5),
-('Final Stretch', 'Crack 75 beers', 'beer', '💎', 'beers_cracked', 75, 2000, 2.0),
-('Almost There', 'Crack 90 beers', 'beer', '⭐', 'beers_cracked', 90, 3000, 2.5),
-('Perfect Run', 'Crack all beers', 'beer', '👑', 'beers_cracked', 99, 5000, 4.0),
-('Level 5', 'Reach level 5', 'level', '🚀', 'level', 5, 200, 1.1),
-('Level 10', 'Reach level 10', 'level', '🌟', 'level', 10, 500, 1.2),
-('Level 25', 'Reach level 25', 'level', '👑', 'level', 25, 2000, 1.5),
-('Discipline Master', 'Achieve 95+ discipline score', 'discipline', '🎖️', 'discipline_score', 95, 1500, 1.4);
+INSERT INTO achievements (name, description, category, icon, rarity, requirement_type, requirement_value) VALUES
+('First Step', 'Complete your first check-in', 'milestone', '🎯', 'common', 'check_ins', 1),
+('Week Warrior', 'Maintain a 7-day streak', 'streak', '🔥', 'common', 'streak', 7),
+('Month Master', 'Maintain a 30-day streak', 'streak', 'rare', 'streak', 30),
+('Century Club', 'Complete 100 check-ins', 'milestone', 'rare', 'check_ins', 100),
+('First Beer', 'Crack your first beer', 'beer', 'common', 'beers_cracked', 1),
+('5 Pack', 'Crack 5 beers', 'beer', 'common', 'beers_cracked', 5),
+('Case Complete', 'Crack 10 beers', 'beer', 'common', 'beers_cracked', 10),
+('Quarter Way', 'Crack 25 beers', 'beer', 'rare', 'beers_cracked', 25),
+('Halfway Hero', 'Crack 50 beers', 'beer', 'epic', 'beers_cracked', 50),
+('Final Stretch', 'Crack 75 beers', 'beer', 'epic', 'beers_cracked', 75),
+('Almost There', 'Crack 90 beers', 'beer', 'legendary', 'beers_cracked', 90),
+('Perfect Run', 'Crack all beers', 'beer', 'legendary', 'beers_cracked', 99),
+('Level 5', 'Reach level 5', 'level', 'common', 'level', 5),
+('Level 10', 'Reach level 10', 'level', 'rare', 'level', 10),
+('Level 25', 'Reach level 25', 'level', 'epic', 'level', 25),
+('Discipline Master', 'Achieve 95+ discipline score', 'discipline', 'legendary', 'discipline_score', 95);
 
--- 12. User Achievements Table (junction table)
+-- 12. Rewards Table
+CREATE TABLE rewards (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    type TEXT NOT NULL, -- 'experience', 'title', 'badge', 'cosmetic'
+    value TEXT NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT
+);
+
+INSERT INTO rewards (type, name, value, description) VALUES
+('experience', '50 XP', '50', 'Grants 50 experience points.'),
+('experience', '100 XP', '100', 'Grants 100 experience points.'),
+('experience', '500 XP', '500', 'Grants 500 experience points.'),
+('experience', '1000 XP', '1000', 'Grants 1000 experience points.'),
+('title', 'Novice Trader', 'Novice Trader', 'A title for new traders.'),
+('title', 'Streak Keeper', 'Streak Keeper', 'A title for maintaining streaks.'),
+('badge', '7-Day Streak Badge', 'streak_7_day.png', 'A cosmetic badge for your profile.');
+
+-- 13. Achievement Rewards Junction Table
+CREATE TABLE achievement_rewards (
+    achievement_id UUID REFERENCES achievements NOT NULL,
+    reward_id UUID REFERENCES rewards NOT NULL,
+    PRIMARY KEY (achievement_id, reward_id)
+);
+
+-- Link rewards to achievements
+INSERT INTO achievement_rewards (achievement_id, reward_id)
+SELECT a.id, r.id FROM achievements a, rewards r WHERE a.name = 'First Step' AND r.name = '50 XP';
+
+INSERT INTO achievement_rewards (achievement_id, reward_id)
+SELECT a.id, r.id FROM achievements a, rewards r WHERE a.name = 'Week Warrior' AND r.name = '100 XP';
+
+INSERT INTO achievement_rewards (achievement_id, reward_id)
+SELECT a.id, r.id FROM achievements a, rewards r WHERE a.name = 'Week Warrior' AND r.name = 'Streak Keeper';
+
+-- 14. User Achievements Table (junction table)
 CREATE TABLE user_achievements (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id UUID REFERENCES auth.users NOT NULL,
@@ -352,7 +386,7 @@ CREATE POLICY "Users can insert own achievements"
     ON user_achievements FOR INSERT
     WITH CHECK (auth.uid() = user_id);
 
--- 13. Daily Check-ins Table
+-- 15. Daily Check-ins Table
 CREATE TABLE daily_check_ins (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id UUID REFERENCES auth.users NOT NULL,
@@ -385,7 +419,7 @@ CREATE POLICY "Users can update own check-ins"
     ON daily_check_ins FOR UPDATE
     USING (auth.uid() = user_id);
 
--- 14. Progress Token Options (Reference table)
+-- 16. Progress Token Options (Reference table)
 CREATE TABLE progress_tokens (
     id SERIAL PRIMARY KEY,
     token_type TEXT NOT NULL UNIQUE,
@@ -400,7 +434,7 @@ INSERT INTO progress_tokens (token_type, display_name, emoji, display_order) VAL
 ('donut', 'Donut', '🍩', 3),
 ('diamond', 'Diamond', '💎', 4);
 
--- 15. Add indexes for progress system
+-- 17. Add indexes for progress system
 CREATE INDEX idx_user_progress_user_id ON user_progress(user_id);
 CREATE INDEX idx_user_achievements_user_id ON user_achievements(user_id);
 CREATE INDEX idx_daily_check_ins_user_id ON daily_check_ins(user_id);
@@ -410,9 +444,76 @@ CREATE INDEX idx_beer_completions_date ON beer_completions(completion_date DESC)
 CREATE INDEX idx_beer_spills_user_id ON beer_spills(user_id);
 CREATE INDEX idx_beer_spills_date ON beer_spills(spill_date DESC);
 
--- 16. Add trigger for user_progress
+-- 18. Add trigger for user_progress
 CREATE TRIGGER update_user_progress_updated_at BEFORE UPDATE ON user_progress
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+-- 19. Rule Categories
+CREATE TABLE rule_categories (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    name TEXT NOT NULL UNIQUE,
+    description TEXT,
+    display_order INTEGER
+);
+
+INSERT INTO rule_categories (name, description, display_order) VALUES
+('Risk Management', 'Rules for managing capital and risk.', 1),
+('Entry Criteria', 'Rules defining when to enter a trade.', 2),
+('Position Sizing', 'Rules for determining trade size.', 3),
+('Trade Management', 'Rules for managing an open position.', 4),
+('Psychology', 'Rules for maintaining mental discipline.', 5);
+
+-- 20. Rule Templates
+CREATE TABLE rule_templates (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    category_id UUID REFERENCES rule_categories NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT,
+    default_value TEXT,
+    value_type TEXT, -- e.g., 'percentage', 'number', 'boolean'
+    is_core_rule BOOLEAN DEFAULT false
+);
+
+INSERT INTO rule_templates (category_id, name, description, default_value, value_type)
+SELECT id, 'Max Risk per Trade', 'Maximum percentage of account to risk on a single trade.', '2.0', 'percentage' FROM rule_categories WHERE name = 'Risk Management';
+
+INSERT INTO rule_templates (category_id, name, description, default_value, value_type)
+SELECT id, 'Max Daily Loss', 'Maximum percentage of account to lose in a single day.', '5.0', 'percentage' FROM rule_categories WHERE name = 'Risk Management';
+
+INSERT INTO rule_templates (category_id, name, description, default_value, value_type)
+SELECT id, 'Max Trades per Day', 'Maximum number of trades to execute in a single day.', '3', 'number' FROM rule_categories WHERE name = 'Trade Management';
+
+INSERT INTO rule_templates (category_id, name, description, default_value, value_type)
+SELECT id, 'No FOMO Entries', 'Do not enter a trade based on fear of missing out.', 'true', 'boolean' FROM rule_categories WHERE name = 'Psychology';
+
+-- 21. User Defined Rules
+CREATE TABLE user_defined_rules (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users NOT NULL,
+    category_id UUID REFERENCES rule_categories NOT NULL,
+    template_id UUID REFERENCES rule_templates,
+    rule_text TEXT NOT NULL,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE user_defined_rules ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can manage their own rules" ON user_defined_rules FOR ALL USING (auth.uid() = user_id);
+
+-- 22. Trade Rule Violations
+CREATE TABLE trade_rule_violations (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    trade_id UUID REFERENCES trades NOT NULL,
+    rule_id UUID REFERENCES user_defined_rules NOT NULL,
+    violation_time TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE trade_rule_violations ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can view their own violations" ON trade_rule_violations FOR SELECT USING (auth.uid() = (SELECT user_id FROM trades WHERE id = trade_id));
+
+-- Add indexes
+CREATE INDEX idx_user_defined_rules_user_id ON user_defined_rules(user_id);
+CREATE INDEX idx_trade_rule_violations_trade_id ON trade_rule_violations(trade_id);
+
 -- Success message
-SELECT 'Database schema with Growth & Compounding System created successfully!' as message;
+SELECT 'Database schema with Trading Discipline Core created successfully!' as message;
