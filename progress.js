@@ -485,14 +485,19 @@ async function getUserProgressSummary(userId) {
             .eq('user_id', userId)
             .single();
         
+        const { data: goals } = await supabase
+            .from('user_goals')
+            .select('*')
+            .eq('user_id', userId)
+            .eq('is_active', true)
+            .single();
+        
         const { data: achievements } = await supabase
             .from('user_achievements')
             .select('*, achievements(*)')
             .eq('user_id', userId);
         
-        const currentObject = getCurrentProgressObject(progress.completions);
-        const nextObject = getNextProgressObject(progress.completions);
-        const progressToNext = calculateProgressToNextObject(progress.completions);
+        const token = PROGRESS_TOKENS[progress.progress_token] || PROGRESS_TOKENS.beer;
         
         const totalGrowth = calculateTotalGrowth(
             1.0,
@@ -501,13 +506,24 @@ async function getUserProgressSummary(userId) {
             achievements.map(a => a.achievements)
         );
         
+        // Calculate progress percentage
+        const progressPercent = goals ? (progress.beers_cracked / goals.total_bottles) * 100 : 0;
+        
+        // Calculate projected final balance
+        const projectedBalance = goals ? calculateProjectedBalance(
+            goals.starting_capital,
+            goals.target_percent_per_beer,
+            goals.total_bottles
+        ) : 0;
+        
         return {
             ...progress,
-            currentObject,
-            nextObject,
-            progressToNext,
+            goals,
+            token,
+            progressPercent,
+            projectedBalance,
             totalGrowthMultiplier: totalGrowth,
-            achievements: achievements.map(a => a.achievements)
+            achievements: achievements ? achievements.map(a => a.achievements) : []
         };
         
     } catch (error) {

@@ -113,28 +113,31 @@
                         
                         <form class="onboarding-form" id="goalsForm">
                             <div class="form-group">
-                                <label>Starting Account Size</label>
-                                <input type="number" id="startingCapital" placeholder="e.g., 5000" required min="0" step="100">
+                                <label>Starting Account Balance</label>
+                                <input type="number" id="startingCapital" placeholder="e.g., 5000" required min="100" step="100">
                             </div>
                             
                             <div class="form-group">
-                                <label>Target Account Size</label>
-                                <input type="number" id="targetCapital" placeholder="e.g., 50000" required min="0" step="100">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label>Target Return Per Completion (%)</label>
-                                <input type="number" id="targetReturn" placeholder="e.g., 8" required min="0.1" max="100" step="0.1">
+                                <label>Total Bottles on the Wall</label>
+                                <input type="number" id="totalBottles" placeholder="e.g., 50" required min="1" max="99" step="1" value="50">
                                 <small style="color: var(--text-secondary); margin-top: 0.5rem; display: block;">
-                                    This is your target gain percentage for each "bottle" completion
+                                    How many bottles to crack? Default: 50
                                 </small>
                             </div>
                             
                             <div class="form-group">
-                                <label>Target Completions</label>
-                                <input type="number" id="targetCompletions" placeholder="e.g., 50" required min="1" max="99" step="1">
+                                <label>Target % Per Beer (Completion)</label>
+                                <input type="number" id="targetPercentPerBeer" placeholder="e.g., 8" required min="0.1" max="50" step="0.1" value="8">
                                 <small style="color: var(--text-secondary); margin-top: 0.5rem; display: block;">
-                                    How many bottles do you want to crack? (1-99)
+                                    Each beer = hitting this % gain. Default: 8%
+                                </small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Max Loss % (Beer Spill Threshold)</label>
+                                <input type="number" id="maxLossPercent" placeholder="e.g., 2" required min="0.1" max="10" step="0.1" value="2">
+                                <small style="color: var(--text-secondary); margin-top: 0.5rem; display: block;">
+                                    If you lose more than this %, you "spill a beer". Default: -2%
                                 </small>
                             </div>
                         </form>
