@@ -1764,6 +1764,21 @@ body {
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
 }
 
+.step-content-center {
+    text-align: center;
+}
+
+.step-content-center .onboarding-form {
+    text-align: left;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.step-content-center .token-grid {
+    margin: 0 auto;
+    max-width: 600px;
+}
+
 .step-icon {
     font-size: 4rem;
     text-align: center;
