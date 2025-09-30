@@ -177,28 +177,53 @@
                     </div>
                     
                     <div class="chart-section">
-                        <h3 style="margin: 0 0 1rem 0;">📊 P&L Performance</h3>
+                        <h3 style="margin: 0 0 1rem 0;">🤖 AI Trading Analysis</h3>
                         
-                        <!-- P&L Stats Summary -->
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
-                            <div style="background: rgba(76, 175, 80, 0.1); padding: 1rem; border-radius: 12px; border-left: 3px solid #4CAF50;">
-                                <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.25rem;">Total Wins</div>
-                                <div style="font-size: 1.5rem; font-weight: 700; color: #4CAF50;" id="totalWins">$0</div>
+                        <button class="cta-primary" onclick="generateAIAnalysis()" style="width: 100%; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem;" id="analyzeBtn">
+                            <span>🧠</span>
+                            <span id="analyzeBtnText">Analyze My Trades</span>
+                        </button>
+                        
+                        <!-- Quick Stats -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1.5rem;">
+                            <div style="background: rgba(76, 175, 80, 0.1); padding: 0.75rem; border-radius: 8px; text-align: center;">
+                                <div style="font-size: 0.75rem; color: var(--text-secondary);">Win Rate</div>
+                                <div style="font-size: 1.25rem; font-weight: 700; color: #4CAF50;" id="winRate">--%</div>
                             </div>
-                            <div style="background: rgba(244, 67, 54, 0.1); padding: 1rem; border-radius: 12px; border-left: 3px solid #F44336;">
-                                <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.25rem;">Total Losses</div>
-                                <div style="font-size: 1.5rem; font-weight: 700; color: #F44336;" id="totalLosses">$0</div>
+                            <div style="background: rgba(255, 149, 0, 0.1); padding: 0.75rem; border-radius: 8px; text-align: center;">
+                                <div style="font-size: 0.75rem; color: var(--text-secondary);">Avg P&L</div>
+                                <div style="font-size: 1.25rem; font-weight: 700; color: var(--primary);" id="avgPnl">$0</div>
                             </div>
                         </div>
                         
-                        <div style="background: rgba(255, 149, 0, 0.1); padding: 1rem; border-radius: 12px; border-left: 3px solid var(--primary); margin-bottom: 1.5rem;">
-                            <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.25rem;">Net P&L</div>
-                            <div style="font-size: 2rem; font-weight: 700; color: var(--primary);" id="netPnl">$0</div>
+                        <!-- AI Insights Container -->
+                        <div id="aiInsights" style="display: none;">
+                            <div style="background: linear-gradient(135deg, rgba(255, 149, 0, 0.1), rgba(255, 149, 0, 0.05)); border: 1px solid var(--primary); border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem;">
+                                <h4 style="margin: 0 0 1rem 0; color: var(--primary); display: flex; align-items: center; gap: 0.5rem;">
+                                    <span>✨</span> Key Insights
+                                </h4>
+                                <div id="aiInsightsContent" style="line-height: 1.8; color: var(--text-primary);"></div>
+                            </div>
+                            
+                            <div style="background: rgba(33, 150, 243, 0.1); border: 1px solid #2196F3; border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem;">
+                                <h4 style="margin: 0 0 1rem 0; color: #2196F3; display: flex; align-items: center; gap: 0.5rem;">
+                                    <span>📈</span> Patterns
+                                </h4>
+                                <div id="aiPatterns" style="line-height: 1.8; color: var(--text-primary);"></div>
+                            </div>
+                            
+                            <div style="background: rgba(76, 175, 80, 0.1); border: 1px solid #4CAF50; border-radius: 12px; padding: 1.5rem;">
+                                <h4 style="margin: 0 0 1rem 0; color: #4CAF50; display: flex; align-items: center; gap: 0.5rem;">
+                                    <span>💡</span> Recommendations
+                                </h4>
+                                <div id="aiRecommendations" style="line-height: 1.8; color: var(--text-primary);"></div>
+                            </div>
                         </div>
                         
-                        <!-- P&L Chart -->
-                        <div style="width: 100%; height: 300px; position: relative;">
-                            <canvas id="pnlChart"></canvas>
+                        <!-- Empty State -->
+                        <div id="aiEmptyState" style="text-align: center; padding: 3rem 1rem; color: var(--text-secondary);">
+                            <div style="font-size: 3rem; margin-bottom: 1rem;">🤖</div>
+                            <p>Click "Analyze My Trades" to get AI-powered insights on your trading performance, patterns, and personalized recommendations.</p>
                         </div>
                     </div>
                 </div>

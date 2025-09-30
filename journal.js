@@ -105,14 +105,19 @@ async function saveTrade(e) {
     const tradeId = document.getElementById('tradeId').value;
     const emotions = Array.from(document.querySelectorAll('.emotion-tags .tag.selected')).map(tag => tag.dataset.emotion);
 
+    const tradeType = document.getElementById('tradeType').value;
+    
     const tradeData = {
         user_id: user.id,
         symbol: document.getElementById('symbol').value,
+        trade_type: tradeType,
         direction: document.getElementById('direction').value,
         entry_price: parseFloat(document.getElementById('entryPrice').value),
         exit_price: parseFloat(document.getElementById('exitPrice').value) || null,
         stop_loss: parseFloat(document.getElementById('stopLoss').value) || null,
         target_price: parseFloat(document.getElementById('targetPrice').value) || null,
+        strike_price: (tradeType === 'call' || tradeType === 'put') ? parseFloat(document.getElementById('strikePrice').value) || null : null,
+        expiry_date: (tradeType === 'call' || tradeType === 'put') ? document.getElementById('expiryDate').value || null : null,
         position_size: parseFloat(document.getElementById('positionSize').value),
         status: document.getElementById('status').value,
         notes: document.getElementById('notes').value,
