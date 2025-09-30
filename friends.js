@@ -11,10 +11,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function loadFriendData() {
     const { data: { user } } = await supabase.auth.getUser();
 
-    // Fetch friends and requests
-    const { data, error } = await supabase
+    // 1) Fetch all friendships involving the user
+    const { data: friendships, error } = await supabase
         .from('friends')
-        .select('user_id_1, user_id_2, status, profiles1:user_profiles!user_id_1(username), profiles2:user_profiles!user_id_2(username))')
+        .select('user_id_1, user_id_2, status')
         .or(`user_id_1.eq.${user.id},user_id_2.eq.${user.id}`);
 
     if (error) {
@@ -27,20 +27,36 @@ async function loadFriendData() {
     friendsList.innerHTML = '';
     requestsList.innerHTML = '';
 
-    data.forEach(friendship => {
-        if (friendship.status === 'accepted') {
-            const friendId = friendship.user_id_1 === user.id ? friendship.user_id_2 : friendship.user_id_1;
-            const friendProfile = friendship.user_id_1 === user.id ? friendship.profiles2 : friendship.profiles1;
+    if (!friendships || friendships.length === 0) return;
+
+    // 2) Collect other user IDs and fetch their usernames
+    const otherIds = new Set();
+    friendships.forEach(f => {
+        const other = f.user_id_1 === user.id ? f.user_id_2 : f.user_id_1;
+        otherIds.add(other);
+    });
+
+    const { data: profiles } = await supabase
+        .from('user_profiles')
+        .select('user_id, username')
+        .in('user_id', Array.from(otherIds));
+
+    const nameMap = new Map();
+    (profiles || []).forEach(p => nameMap.set(p.user_id, p.username || 'User'));
+
+    // 3) Render lists
+    friendships.forEach(f => {
+        if (f.status === 'accepted') {
+            const friendId = f.user_id_1 === user.id ? f.user_id_2 : f.user_id_1;
             const friendEl = document.createElement('div');
             friendEl.className = 'user-item';
-            friendEl.innerHTML = `<span>${friendProfile?.username || 'User'}</span> <button onclick="removeFriend('${friendId}')">Remove</button>`;
+            friendEl.innerHTML = `<span>${nameMap.get(friendId) || 'User'}</span> <button onclick="removeFriend('${friendId}')">Remove</button>`;
             friendsList.appendChild(friendEl);
-        } else if (friendship.status === 'requested' && friendship.user_id_2 === user.id) {
-            const requesterId = friendship.user_id_1;
-            const requesterProfile = friendship.profiles1;
+        } else if (f.status === 'requested' && f.user_id_2 === user.id) {
+            const requesterId = f.user_id_1;
             const requestEl = document.createElement('div');
             requestEl.className = 'user-item';
-            requestEl.innerHTML = `<span>${requesterProfile?.username || 'User'}</span> <div><button onclick="acceptRequest('${requesterId}')">Accept</button><button onclick="declineRequest('${requesterId}')">Decline</button></div>`;
+            requestEl.innerHTML = `<span>${nameMap.get(requesterId) || 'User'}</span> <div><button onclick="acceptRequest('${requesterId}')">Accept</button><button onclick="declineRequest('${requesterId}')">Decline</button></div>`;
             requestsList.appendChild(requestEl);
         }
     });
@@ -53,7 +69,7 @@ async function searchUsers() {
     const { data, error } = await supabase
         .from('user_profiles')
         .select('user_id, username')
-        .or(`username.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`)
+        .ilike('username', `%${searchTerm}%`)
         .limit(10);
 
     if (error) {
