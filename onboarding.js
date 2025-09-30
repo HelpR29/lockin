@@ -77,12 +77,12 @@ async function saveProfile() {
 // Step 3: Save Goals & Calculate Projection
 function calculateProjection() {
     const starting = parseFloat(document.getElementById('startingCapital').value) || 0;
-    const returnPercent = parseFloat(document.getElementById('targetReturn').value) || 0;
-    const completions = parseInt(document.getElementById('targetCompletions').value) || 0;
+    const percentPerBeer = parseFloat(document.getElementById('targetPercentPerBeer').value) || 0;
+    const totalBottles = parseInt(document.getElementById('totalBottles').value) || 0;
     
-    if (starting > 0 && returnPercent > 0 && completions > 0) {
-        const multiplier = 1 + (returnPercent / 100);
-        const finalValue = starting * Math.pow(multiplier, completions);
+    if (starting > 0 && percentPerBeer > 0 && totalBottles > 0) {
+        const multiplier = 1 + (percentPerBeer / 100);
+        const finalValue = starting * Math.pow(multiplier, totalBottles);
         
         document.getElementById('goalPreview').style.display = 'block';
         document.getElementById('projectedValue').textContent = `$${finalValue.toLocaleString('en-US', { maximumFractionDigits: 2 })}`;
@@ -91,7 +91,7 @@ function calculateProjection() {
 
 // Add event listeners for goal inputs
 document.addEventListener('DOMContentLoaded', () => {
-    ['startingCapital', 'targetReturn', 'targetCompletions'].forEach(id => {
+    ['startingCapital', 'targetPercentPerBeer', 'totalBottles'].forEach(id => {
         const element = document.getElementById(id);
         if (element) {
             element.addEventListener('input', calculateProjection);
@@ -108,9 +108,9 @@ async function saveGoals() {
     
     onboardingData.goals = {
         starting_capital: parseFloat(document.getElementById('startingCapital').value),
-        target_capital: parseFloat(document.getElementById('targetCapital').value),
-        target_return: parseFloat(document.getElementById('targetReturn').value),
-        target_completions: parseInt(document.getElementById('targetCompletions').value)
+        total_bottles: parseInt(document.getElementById('totalBottles').value),
+        target_percent_per_beer: parseFloat(document.getElementById('targetPercentPerBeer').value),
+        max_loss_percent: parseFloat(document.getElementById('maxLossPercent').value)
     };
     
     nextStep();
