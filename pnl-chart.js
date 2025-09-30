@@ -262,5 +262,53 @@ async function updateProgressTracker(cumulativePnL) {
     }
 }
 
-// Export function
+// Penalize XP for rule violations
+async function penalizeForRuleViolation(ruleName) {
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        
+        // Get current progress
+        const { data: progress } = await supabase
+            .from('user_progress')
+            .select('total_check_ins, beers_spilled')
+            .eq('user_id', user.id)
+            .single();
+        
+        if (!progress) return;
+        
+        // Deduct 30 XP for rule violation
+        const xpPenalty = 30;
+        const newXP = Math.max(0, (progress.total_check_ins || 0) - xpPenalty);
+        const newSpilled = (progress.beers_spilled || 0) + 1;
+        
+        // Update progress
+        await supabase
+            .from('user_progress')
+            .update({
+                total_check_ins: newXP,
+                beers_spilled: newSpilled
+            })
+            .eq('user_id', user.id);
+        
+        // Send notification
+        if (typeof createNotification === 'function') {
+            await createNotification(
+                'rule_violation',
+                'Rule Violation! ⚠️',
+                `You broke "${ruleName}". -${xpPenalty} XP penalty. Glasses spilled: ${newSpilled}`,
+                '⚠️',
+                '/rules.html'
+            );
+        }
+        
+        console.log(`Rule violation penalty: -${xpPenalty} XP, Glasses spilled: ${newSpilled}`);
+        
+    } catch (error) {
+        console.error('Error penalizing rule violation:', error);
+    }
+}
+
+// Export functions
 window.updatePnLChart = updatePnLChart;
+window.penalizeForRuleViolation = penalizeForRuleViolation;
