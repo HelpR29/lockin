@@ -7,14 +7,25 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Orbitron:wght@400;500;600;700;900&display=swap" rel="stylesheet">
 </head>
 <body>
+    <!-- Animated Background -->
+    <div class="bg-animation">
+        <div class="grid-overlay"></div>
+        <canvas id="particle-canvas"></canvas>
+    </div>
+    
     <div class="container">
         <!-- Header Section -->
         <header class="header">
             <div class="logo">
-                <span class="logo-icon">🔐</span>
+                <div class="logo-icon-wrapper">
+                    <svg class="logo-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2L4 6V11C4 16.55 7.84 21.74 12 23C16.16 21.74 20 16.55 20 11V6L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M12 8V12L14 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
                 <span class="logo-text">LockIn</span>
             </div>
             <nav class="nav">
@@ -29,31 +40,55 @@
         <!-- Hero Section -->
         <section class="hero">
             <div class="hero-content">
+                <div class="badge">🚀 Next-Gen Security Platform</div>
                 <h1 class="hero-title">
-                    Secure Your Digital
-                    <span class="highlight">Life</span>
+                    <span class="title-line">Secure Your</span>
+                    <span class="title-line highlight">Digital Future</span>
                 </h1>
                 <p class="hero-subtitle">
-                    Advanced security for the modern world. Protect what matters most with military-grade encryption and intelligent threat detection.
+                    Advanced quantum-resistant encryption meets AI-powered threat detection. Experience enterprise-grade security with zero compromise.
                 </p>
                 <div class="hero-cta">
-                    <button class="cta-primary">Get Started</button>
-                    <button class="cta-secondary">Learn More</button>
+                    <button class="cta-primary">
+                        <span>Start Free Trial</span>
+                        <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                    <button class="cta-secondary">
+                        <svg class="play-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M8 5V19L19 12L8 5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span>Watch Demo</span>
+                    </button>
+                </div>
+                <div class="hero-stats">
+                    <div class="stat">
+                        <div class="stat-value">99.9%</div>
+                        <div class="stat-label">Uptime</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">500K+</div>
+                        <div class="stat-label">Users</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">24/7</div>
+                        <div class="stat-label">Support</div>
+                    </div>
                 </div>
             </div>
             <div class="hero-visual">
-                <div class="animated-lock-container">
-                    <div class="lock-body">
-                        <div class="lock-shackle"></div>
-                        <div class="lock-base">
-                            <div class="keyhole"></div>
+                <div class="holographic-container">
+                    <div class="cyber-shield">
+                        <div class="shield-core"></div>
+                        <div class="shield-ring ring-1"></div>
+                        <div class="shield-ring ring-2"></div>
+                        <div class="shield-ring ring-3"></div>
+                        <div class="data-streams">
+                            <div class="data-stream"></div>
+                            <div class="data-stream"></div>
+                            <div class="data-stream"></div>
                         </div>
-                    </div>
-                    <div class="particles">
-                        <div class="particle"></div>
-                        <div class="particle"></div>
-                        <div class="particle"></div>
-                        <div class="particle"></div>
                     </div>
                 </div>
             </div>
@@ -62,49 +97,95 @@
         <!-- Features Section -->
         <section class="features">
             <div class="section-header">
-                <h2 class="section-title">Why Choose LockIn?</h2>
-                <p class="section-subtitle">Comprehensive security solutions for individuals and businesses</p>
+                <h2 class="section-title">Next-Generation Security</h2>
+                <p class="section-subtitle">Comprehensive protection powered by AI and quantum-resistant cryptography</p>
             </div>
             <div class="features-grid">
                 <div class="feature-card">
-                    <div class="feature-icon">🛡️</div>
-                    <h3 class="feature-title">Military-Grade Security</h3>
-                    <p class="feature-description">Advanced encryption algorithms protect your data with bank-level security</p>
+                    <div class="feature-glow"></div>
+                    <div class="feature-icon-wrapper">
+                        <svg class="feature-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" stroke-width="2"/>
+                            <path d="M12 6V12L16 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">Real-Time Protection</h3>
+                    <p class="feature-description">AI-powered threat detection identifies and neutralizes attacks in milliseconds</p>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon">🚀</div>
-                    <h3 class="feature-title">Lightning Fast</h3>
-                    <p class="feature-description">Optimized performance ensures your security doesn't slow you down</p>
+                    <div class="feature-glow"></div>
+                    <div class="feature-icon-wrapper">
+                        <svg class="feature-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M21 16V8C20.9996 7.64927 20.9071 7.30481 20.7315 7.00116C20.556 6.69751 20.3037 6.44536 20 6.27L13 2.27C12.696 2.09446 12.3511 2.00205 12 2.00205C11.6489 2.00205 11.304 2.09446 11 2.27L4 6.27C3.69626 6.44536 3.44398 6.69751 3.26846 7.00116C3.09294 7.30481 3.00036 7.64927 3 8V16C3.00036 16.3507 3.09294 16.6952 3.26846 16.9988C3.44398 17.3025 3.69626 17.5546 4 17.73L11 21.73C11.304 21.9055 11.6489 21.9979 12 21.9979C12.3511 21.9979 12.696 21.9055 13 21.73L20 17.73C20.3037 17.5546 20.556 17.3025 20.7315 16.9988C20.9071 16.6952 20.9996 16.3507 21 16Z" stroke="currentColor" stroke-width="2"/>
+                            <path d="M3.27002 6.96L12 12.01L20.73 6.96" stroke="currentColor" stroke-width="2"/>
+                            <path d="M12 22.08V12" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">Quantum-Resistant</h3>
+                    <p class="feature-description">Future-proof encryption algorithms protect against quantum computing threats</p>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon">📱</div>
-                    <h3 class="feature-title">Mobile First</h3>
-                    <p class="feature-description">Designed for mobile devices with touch-optimized interfaces</p>
+                    <div class="feature-glow"></div>
+                    <div class="feature-icon-wrapper">
+                        <svg class="feature-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">Multi-Layer Defense</h3>
+                    <p class="feature-description">Comprehensive security stack with defense-in-depth architecture</p>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon">🔒</div>
-                    <h3 class="feature-title">Zero Trust</h3>
-                    <p class="feature-description">Every access request is verified, no exceptions, no compromises</p>
+                    <div class="feature-glow"></div>
+                    <div class="feature-icon-wrapper">
+                        <svg class="feature-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M18 8C18 6.4087 17.3679 4.88258 16.2426 3.75736C15.1174 2.63214 13.5913 2 12 2C10.4087 2 8.88258 2.63214 7.75736 3.75736C6.63214 4.88258 6 6.4087 6 8C6 15 3 17 3 17H21C21 17 18 15 18 8Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M13.73 21C13.5542 21.3031 13.3019 21.5547 12.9982 21.7295C12.6946 21.9044 12.3504 21.9965 12 21.9965C11.6496 21.9965 11.3054 21.9044 11.0018 21.7295C10.6982 21.5547 10.4458 21.3031 10.27 21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">Smart Alerts</h3>
+                    <p class="feature-description">Intelligent notifications keep you informed without overwhelming you</p>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon">☁️</div>
-                    <h3 class="feature-title">Cloud Native</h3>
-                    <p class="feature-description">Scalable cloud infrastructure with global availability and redundancy</p>
+                    <div class="feature-glow"></div>
+                    <div class="feature-icon-wrapper">
+                        <svg class="feature-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2"/>
+                            <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">Zero Trust Security</h3>
+                    <p class="feature-description">Verify every user, device, and connection with continuous authentication</p>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon">🔐</div>
-                    <h3 class="feature-title">Passwordless</h3>
-                    <p class="feature-description">Advanced biometric authentication eliminates password vulnerabilities</p>
+                    <div class="feature-glow"></div>
+                    <div class="feature-icon-wrapper">
+                        <svg class="feature-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M13 10V3L4 14H11V21L20 10H13Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">Instant Deployment</h3>
+                    <p class="feature-description">Go live in minutes with zero-configuration cloud infrastructure</p>
                 </div>
             </div>
         </section>
 
         <!-- CTA Section -->
         <section class="cta-section">
+            <div class="cta-glow"></div>
             <div class="cta-content">
-                <h2 class="cta-title">Ready to Get Started?</h2>
-                <p class="cta-description">Join thousands of users who trust LockIn with their digital security</p>
-                <button class="cta-primary-large">Start Free Trial</button>
+                <h2 class="cta-title">Join the Security Revolution</h2>
+                <p class="cta-description">Over 500,000 users trust LockIn to protect their digital assets</p>
+                <button class="cta-primary-large">
+                    <span>Start Free Trial</span>
+                    <div class="button-glow"></div>
+                </button>
+                <div class="trust-badges">
+                    <div class="trust-badge">✓ No credit card required</div>
+                    <div class="trust-badge">✓ 30-day money-back guarantee</div>
+                    <div class="trust-badge">✓ Enterprise support included</div>
+                </div>
             </div>
         </section>
 
@@ -112,7 +193,12 @@
         <footer class="footer">
             <div class="footer-content">
                 <div class="footer-logo">
-                    <span class="logo-icon">🔐</span>
+                    <div class="logo-icon-wrapper">
+                        <svg class="logo-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2L4 6V11C4 16.55 7.84 21.74 12 23C16.16 21.74 20 16.55 20 11V6L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M12 8V12L14 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
                     <span class="logo-text">LockIn</span>
                 </div>
                 <div class="footer-links">
@@ -120,15 +206,30 @@
                     <a href="#" class="footer-link">Terms of Service</a>
                     <a href="#" class="footer-link">Support</a>
                     <a href="#" class="footer-link">Contact</a>
+                    <a href="#" class="footer-link">Documentation</a>
                 </div>
                 <div class="footer-social">
-                    <a href="#" class="social-link" aria-label="Twitter">🐦</a>
-                    <a href="#" class="social-link" aria-label="LinkedIn">💼</a>
-                    <a href="#" class="social-link" aria-label="GitHub">📁</a>
+                    <a href="#" class="social-link" aria-label="Twitter">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M23 3A10.9 10.9 0 0 1 19.5 4a4.48 4.48 0 0 0 2-2.5 9 9 0 0 1-2.83 1.08 4.48 4.48 0 0 0-7.64 4.08A12.94 12.94 0 0 1 1.64 2.16a4.48 4.48 0 0 0 1.38 5.98 4.48 4.48 0 0 1-2-.56v.06a4.48 4.48 0 0 0 3.6 4.39 4.48 4.48 0 0 1-2 .08 4.48 4.48 0 0 0 4.18 3.11A9 9 0 0 1 .96 16.5a12.77 12.77 0 0 0 7 2c8.4 0 13-6.97 13-13v-.59A9.29 9.29 0 0 0 23 3z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </a>
+                    <a href="#" class="social-link" aria-label="GitHub">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9 19C4 20.5 4 16.5 2 16M16 22V18.13C16.0375 17.6532 15.9731 17.1738 15.811 16.7238C15.6489 16.2738 15.3929 15.8634 15.06 15.52C18.2 15.17 21.5 13.98 21.5 8.52C21.4997 7.12383 20.9627 5.7812 20 4.77C20.4559 3.54851 20.4236 2.19835 19.91 1C19.91 1 18.73 0.650001 16 2.48C13.708 1.85882 11.292 1.85882 9 2.48C6.27 0.650001 5.09 1 5.09 1C4.57638 2.19835 4.54414 3.54851 5 4.77C4.03013 5.7887 3.49252 7.14346 3.5 8.55C3.5 13.97 6.8 15.16 9.94 15.55C9.611 15.89 9.35726 16.2954 9.19531 16.7399C9.03335 17.1844 8.96681 17.6581 9 18.13V22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </a>
+                    <a href="#" class="social-link" aria-label="LinkedIn">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M16 8C17.5913 8 19.1174 8.63214 20.2426 9.75736C21.3679 10.8826 22 12.4087 22 14V21H18V14C18 13.4696 17.7893 12.9609 17.4142 12.5858C17.0391 12.2107 16.5304 12 16 12C15.4696 12 14.9609 12.2107 14.5858 12.5858C14.2107 12.9609 14 13.4696 14 14V21H10V14C10 12.4087 10.6321 10.8826 11.7574 9.75736C12.8826 8.63214 14.4087 8 16 8Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M6 9H2V21H6V9Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M4 6C5.10457 6 6 5.10457 6 4C6 2.89543 5.10457 2 4 2C2.89543 2 2 2.89543 2 4C2 5.10457 2.89543 6 4 6Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </a>
                 </div>
             </div>
             <div class="footer-bottom">
-                <p class="footer-copyright">© 2024 LockIn. All rights reserved.</p>
+                <p class="footer-copyright">© 2025 LockIn. All rights reserved. Powered by next-gen cryptography.</p>
             </div>
         </footer>
     </div>
