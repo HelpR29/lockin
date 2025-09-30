@@ -240,24 +240,52 @@
             await loadUserProgress(user.id);
         }
         
+        // Global variables
+        let portfolioChart = null;
+        let currentProgressData = null;
+        
+        // Switch between views
+        function switchView(viewName) {
+            // Update toggle buttons
+            document.querySelectorAll('.toggle-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-view="${viewName}"]`).classList.add('active');
+            
+            // Update view content
+            document.querySelectorAll('.view-content').forEach(view => {
+                view.classList.remove('active');
+            });
+            document.getElementById(`view-${viewName}`).classList.add('active');
+            
+            // Load specific view data
+            if (viewName === 'chart') {
+                loadPortfolioChart();
+            } else if (viewName === 'grid') {
+                loadBottlesGrid();
+            }
+        }
+        
         // Load and display user progress
         async function loadUserProgress(userId) {
             const progressSummary = await getUserProgressSummary(userId);
             
             if (!progressSummary) return;
             
-            // Update beer wall display
-            document.getElementById('wallIcon').textContent = progressSummary.token.emoji;
-            document.getElementById('bottlesRemaining').textContent = progressSummary.goals?.bottles_remaining || 0;
-            document.getElementById('bottlesTotal').textContent = progressSummary.goals?.total_bottles || 0;
-            document.getElementById('beersCracked').textContent = progressSummary.beers_cracked;
-            document.getElementById('progressPercent').textContent = `${Math.floor(progressSummary.progressPercent)}%`;
-            document.getElementById('progressBarFill').style.width = `${progressSummary.progressPercent}%`;
+            currentProgressData = progressSummary;
             
-            // Update beer progress stats
-            document.getElementById('targetPercent').textContent = `+${progressSummary.goals?.target_percent_per_beer || 8}%`;
-            document.getElementById('currentBalance').textContent = `$${(progressSummary.goals?.current_capital || 0).toLocaleString()}`;
-            document.getElementById('projectedFinal').textContent = `$${(progressSummary.projectedBalance || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
+            // Update hero beer display
+            document.getElementById('heroBeerIcon').textContent = progressSummary.token.emoji;
+            document.getElementById('bottlesRemainingLarge').textContent = progressSummary.goals?.bottles_remaining || 0;
+            document.getElementById('beersCrackedMain').textContent = progressSummary.beers_cracked;
+            document.getElementById('beersSpilledMain').textContent = progressSummary.beers_spilled;
+            document.getElementById('progressPercentMain').textContent = `${Math.floor(progressSummary.progressPercent)}%`;
+            document.getElementById('progressBarLarge').style.width = `${progressSummary.progressPercent}%`;
+            
+            // Update beer stats cards
+            document.getElementById('targetPercentWall').textContent = `+${progressSummary.goals?.target_percent_per_beer || 8}%`;
+            document.getElementById('currentBalanceWall').textContent = `$${(progressSummary.goals?.current_capital || 0).toLocaleString()}`;
+            document.getElementById('projectedFinalWall').textContent = `$${(progressSummary.projectedBalance || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
             
             // Update stats cards
             document.getElementById('beersCrackedValue').textContent = progressSummary.beers_cracked;
@@ -270,6 +298,152 @@
             document.getElementById('xpProgress').textContent = `${progressSummary.experience} / ${progressSummary.next_level_xp} XP`;
             const xpPercent = (progressSummary.experience / progressSummary.next_level_xp) * 100;
             document.getElementById('xpBarFill').style.width = `${xpPercent}%`;
+        }
+        
+        // Load portfolio growth chart
+        async function loadPortfolioChart() {
+            if (!currentProgressData) return;
+            
+            const { data: { user } } = await supabase.auth.getUser();
+            
+            // Get beer completions history
+            const { data: completions } = await supabase
+                .from('beer_completions')
+                .select('*')
+                .eq('user_id', user.id)
+                .order('beer_number', { ascending: true });
+            
+            const goals = currentProgressData.goals;
+            
+            // Build chart data
+            const chartData = {
+                labels: ['Start'],
+                balances: [goals.starting_capital]
+            };
+            
+            if (completions && completions.length > 0) {
+                completions.forEach(completion => {
+                    chartData.labels.push(`Beer ${completion.beer_number}`);
+                    chartData.balances.push(completion.ending_balance);
+                });
+            }
+            
+            // Calculate stats
+            const currentBalance = goals.current_capital;
+            const totalGain = currentBalance - goals.starting_capital;
+            const totalGainPercent = ((totalGain / goals.starting_capital) * 100).toFixed(2);
+            const avgPerBeer = completions && completions.length > 0 ? (totalGain / completions.length).toFixed(2) : 0;
+            
+            document.getElementById('totalGain').textContent = `$${totalGain.toLocaleString()}`;
+            document.getElementById('totalGainPercent').textContent = `+${totalGainPercent}%`;
+            document.getElementById('avgPerBeer').textContent = `$${parseFloat(avgPerBeer).toLocaleString()}`;
+            
+            // Destroy existing chart
+            if (portfolioChart) {
+                portfolioChart.destroy();
+            }
+            
+            // Create new chart
+            const ctx = document.getElementById('portfolioChart').getContext('2d');
+            portfolioChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: chartData.labels,
+                    datasets: [{
+                        label: 'Portfolio Value',
+                        data: chartData.balances,
+                        borderColor: 'rgb(255, 149, 0)',
+                        backgroundColor: 'rgba(255, 149, 0, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 5,
+                        pointHoverRadius: 7,
+                        pointBackgroundColor: 'rgb(255, 149, 0)',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12,
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderColor: 'rgb(255, 149, 0)',
+                            borderWidth: 1,
+                            callbacks: {
+                                label: function(context) {
+                                    return '$' + context.parsed.y.toLocaleString();
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#fff',
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString();
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#fff'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Load bottles grid view
+        async function loadBottlesGrid() {
+            if (!currentProgressData) return;
+            
+            const totalBottles = currentProgressData.goals?.total_bottles || 50;
+            const beersCracked = currentProgressData.beers_cracked;
+            const beersSpilled = currentProgressData.beers_spilled;
+            const token = currentProgressData.token.emoji;
+            
+            const grid = document.getElementById('bottlesGrid');
+            grid.innerHTML = '';
+            
+            for (let i = 1; i <= totalBottles; i++) {
+                const bottle = document.createElement('div');
+                bottle.className = 'bottle-item';
+                
+                if (i <= beersCracked) {
+                    bottle.classList.add('cracked');
+                    bottle.innerHTML = `
+                        <div class="bottle-icon">${token}</div>
+                        <div class="bottle-number">${i}</div>
+                        <div class="bottle-status">✓</div>
+                    `;
+                } else {
+                    bottle.classList.add('pending');
+                    bottle.innerHTML = `
+                        <div class="bottle-icon">${token}</div>
+                        <div class="bottle-number">${i}</div>
+                    `;
+                }
+                
+                grid.appendChild(bottle);
+            }
         }
         
         // Initialize dashboard
