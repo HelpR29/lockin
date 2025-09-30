@@ -8,41 +8,39 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadRules();
     await populateCategoryDropdown();
     await populateTemplateModal();
-
     document.getElementById('ruleForm').addEventListener('submit', saveRule);
 });
 
 async function loadRules() {
     try {
-        const { data: categories, error: catError } = await supabase
-            .from('rule_categories')
-            .select('*')
-            .order('display_order');
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
 
-        if (catError) {
-            console.error('Error fetching categories:', catError);
+        const { data: rules, error: rulesError } = await supabase
+            .from('trading_rules')
+            .select('*')
+            .eq('user_id', user.id);
+
+        if (rulesError) {
+            console.error('Error fetching rules:', rulesError);
             return;
         }
 
-    const { data: rules, error: rulesError } = await supabase
-        .from('user_defined_rules')
-        .select('*');
+        const container = document.getElementById('ruleCategoriesContainer');
+        container.innerHTML = '';
 
-    if (rulesError) {
-        console.error('Error fetching rules:', rulesError);
-        return;
-    }
+        // Group rules by category
+        const categories = ['Risk Management', 'Entry Rules', 'Exit Rules', 'Psychology', 'General'];
+        const categoryIcons = {
+            'Risk Management': '⚠️',
+            'Entry Rules': '📥',
+            'Exit Rules': '📤',
+            'Psychology': '🧠',
+            'General': '📋'
+        };
 
-    const container = document.getElementById('ruleCategoriesContainer');
-    container.innerHTML = '';
-
-    for (const category of categories) {
-        const categoryRules = rules.filter(rule => rule.category_id === category.id);
-        
-        const categoryEl = document.createElement('div');
-        categoryEl.className = 'rule-category';
-        categoryEl.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+        for (const category of categories) {
+            const categoryRules = rules.filter(rule => rule.category === category);
                 <span style="font-size: 2rem;">${category.icon || '📋'}</span>
                 <div>
                     <h3 class="category-title" style="margin: 0;">${category.name}</h3>

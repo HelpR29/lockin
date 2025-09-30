@@ -297,18 +297,22 @@ async function completeOnboarding() {
         
         if (progressError) console.warn('Progress init warning:', progressError);
         
-        // Success! Redirect to dashboard
-        window.location.href = 'dashboard.html';
+        // Step 4: Initialize default trading rules
+        await initializeDefaultTradingRules(user.id);
         
+        console.log('✅ Onboarding complete! Redirecting to dashboard...');
+        
+        // Redirect to dashboard
+        setTimeout(() => {
+            window.location.href = 'dashboard.html';
+        }, 1500);
     } catch (error) {
         console.error('Error saving onboarding data:', error);
         console.error('Error details:', error.message);
         console.error('Current data:', onboardingData);
         
         let errorMsg = 'Error saving your settings. ';
-        if (error.message.includes('complete all steps')) {
-            errorMsg = error.message;
-        } else if (error.message) {
+        if (error.message) {
             errorMsg += error.message;
         } else {
             errorMsg += 'Please try again.';
@@ -320,12 +324,53 @@ async function completeOnboarding() {
     }
 }
 
+// Initialize default trading rules
+async function initializeDefaultTradingRules(userId) {
+    const defaultRules = [
+        { category: "Risk Management", rule: "Never risk more than 2% of account per trade" },
+        { category: "Risk Management", rule: "Always use stop loss orders" },
+        { category: "Risk Management", rule: "Don't add to losing positions" },
+        { category: "Risk Management", rule: "Maximum 3 open positions at once" },
+        { category: "Entry Rules", rule: "Wait for confirmation before entering" },
+        { category: "Entry Rules", rule: "Only trade during market hours (9:30 AM - 4:00 PM)" },
+        { category: "Entry Rules", rule: "No trading in first/last 15 minutes of market" },
+        { category: "Entry Rules", rule: "Must have 3:1 reward-to-risk ratio minimum" },
+        { category: "Exit Rules", rule: "Take profits at predetermined targets" },
+        { category: "Exit Rules", rule: "Move stop to breakeven after 50% profit" },
+        { category: "Exit Rules", rule: "Exit immediately if thesis is invalidated" },
+        { category: "Exit Rules", rule: "Don't hold overnight unless planned" },
+        { category: "Psychology", rule: "No revenge trading after a loss" },
+        { category: "Psychology", rule: "Take a break after 2 consecutive losses" },
+        { category: "Psychology", rule: "Don't trade when emotional or stressed" },
+        { category: "Psychology", rule: "Journal every trade with emotions" },
+        { category: "General", rule: "Follow the trading plan always" },
+        { category: "General", rule: "Review trades weekly" },
+        { category: "General", rule: "No FOMO trading" },
+        { category: "General", rule: "Keep risk-reward ratio consistent" }
+    ];
+    
+    try {
+        for (const ruleData of defaultRules) {
+            await supabase.from('trading_rules').insert({
+                user_id: userId,
+                rule: ruleData.rule,
+                category: ruleData.category,
+                is_active: true
+            });
+        }
+        console.log('✅ Default trading rules initialized');
+    } catch (error) {
+        console.error('Error initializing default rules:', error);
+    }
+}
+
 // Export functions to global scope for HTML onclick handlers
 window.selectAvatar = selectAvatar;
 window.nextStep = nextStep;
 window.prevStep = prevStep;
 window.saveProfile = saveProfile;
-window.calculateProjection = calculateProjection;
+window.saveGoals = saveGoals;
+window.completeOnboarding = completeOnboarding;
 window.saveGoals = saveGoals;
 window.saveRules = saveRules;
 window.selectToken = selectToken;
