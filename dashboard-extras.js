@@ -67,6 +67,15 @@ async function openProfileModal() {
         .eq('user_id', user.id)
         .single();
     
+    // Fetch avatar from onboarding
+    const { data: onboardingData } = await supabase
+        .from('user_onboarding')
+        .select('avatar')
+        .eq('user_id', user.id)
+        .single();
+    
+    const avatarEmoji = onboardingData?.avatar || '👤';
+    
     const modal = document.createElement('div');
     modal.className = 'modal';
     modal.style.display = 'flex';
@@ -76,8 +85,8 @@ async function openProfileModal() {
             <h2 style="margin-bottom: 2rem; text-align: center;">👤 Your Profile</h2>
             
             <div style="text-align: center; margin-bottom: 2rem;">
-                <div style="width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), #FFB84D); margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; font-size: 1.75rem; font-weight: 700; padding: 1rem; word-break: break-word;">
-                    ${user.user_metadata?.full_name || user.email?.split('@')[0] || 'Trader'}
+                <div style="width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), #FFB84D); margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; font-size: 4rem;">
+                    ${avatarEmoji}
                 </div>
                 <h3 style="margin: 0.5rem 0;">${user.user_metadata?.full_name || 'Trader'}</h3>
                 <p style="color: var(--text-secondary); font-size: 0.875rem;">${user.email}</p>
