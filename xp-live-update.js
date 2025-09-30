@@ -16,14 +16,29 @@ async function updateXPBar() {
         const currentXP = progress.total_check_ins || 0;
         const currentLevel = progress.level || 1;
         const xpForNextLevel = currentLevel * 100;
-        const xpProgress = (currentXP / xpForNextLevel) * 100;
+        const xpPercentage = (currentXP / xpForNextLevel) * 100;
 
-        // Update XP display elements
+        // Update XP display elements (Dashboard)
+        const xpProgressEl = document.getElementById('xpProgress');
+        const currentLevelEl = document.getElementById('currentLevel');
+        const xpBarFill = document.getElementById('xpBarFill');
+
+        if (xpProgressEl) {
+            xpProgressEl.textContent = `${currentXP} / ${xpForNextLevel} XP`;
+        }
+
+        if (currentLevelEl) {
+            currentLevelEl.textContent = currentLevel;
+        }
+
+        if (xpBarFill) {
+            xpBarFill.style.width = `${Math.min(xpPercentage, 100)}%`;
+        }
+        
+        // Also try alternative selectors for other pages
         const xpText = document.querySelector('.xp-text, #xpText');
         const levelText = document.querySelector('.level-text, #levelText');
-        const xpBar = document.querySelector('.xp-progress-bar, #xpProgressBar');
-        const xpBarFill = document.querySelector('.xp-bar-fill, #xpBarFill');
-
+        
         if (xpText) {
             xpText.textContent = `${currentXP} / ${xpForNextLevel} XP`;
         }
@@ -32,21 +47,7 @@ async function updateXPBar() {
             levelText.textContent = `Level ${currentLevel}`;
         }
 
-        if (xpBar) {
-            xpBar.style.width = `${Math.min(xpProgress, 100)}%`;
-        }
-
-        if (xpBarFill) {
-            xpBarFill.style.width = `${Math.min(xpProgress, 100)}%`;
-        }
-
-        // Also update the dashboard XP text if it exists
-        const dashboardXP = document.getElementById('dashboardXP');
-        if (dashboardXP) {
-            dashboardXP.textContent = `${currentXP} / ${xpForNextLevel} XP`;
-        }
-
-        console.log(`✅ XP Updated: ${currentXP}/${xpForNextLevel} XP (${xpProgress.toFixed(1)}%)`);
+        console.log(`✅ XP Updated: ${currentXP}/${xpForNextLevel} XP (${xpPercentage.toFixed(1)}%)`);
     } catch (error) {
         console.error('Error updating XP bar:', error);
     }

@@ -34,9 +34,9 @@ function renderRuleAdherenceSection(rules, violations) {
     if (!container) return;
 
     const totalRules = rules.filter(r => r.is_active).length;
-    const totalViolations = violations.length;
+    const totalViolations = violations.length; // Use actual violation records
     const totalFollowed = rules.reduce((sum, r) => sum + (r.times_followed || 0), 0);
-    const totalViolated = rules.reduce((sum, r) => sum + (r.times_violated || 0), 0);
+    const totalViolated = violations.length; // Use actual violation records (not counter)
     
     const adherenceRate = totalFollowed + totalViolated > 0 
         ? ((totalFollowed / (totalFollowed + totalViolated)) * 100).toFixed(1)
