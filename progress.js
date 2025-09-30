@@ -493,35 +493,52 @@ async function checkAndUnlockAchievements(userId, stats) {
 // Get User Progress Summary
 async function getUserProgressSummary(userId) {
     try {
-        const { data: progress } = await supabase
+        console.log('Getting progress for user:', userId);
+        
+        const { data: progress, error: progressError } = await supabase
             .from('user_progress')
             .select('*')
             .eq('user_id', userId)
             .single();
         
-        const { data: goals } = await supabase
+        if (progressError) {
+            console.error('Progress error:', progressError);
+        }
+        console.log('Progress data:', progress);
+        
+        const { data: goals, error: goalsError } = await supabase
             .from('user_goals')
             .select('*')
             .eq('user_id', userId)
             .eq('is_active', true)
             .single();
         
+        if (goalsError) {
+            console.error('Goals error:', goalsError);
+        }
+        console.log('Goals data:', goals);
+        
         const { data: achievements } = await supabase
             .from('user_achievements')
             .select('*, achievements(*)')
             .eq('user_id', userId);
         
-        const tokenType = progress.progress_token || 'beer';
+        const tokenType = progress?.progress_token || 'beer';
+        console.log('Token type from DB:', tokenType);
+        console.log('Available tokens:', PROGRESS_TOKENS);
+        
         const token = {
             type: tokenType,
             ...PROGRESS_TOKENS[tokenType]
         } || { type: 'beer', ...PROGRESS_TOKENS.beer };
         
+        console.log('Final token object:', token);
+        
         const totalGrowth = calculateTotalGrowth(
             1.0,
-            progress.streak,
-            progress.level,
-            achievements.map(a => a.achievements)
+            progress?.streak || 0,
+            progress?.level || 1,
+            achievements ? achievements.map(a => a.achievements) : []
         );
         
         // Calculate progress percentage

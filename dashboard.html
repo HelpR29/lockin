@@ -335,13 +335,24 @@
             console.log('Token Emoji:', tokenEmoji);
             
             // Update all dynamic text with token name
-            document.getElementById('viewToggleWall').innerHTML = `${tokenEmoji} ${tokenInfo.singular} Wall`;
-            document.getElementById('viewToggleGrid').innerHTML = `🗂️ All ${tokenInfo.container}`;
-            document.getElementById('countLabel').textContent = `${tokenInfo.container} on the Wall`;
-            document.getElementById('targetLabel').textContent = `Target per ${tokenInfo.singular}`;
-            document.getElementById('crackedLabel').textContent = `${tokenInfo.plural} Cracked`;
-            document.getElementById('spilledLabel').textContent = `${tokenInfo.plural} Spilled`;
-            document.getElementById('crackedIcon').textContent = tokenEmoji;
+            console.log('Updating dashboard UI with token:', tokenEmoji, tokenInfo);
+            const viewToggleWall = document.getElementById('viewToggleWall');
+            const viewToggleGrid = document.getElementById('viewToggleGrid');
+            const countLabel = document.getElementById('countLabel');
+            const targetLabel = document.getElementById('targetLabel');
+            const crackedLabel = document.getElementById('crackedLabel');
+            const spilledLabel = document.getElementById('spilledLabel');
+            const crackedIcon = document.getElementById('crackedIcon');
+            
+            if (viewToggleWall) viewToggleWall.innerHTML = `${tokenEmoji} ${tokenInfo.singular} Wall`;
+            if (viewToggleGrid) viewToggleGrid.innerHTML = `🗂️ All ${tokenInfo.container}`;
+            if (countLabel) countLabel.textContent = `${tokenInfo.container} on the Wall`;
+            if (targetLabel) targetLabel.textContent = `Target per ${tokenInfo.singular}`;
+            if (crackedLabel) crackedLabel.textContent = `${tokenInfo.plural} Cracked`;
+            if (spilledLabel) spilledLabel.textContent = `${tokenInfo.plural} Spilled`;
+            if (crackedIcon) crackedIcon.textContent = tokenEmoji;
+            
+            console.log('Dashboard UI updated successfully!');
             
             // Update hero beer display
             document.getElementById('heroBeerIcon').textContent = tokenEmoji;
