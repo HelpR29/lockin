@@ -205,19 +205,32 @@
         .modal {
             display: none;
             position: fixed;
-            z-index: 9999 !important;
+            z-index: 99999 !important;
             left: 0;
             top: 0;
+            right: 0;
+            bottom: 0;
             width: 100vw;
             height: 100vh;
-            background-color: rgba(0, 0, 0, 0.9);
+            background-color: rgba(0, 0, 0, 0.95) !important;
             justify-content: center;
             align-items: center;
             overflow: auto;
+            pointer-events: auto !important;
         }
         
         .modal[style*="flex"] {
             display: flex !important;
+        }
+        
+        /* Ensure background canvas doesn't block modal */
+        .bg-animation {
+            z-index: 1;
+        }
+        
+        .container {
+            z-index: 10;
+            position: relative;
         }
         
         .modal-content {
