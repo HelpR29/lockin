@@ -78,8 +78,15 @@ async function loadTrades() {
             </div>
             <div class="trade-footer">
                 <div class="trade-notes">${trade.notes || ''}</div>
-                <div class="trade-timestamp" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">
-                    ${new Date(trade.created_at).toLocaleString()}
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
+                    <div class="trade-timestamp" style="font-size: 0.75rem; color: var(--text-muted);">
+                        ${new Date(trade.created_at).toLocaleString()}
+                    </div>
+                    ${trade.status === 'open' ? `
+                        <button class="cta-secondary" onclick="event.stopPropagation(); closeTrade('${trade.id}')" style="padding: 0.5rem 1rem; font-size: 0.875rem;">
+                            ✅ Close Trade
+                        </button>
+                    ` : ''}
                 </div>
             </div>
         `;
@@ -197,6 +204,53 @@ async function viewTradeOnChart(tradeId) {
     }
 }
 
+// Close an open trade (only changes status, maintains discipline)
+async function closeTrade(tradeId) {
+    if (!confirm('Are you sure you want to close this trade? This action cannot be undone.')) {
+        return;
+    }
+    
+    try {
+        const { error } = await supabase
+            .from('trades')
+            .update({ status: 'closed' })
+            .eq('id', tradeId);
+        
+        if (error) {
+            console.error('Error closing trade:', error);
+            alert('Failed to close trade. Please try again.');
+        } else {
+            // Reload trades to show updated status and P&L
+            await loadTrades();
+            
+            // Award XP for closing trade (10 XP per closed trade)
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const { data: progress } = await supabase
+                    .from('user_progress')
+                    .select('total_check_ins')
+                    .eq('user_id', user.id)
+                    .single();
+                
+                await supabase
+                    .from('user_progress')
+                    .update({ total_check_ins: (progress?.total_check_ins || 0) + 10 })
+                    .eq('user_id', user.id);
+            }
+            
+            // Update progress tracker
+            if (typeof updatePnLChart === 'function') {
+                await updatePnLChart();
+            }
+            
+            alert('Trade closed successfully! P&L calculated. +10 XP earned!');
+        }
+    } catch (error) {
+        console.error('Error closing trade:', error);
+        alert('An error occurred. Please try again.');
+    }
+}
+
 // Export functions to global scope for HTML onclick handlers
 window.openLogTradeModal = openLogTradeModal;
 window.editTrade = editTrade;
@@ -204,3 +258,4 @@ window.deleteTrade = deleteTrade;
 window.openModal = openModal;
 window.closeModal = closeModal;
 window.viewTradeOnChart = viewTradeOnChart;
+window.closeTrade = closeTrade;
