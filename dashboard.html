@@ -41,7 +41,7 @@
                 <a href="reports.html" style="color: var(--text-primary); text-decoration: none; padding: 0.5rem 1rem; border-radius: 8px; transition: background 0.3s;" onmouseover="this.style.background='rgba(255,149,0,0.1)'" onmouseout="this.style.background='transparent'">📊 Reports</a>
                 <a href="achievements.html" style="color: var(--text-primary); text-decoration: none; padding: 0.5rem 1rem; border-radius: 8px; transition: background 0.3s;" onmouseover="this.style.background='rgba(255,149,0,0.1)'" onmouseout="this.style.background='transparent'">🏆 Achievements</a>
                 <a href="friends.html" style="color: var(--text-primary); text-decoration: none; padding: 0.5rem 1rem; border-radius: 8px; transition: background 0.3s;" onmouseover="this.style.background='rgba(255,149,0,0.1)'" onmouseout="this.style.background='transparent'">👥 Friends</a>
-                <button class="cta-secondary" id="signOutBtn" onclick="handleSignOut()" style="padding: 0.6rem 1.5rem; margin-left: 1rem; cursor: pointer;">
+                <button class="cta-secondary" id="signOutBtn" onclick="alert('Button clicked!'); handleSignOut();" style="padding: 0.6rem 1.5rem; margin-left: 1rem; cursor: pointer; pointer-events: auto; position: relative; z-index: 9999;">
                     <span>Sign Out</span>
                 </button>
             </nav>
@@ -237,25 +237,27 @@
     <script src="progress.js"></script>
     <script>
         // Simple sign out handler - defined globally
-        async function handleSignOut() {
+        function handleSignOut() {
             console.log('handleSignOut called!');
-            try {
-                // Sign out from Supabase
-                const { error } = await supabase.auth.signOut();
-                if (error) {
-                    console.error('Supabase sign out error:', error);
+            
+            // Use setTimeout to ensure the function completes
+            setTimeout(async () => {
+                try {
+                    // Sign out from Supabase
+                    await supabase.auth.signOut();
+                    console.log('Signed out from Supabase');
+                } catch (err) {
+                    console.error('Sign out error:', err);
                 }
+                
                 // Clear storage
                 localStorage.clear();
                 sessionStorage.clear();
-                console.log('Redirecting to index.html...');
+                
                 // Force redirect
+                console.log('Redirecting now...');
                 window.location.href = '/index.html';
-            } catch (err) {
-                console.error('Sign out error:', err);
-                // Force redirect anyway
-                window.location.href = '/index.html';
-            }
+            }, 100);
         }
         
         // Check if user is logged in and load progress
