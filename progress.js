@@ -1,16 +1,12 @@
-// Growth & Compounding System - Progress Management
+// Beer System - Progress Management
 
-// Progress Object Progression
-const PROGRESS_OBJECTS = [
-    { type: 'beer', name: 'Beer', emoji: '🍺', minCompletions: 0, tier: 1, multiplier: 1.0 },
-    { type: 'wine', name: 'Wine', emoji: '🍷', minCompletions: 10, tier: 2, multiplier: 1.15 },
-    { type: 'donut', name: 'Donut', emoji: '🍩', minCompletions: 25, tier: 3, multiplier: 1.30 },
-    { type: 'diamond', name: 'Diamond', emoji: '💎', minCompletions: 50, tier: 4, multiplier: 1.50 },
-    { type: 'trophy', name: 'Trophy', emoji: '🏆', minCompletions: 75, tier: 5, multiplier: 2.0 },
-    { type: 'star', name: 'Star', emoji: '⭐', minCompletions: 90, tier: 6, multiplier: 2.5 },
-    { type: 'medal', name: 'Medal', emoji: '🏅', minCompletions: 95, tier: 7, multiplier: 3.0 },
-    { type: 'coin', name: 'Coin', emoji: '🪙', minCompletions: 99, tier: 8, multiplier: 4.0 }
-];
+// Progress Token Options
+const PROGRESS_TOKENS = {
+    beer: { name: 'Beer', emoji: '🍺' },
+    wine: { name: 'Wine', emoji: '🍷' },
+    donut: { name: 'Donut', emoji: '🍩' },
+    diamond: { name: 'Diamond', emoji: '💎' }
+};
 
 // XP Level System
 const calculateLevelFromXP = (xp) => {
@@ -68,44 +64,45 @@ const calculateTotalGrowth = (baseProgress, streak, level, achievements) => {
     return baseProgress * streakMultiplier * levelBonus * achievementBonus;
 };
 
-// Get Current Progress Object
-const getCurrentProgressObject = (completions) => {
-    let currentObject = PROGRESS_OBJECTS[0];
-    
-    for (const obj of PROGRESS_OBJECTS) {
-        if (completions >= obj.minCompletions) {
-            currentObject = obj;
-        } else {
-            break;
-        }
-    }
-    
-    return currentObject;
+// Calculate projected final balance with compounding
+const calculateProjectedBalance = (startingBalance, targetPercent, totalBottles) => {
+    const multiplier = 1 + (targetPercent / 100);
+    return startingBalance * Math.pow(multiplier, totalBottles);
 };
 
-// Get Next Progress Object
-const getNextProgressObject = (completions) => {
-    const current = getCurrentProgressObject(completions);
-    const currentIndex = PROGRESS_OBJECTS.findIndex(obj => obj.type === current.type);
+// Check if rules were followed in a trade/completion
+const checkRulesFollowed = async (userId, tradeData) => {
+    // Get user's trading rules
+    const { data: rules } = await supabase
+        .from('trading_rules')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('is_active', true)
+        .single();
     
-    if (currentIndex < PROGRESS_OBJECTS.length - 1) {
-        return PROGRESS_OBJECTS[currentIndex + 1];
+    if (!rules) return { followed: true, violations: [] };
+    
+    const violations = [];
+    
+    // Check max risk per trade
+    if (tradeData.risk_percent && tradeData.risk_percent > rules.max_risk_per_trade) {
+        violations.push(`Risk ${tradeData.risk_percent}% exceeded max ${rules.max_risk_per_trade}%`);
     }
     
-    return null; // Max level reached
-};
-
-// Calculate Progress to Next Object
-const calculateProgressToNextObject = (completions) => {
-    const current = getCurrentProgressObject(completions);
-    const next = getNextProgressObject(completions);
-    
-    if (!next) {
-        return 100; // Max level
+    // Check max daily loss
+    if (tradeData.loss_percent && Math.abs(tradeData.loss_percent) > rules.max_daily_loss) {
+        violations.push(`Loss ${Math.abs(tradeData.loss_percent)}% exceeded max ${rules.max_daily_loss}%`);
     }
     
-    const progress = ((completions - current.minCompletions) / (next.minCompletions - current.minCompletions)) * 100;
-    return Math.min(progress, 100);
+    // Check max trades per day
+    if (tradeData.trades_today && tradeData.trades_today > rules.max_trades_per_day) {
+        violations.push(`Trades count ${tradeData.trades_today} exceeded max ${rules.max_trades_per_day}`);
+    }
+    
+    return {
+        followed: violations.length === 0,
+        violations
+    };
 };
 
 // Daily Check-in Function
@@ -232,8 +229,8 @@ async function performDailyCheckIn(userId, checkInData) {
     }
 }
 
-// Complete a Trading Bottle/Token
-async function completeToken(userId, completionData) {
+// Crack a Beer (Complete a Target)
+async function crackBeer(userId, completionData) {
     try {
         // Get current progress and goals
         const { data: progress } = await supabase
@@ -249,28 +246,44 @@ async function completeToken(userId, completionData) {
             .eq('is_active', true)
             .single();
         
-        const newCompletions = progress.completions + 1;
-        const newCurrentObject = getCurrentProgressObject(newCompletions);
+        if (!goals) throw new Error('No active goals found');
+        
+        // Check if rules were followed
+        const rulesCheck = await checkRulesFollowed(userId, completionData);
+        
+        // Check if target was hit
+        const targetHit = completionData.gain_percent >= goals.target_percent_per_beer;
+        
+        if (!targetHit) {
+            throw new Error(`Target not reached. Needed ${goals.target_percent_per_beer}%, got ${completionData.gain_percent}%`);
+        }
+        
+        if (!rulesCheck.followed) {
+            throw new Error(`Rules violated: ${rulesCheck.violations.join(', ')}`);
+        }
+        
+        const newBeersCracked = progress.beers_cracked + 1;
+        const newBottlesRemaining = goals.bottles_remaining - 1;
         
         // Calculate XP for completion
-        const completionXP = 100 * newCurrentObject.multiplier;
+        const completionXP = 100;
         const newXP = progress.experience + completionXP;
         const levelInfo = calculateLevelFromXP(newXP);
         
-        // Insert completion record
+        // Insert beer completion record
         const { error: completionError } = await supabase
-            .from('completions')
+            .from('beer_completions')
             .insert({
                 user_id: userId,
-                completion_number: newCompletions,
-                completion_date: new Date().toISOString().split('T')[0],
+                beer_number: newBeersCracked,
                 starting_balance: completionData.starting_balance,
                 ending_balance: completionData.ending_balance,
                 gain_amount: completionData.gain_amount,
                 gain_percent: completionData.gain_percent,
-                token_type: progress.current_progress_object,
-                notes: completionData.notes,
-                trades_count: completionData.trades_count
+                target_percent: goals.target_percent_per_beer,
+                trades_count: completionData.trades_count || 0,
+                rules_followed: true,
+                notes: completionData.notes
             });
         
         if (completionError) throw completionError;
@@ -279,8 +292,7 @@ async function completeToken(userId, completionData) {
         const { error: progressError } = await supabase
             .from('user_progress')
             .update({
-                completions: newCompletions,
-                current_progress_object: newCurrentObject.type,
+                beers_cracked: newBeersCracked,
                 experience: newXP,
                 level: levelInfo.level,
                 next_level_xp: levelInfo.nextLevelXP
@@ -290,32 +302,97 @@ async function completeToken(userId, completionData) {
         if (progressError) throw progressError;
         
         // Update goals
-        if (goals) {
-            await supabase
-                .from('user_goals')
-                .update({
-                    current_capital: completionData.ending_balance,
-                    completions_count: newCompletions
-                })
-                .eq('id', goals.id);
-        }
+        await supabase
+            .from('user_goals')
+            .update({
+                current_capital: completionData.ending_balance,
+                bottles_remaining: newBottlesRemaining,
+                bottles_cracked: newBeersCracked
+            })
+            .eq('id', goals.id);
         
         // Check for achievements
         await checkAndUnlockAchievements(userId, {
-            completions: newCompletions,
+            beers_cracked: newBeersCracked,
             level: levelInfo.level
         });
         
         return {
             success: true,
-            newCompletions,
-            progressObject: newCurrentObject,
+            beers_racked: newBeersCracked,
+            bottlesRemaining: newBottlesRemaining,
             xpEarned: completionXP,
-            leveledUp: levelInfo.level > progress.level
+            leveledUp: levelInfo.level > progress.level,
+            message: `🍺 Beer #${newBeersCracked} cracked! ${newBottlesRemaining} bottles remaining on the wall.`
         };
         
     } catch (error) {
-        console.error('Error completing token:', error);
+        console.error('Error cracking beer:', error);
+        throw error;
+    }
+}
+
+// Spill a Beer (Rule Violation or Excessive Loss)
+async function spillBeer(userId, spillData) {
+    try {
+        // Get current progress and goals
+        const { data: progress } = await supabase
+            .from('user_progress')
+            .select('*')
+            .eq('user_id', userId)
+            .single();
+        
+        const { data: goals } = await supabase
+            .from('user_goals')
+            .select('*')
+            .eq('user_id', userId)
+            .eq('is_active', true)
+            .single();
+        
+        const newBeersSpilled = progress.beers_spilled + 1;
+        
+        // Insert beer spill record
+        const { error: spillError } = await supabase
+            .from('beer_spills')
+            .insert({
+                user_id: userId,
+                starting_balance: spillData.starting_balance,
+                ending_balance: spillData.ending_balance,
+                loss_amount: spillData.loss_amount,
+                loss_percent: spillData.loss_percent,
+                max_loss_percent: goals.max_loss_percent,
+                rule_violations: spillData.violations || [],
+                trades_involved: spillData.trades_count || 1,
+                notes: spillData.notes
+            });
+        
+        if (spillError) throw spillError;
+        
+        // Update progress
+        await supabase
+            .from('user_progress')
+            .update({
+                beers_spilled: newBeersSpilled
+            })
+            .eq('user_id', userId);
+        
+        // Update goals
+        await supabase
+            .from('user_goals')
+            .update({
+                beers_spilled: newBeersSpilled,
+                current_capital: spillData.ending_balance
+            })
+            .eq('id', goals.id);
+        
+        return {
+            success: true,
+            beersSpilled: newBeersSpilled,
+            message: `🚨 Beer spilled! Rules violated or loss exceeded limit.`
+        };
+        
+    } catch (error) {
+        console.error('Error recording beer spill:', error);
         throw error;
     }
 }
@@ -351,8 +428,8 @@ async function checkAndUnlockAchievements(userId, stats) {
                 case 'streak':
                     unlocked = stats.streak >= achievement.requirement_value;
                     break;
-                case 'completions':
-                    unlocked = stats.completions >= achievement.requirement_value;
+                case 'beers_cracked':
+                    unlocked = stats.beers_cracked >= achievement.requirement_value;
                     break;
                 case 'level':
                     unlocked = stats.level >= achievement.requirement_value;

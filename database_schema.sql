@@ -30,16 +30,18 @@ CREATE POLICY "Users can update own profile"
     ON user_profiles FOR UPDATE
     USING (auth.uid() = user_id);
 
--- 2. User Goals Table
+-- 2. User Goals Table (Beer System)
 CREATE TABLE user_goals (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id UUID REFERENCES auth.users NOT NULL,
     starting_capital NUMERIC NOT NULL,
-    target_capital NUMERIC NOT NULL,
-    target_return_percent NUMERIC NOT NULL,
-    target_completions INTEGER NOT NULL,
     current_capital NUMERIC NOT NULL,
-    completions_count INTEGER DEFAULT 0,
+    target_percent_per_beer NUMERIC DEFAULT 8.0 NOT NULL,
+    total_bottles INTEGER DEFAULT 50 NOT NULL,
+    bottles_remaining INTEGER DEFAULT 50 NOT NULL,
+    bottles_cracked INTEGER DEFAULT 0,
+    max_loss_percent NUMERIC DEFAULT 2.0 NOT NULL,
+    beers_spilled INTEGER DEFAULT 0,
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
@@ -131,35 +133,63 @@ CREATE POLICY "Users can delete own trades"
     ON trades FOR DELETE
     USING (auth.uid() = user_id);
 
--- 5. Completions Table (Progress Tokens/Bottles)
-CREATE TABLE completions (
+-- 5. Beer Completions Table (Bottles Cracked)
+CREATE TABLE beer_completions (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id UUID REFERENCES auth.users NOT NULL,
-    completion_number INTEGER NOT NULL,
-    completion_date DATE NOT NULL,
+    beer_number INTEGER NOT NULL,
+    completion_date TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
     starting_balance NUMERIC NOT NULL,
     ending_balance NUMERIC NOT NULL,
     gain_amount NUMERIC NOT NULL,
     gain_percent NUMERIC NOT NULL,
-    token_type TEXT DEFAULT 'beer',
-    notes TEXT,
+    target_percent NUMERIC NOT NULL,
     trades_count INTEGER DEFAULT 0,
+    rules_followed BOOLEAN DEFAULT true,
+    rule_violations TEXT[],
+    notes TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
-ALTER TABLE completions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE beer_completions ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users can view own completions"
-    ON completions FOR SELECT
+CREATE POLICY "Users can view own beer completions"
+    ON beer_completions FOR SELECT
     USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can insert own completions"
-    ON completions FOR INSERT
+CREATE POLICY "Users can insert own beer completions"
+    ON beer_completions FOR INSERT
     WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Users can update own completions"
-    ON completions FOR UPDATE
+CREATE POLICY "Users can update own beer completions"
+    ON beer_completions FOR UPDATE
     USING (auth.uid() = user_id);
+
+-- 5b. Beer Spills Table (Rule Violations / Losses)
+CREATE TABLE beer_spills (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users NOT NULL,
+    spill_date TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    starting_balance NUMERIC NOT NULL,
+    ending_balance NUMERIC NOT NULL,
+    loss_amount NUMERIC NOT NULL,
+    loss_percent NUMERIC NOT NULL,
+    max_loss_percent NUMERIC NOT NULL,
+    rule_violations TEXT[] NOT NULL,
+    trades_involved INTEGER DEFAULT 1,
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE beer_spills ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own beer spills"
+    ON beer_spills FOR SELECT
+    USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own beer spills"
+    ON beer_spills FOR INSERT
+    WITH CHECK (auth.uid() = user_id);
 
 -- 6. Daily Stats Table
 CREATE TABLE daily_stats (
@@ -237,14 +267,15 @@ CREATE TRIGGER update_daily_stats_updated_at BEFORE UPDATE ON daily_stats
 CREATE TABLE user_progress (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id UUID REFERENCES auth.users NOT NULL UNIQUE,
-    completions INTEGER DEFAULT 0,
+    beers_cracked INTEGER DEFAULT 0,
+    beers_spilled INTEGER DEFAULT 0,
     streak INTEGER DEFAULT 0,
     longest_streak INTEGER DEFAULT 0,
     discipline_score NUMERIC DEFAULT 0,
     level INTEGER DEFAULT 1,
     experience INTEGER DEFAULT 0,
     next_level_xp INTEGER DEFAULT 100,
-    current_progress_object TEXT DEFAULT 'beer',
+    progress_token TEXT DEFAULT 'beer',
     total_check_ins INTEGER DEFAULT 0,
     last_check_in_date DATE,
     streak_multiplier NUMERIC DEFAULT 1.0,
@@ -289,14 +320,14 @@ INSERT INTO achievements (name, description, category, icon, requirement_type, r
 ('Week Warrior', 'Maintain a 7-day streak', 'streak', '🔥', 'streak', 7, 100, 1.1),
 ('Month Master', 'Maintain a 30-day streak', 'streak', '💪', 'streak', 30, 500, 1.25),
 ('Century Club', 'Complete 100 check-ins', 'milestone', '💯', 'check_ins', 100, 1000, 1.5),
-('Beer Beginner', 'Unlock your first beer bottle', 'progress', '🍺', 'completions', 1, 50, 1.05),
-('Wine Warrior', 'Unlock wine glass level', 'progress', '🍷', 'completions', 10, 200, 1.15),
-('Donut Dynasty', 'Reach donut tier', 'progress', '🍩', 'completions', 25, 500, 1.25),
-('Diamond Hands', 'Achieve diamond status', 'progress', '💎', 'completions', 50, 1000, 1.5),
-('Trophy Trader', 'Earn the trophy', 'progress', '🏆', 'completions', 75, 2000, 2.0),
-('Rising Star', 'Become a star trader', 'progress', '⭐', 'completions', 90, 3000, 2.5),
-('Medal of Honor', 'Earn the trading medal', 'progress', '🏅', 'completions', 95, 4000, 3.0),
-('Coin Master', 'Master level achieved', 'progress', '🪙', 'completions', 99, 5000, 4.0),
+('First Beer', 'Crack your first beer', 'beer', '🍺', 'beers_cracked', 1, 50, 1.05),
+('5 Pack', 'Crack 5 beers', 'beer', '🍻', 'beers_cracked', 5, 100, 1.1),
+('Case Complete', 'Crack 10 beers', 'beer', '📦', 'beers_cracked', 10, 250, 1.15),
+('Quarter Way', 'Crack 25 beers', 'beer', '🎯', 'beers_cracked', 25, 500, 1.25),
+('Halfway Hero', 'Crack 50 beers', 'beer', '🏆', 'beers_cracked', 50, 1000, 1.5),
+('Final Stretch', 'Crack 75 beers', 'beer', '💎', 'beers_cracked', 75, 2000, 2.0),
+('Almost There', 'Crack 90 beers', 'beer', '⭐', 'beers_cracked', 90, 3000, 2.5),
+('Perfect Run', 'Crack all beers', 'beer', '👑', 'beers_cracked', 99, 5000, 4.0),
 ('Level 5', 'Reach level 5', 'level', '🚀', 'level', 5, 200, 1.1),
 ('Level 10', 'Reach level 10', 'level', '🌟', 'level', 10, 500, 1.2),
 ('Level 25', 'Reach level 25', 'level', '👑', 'level', 25, 2000, 1.5),
@@ -354,32 +385,30 @@ CREATE POLICY "Users can update own check-ins"
     ON daily_check_ins FOR UPDATE
     USING (auth.uid() = user_id);
 
--- 14. Progress Objects Configuration (Reference table)
-CREATE TABLE progress_objects (
+-- 14. Progress Token Options (Reference table)
+CREATE TABLE progress_tokens (
     id SERIAL PRIMARY KEY,
-    object_type TEXT NOT NULL UNIQUE,
+    token_type TEXT NOT NULL UNIQUE,
     display_name TEXT NOT NULL,
     emoji TEXT NOT NULL,
-    min_completions INTEGER NOT NULL,
-    tier_level INTEGER NOT NULL,
-    multiplier_bonus NUMERIC DEFAULT 1.0
+    display_order INTEGER NOT NULL
 );
 
-INSERT INTO progress_objects (object_type, display_name, emoji, min_completions, tier_level, multiplier_bonus) VALUES
-('beer', 'Beer', '🍺', 0, 1, 1.0),
-('wine', 'Wine', '🍷', 10, 2, 1.15),
-('donut', 'Donut', '🍩', 25, 3, 1.30),
-('diamond', 'Diamond', '💎', 50, 4, 1.50),
-('trophy', 'Trophy', '🏆', 75, 5, 2.0),
-('star', 'Star', '⭐', 90, 6, 2.5),
-('medal', 'Medal', '🏅', 95, 7, 3.0),
-('coin', 'Coin', '🪙', 99, 8, 4.0);
+INSERT INTO progress_tokens (token_type, display_name, emoji, display_order) VALUES
+('beer', 'Beer', '🍺', 1),
+('wine', 'Wine', '🍷', 2),
+('donut', 'Donut', '🍩', 3),
+('diamond', 'Diamond', '💎', 4);
 
 -- 15. Add indexes for progress system
 CREATE INDEX idx_user_progress_user_id ON user_progress(user_id);
 CREATE INDEX idx_user_achievements_user_id ON user_achievements(user_id);
 CREATE INDEX idx_daily_check_ins_user_id ON daily_check_ins(user_id);
 CREATE INDEX idx_daily_check_ins_date ON daily_check_ins(check_in_date DESC);
+CREATE INDEX idx_beer_completions_user_id ON beer_completions(user_id);
+CREATE INDEX idx_beer_completions_date ON beer_completions(completion_date DESC);
+CREATE INDEX idx_beer_spills_user_id ON beer_spills(user_id);
+CREATE INDEX idx_beer_spills_date ON beer_spills(spill_date DESC);
 
 -- 16. Add trigger for user_progress
 CREATE TRIGGER update_user_progress_updated_at BEFORE UPDATE ON user_progress
