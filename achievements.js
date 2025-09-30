@@ -5,8 +5,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    await loadAchievements();
-    await loadMyRewards();
+    try {
+        await loadAchievements();
+        await loadMyRewards();
+    } catch (error) {
+        console.error('Error initializing achievements:', error);
+        alert('Failed to load achievements. Please refresh the page.');
+    }
 });
 
 function switchAchievementView(view) {
@@ -22,7 +27,9 @@ function switchAchievementView(view) {
 }
 
 async function loadAchievements() {
-    const { data: { user } } = await supabase.auth.getUser();
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
 
     const { data: allAchievements, error: allErr } = await supabase
         .from('achievements')
@@ -59,11 +66,17 @@ async function loadAchievements() {
             ${isUnlocked ? '<div class="unlocked-check">✓</div>' : ''}
         `;
         grid.appendChild(achievementEl);
+        }
+    } catch (error) {
+        console.error('Error loading achievements:', error);
+        throw error;
     }
 }
 
 async function loadMyRewards() {
-    const { data: { user } } = await supabase.auth.getUser();
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
 
     const { data: unlocked, error } = await supabase
         .from('user_achievements')
@@ -112,7 +125,14 @@ async function loadMyRewards() {
     if (!hasTitles) {
         titlesGrid.innerHTML = '<p class="no-rewards">No titles unlocked yet.</p>';
     }
-    if (!hasBadges) {
-        badgesGrid.innerHTML = '<p class="no-rewards">No badges unlocked yet.</p>';
+        if (!hasBadges) {
+            badgesGrid.innerHTML = '<p class="no-rewards">No badges unlocked yet.</p>';
+        }
+    } catch (error) {
+        console.error('Error loading rewards:', error);
+        throw error;
     }
 }
+
+// Export functions to global scope for HTML onclick handlers
+window.switchAchievementView = switchAchievementView;

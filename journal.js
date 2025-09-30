@@ -14,10 +14,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 async function loadTrades() {
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    const statusFilter = document.getElementById('filterStatus').value;
-    const sortOrder = document.getElementById('sortOrder').value;
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            window.location.href = 'login.html';
+            return;
+        }
+        
+        const statusFilter = document.getElementById('filterStatus')?.value || 'all';
+        const sortOrder = document.getElementById('sortOrder')?.value || 'desc';
 
     let query = supabase.from('trades').select('*').eq('user_id', user.id);
 
@@ -27,14 +32,15 @@ async function loadTrades() {
 
     query = query.order('created_at', { ascending: sortOrder === 'asc' });
 
-    const { data: trades, error } = await query;
+        const { data: trades, error } = await query;
 
-    if (error) {
-        console.error('Error fetching trades:', error);
-        return;
-    }
+        if (error) {
+            console.error('Error fetching trades:', error);
+            return;
+        }
 
-    const container = document.getElementById('tradeList');
+        const container = document.getElementById('tradeList');
+        if (!container) return;
     container.innerHTML = '';
 
     if (trades.length === 0) {
@@ -69,12 +75,21 @@ async function loadTrades() {
             </div>
         `;
         container.appendChild(tradeEl);
+        }
+    } catch (error) {
+        console.error('Error loading trades:', error);
+        alert('Failed to load trades. Please refresh the page.');
     }
 }
 
 async function saveTrade(e) {
     e.preventDefault();
-    const user = (await supabase.auth.getUser()).data.user;
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            alert('Please log in to save trades.');
+            return;
+        }
 
     const tradeId = document.getElementById('tradeId').value;
     const emotions = Array.from(document.querySelectorAll('.emotion-tags .tag.selected')).map(tag => tag.dataset.emotion);
@@ -98,12 +113,16 @@ async function saveTrade(e) {
         ({ error } = await supabase.from('trades').insert(tradeData));
     }
 
-    if (error) {
+        if (error) {
+            console.error('Error saving trade:', error);
+            alert('Could not save the trade.');
+        } else {
+            closeModal('tradeModal');
+            await loadTrades();
+        }
+    } catch (error) {
         console.error('Error saving trade:', error);
-        alert('Could not save the trade.');
-    } else {
-        closeModal('tradeModal');
-        await loadTrades();
+        alert('An error occurred. Please try again.');
     }
 }
 
@@ -116,8 +135,12 @@ function openLogTradeModal() {
 }
 
 async function editTrade(id) {
-    const { data: trade, error } = await supabase.from('trades').select('*').eq('id', id).single();
-    if (error) return;
+    try {
+        const { data: trade, error } = await supabase.from('trades').select('*').eq('id', id).single();
+        if (error || !trade) {
+            console.error('Error fetching trade:', error);
+            return;
+        }
 
     document.getElementById('tradeId').value = trade.id;
     document.getElementById('symbol').value = trade.symbol;
@@ -136,27 +159,49 @@ async function editTrade(id) {
         }
     });
 
-    document.getElementById('tradeModalTitle').textContent = 'Edit Trade';
-    openModal('tradeModal');
+        document.getElementById('tradeModalTitle').textContent = 'Edit Trade';
+        openModal('tradeModal');
+    } catch (error) {
+        console.error('Error loading trade for edit:', error);
+        alert('Failed to load trade details.');
+    }
 }
 
 async function deleteTrade(id) {
     if (!confirm('Are you sure you want to delete this trade?')) return;
 
-    const { error } = await supabase.from('trades').delete().eq('id', id);
+    try {
+        const { error } = await supabase.from('trades').delete().eq('id', id);
 
-    if (error) {
+        if (error) {
+            console.error('Error deleting trade:', error);
+            alert('Could not delete the trade.');
+        } else {
+            await loadTrades();
+        }
+    } catch (error) {
         console.error('Error deleting trade:', error);
-        alert('Could not delete the trade.');
-    } else {
-        await loadTrades();
+        alert('An error occurred. Please try again.');
     }
 }
 
 function openModal(id) {
-    document.getElementById(id).style.display = 'flex';
+    const modal = document.getElementById(id);
+    if (modal) {
+        modal.style.display = 'flex';
+    }
 }
 
 function closeModal(id) {
-    document.getElementById(id).style.display = 'none';
+    const modal = document.getElementById(id);
+    if (modal) {
+        modal.style.display = 'none';
+    }
 }
+
+// Export functions to global scope for HTML onclick handlers
+window.openLogTradeModal = openLogTradeModal;
+window.editTrade = editTrade;
+window.deleteTrade = deleteTrade;
+window.openModal = openModal;
+window.closeModal = closeModal;

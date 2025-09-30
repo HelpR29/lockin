@@ -13,15 +13,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 async function loadRules() {
-    const { data: categories, error: catError } = await supabase
-        .from('rule_categories')
-        .select('*')
-        .order('display_order');
+    try {
+        const { data: categories, error: catError } = await supabase
+            .from('rule_categories')
+            .select('*')
+            .order('display_order');
 
-    if (catError) {
-        console.error('Error fetching categories:', catError);
-        return;
-    }
+        if (catError) {
+            console.error('Error fetching categories:', catError);
+            return;
+        }
 
     const { data: rules, error: rulesError } = await supabase
         .from('user_defined_rules')
@@ -66,6 +67,10 @@ async function loadRules() {
             ruleListEl.appendChild(ruleEl);
         }
     }
+    } catch (error) {
+        console.error('Error loading rules:', error);
+        alert('Failed to load rules. Please refresh the page.');
+    }
 }
 
 async function populateCategoryDropdown() {
@@ -82,7 +87,12 @@ async function populateCategoryDropdown() {
 
 async function saveRule(e) {
     e.preventDefault();
-    const user = (await supabase.auth.getUser()).data.user;
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            alert('Please log in to save rules.');
+            return;
+        }
 
     const ruleId = document.getElementById('ruleId').value;
     const ruleText = document.getElementById('ruleText').value;
@@ -103,12 +113,16 @@ async function saveRule(e) {
         ({ error } = await supabase.from('user_defined_rules').insert(ruleData));
     }
 
-    if (error) {
+        if (error) {
+            console.error('Error saving rule:', error);
+            alert('Could not save the rule.');
+        } else {
+            closeModal('ruleModal');
+            await loadRules();
+        }
+    } catch (error) {
         console.error('Error saving rule:', error);
-        alert('Could not save the rule.');
-    } else {
-        closeModal('ruleModal');
-        await loadRules();
+        alert('An error occurred. Please try again.');
     }
 }
 
@@ -212,11 +226,17 @@ async function addRuleFromTemplate(templateId) {
 }
 
 function openModal(id) {
-    document.getElementById(id).style.display = 'flex';
+    const modal = document.getElementById(id);
+    if (modal) {
+        modal.style.display = 'flex';
+    }
 }
 
 function closeModal(id) {
-    document.getElementById(id).style.display = 'none';
+    const modal = document.getElementById(id);
+    if (modal) {
+        modal.style.display = 'none';
+    }
 }
 
 window.onclick = function(event) {
@@ -224,3 +244,12 @@ window.onclick = function(event) {
         closeModal(event.target.id);
     }
 }
+
+// Export functions to global scope for HTML onclick handlers
+window.openAddRuleModal = openAddRuleModal;
+window.editRule = editRule;
+window.deleteRule = deleteRule;
+window.toggleRuleActive = toggleRuleActive;
+window.addRuleFromTemplate = addRuleFromTemplate;
+window.openModal = openModal;
+window.closeModal = closeModal;

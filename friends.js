@@ -5,11 +5,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    await loadFriendData();
+    try {
+        await loadFriendData();
+    } catch (error) {
+        console.error('Error initializing friends:', error);
+        alert('Failed to load friends. Please refresh the page.');
+    }
 });
 
 async function loadFriendData() {
-    const { data: { user } } = await supabase.auth.getUser();
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
 
     // 1) Fetch all friendships involving the user
     const { data: friendships, error } = await supabase
@@ -60,11 +67,19 @@ async function loadFriendData() {
             requestsList.appendChild(requestEl);
         }
     });
+    } catch (error) {
+        console.error('Error loading friend data:', error);
+        throw error;
+    }
 }
 
 async function searchUsers() {
-    const searchTerm = document.getElementById('searchUser').value;
-    if (searchTerm.length < 3) return;
+    try {
+        const searchInput = document.getElementById('searchUser');
+        if (!searchInput) return;
+        
+        const searchTerm = searchInput.value.trim();
+        if (searchTerm.length < 3) return;
 
     const { data, error } = await supabase
         .from('user_profiles')
@@ -85,32 +100,89 @@ async function searchUsers() {
         resultEl.innerHTML = `<span>${profile.username}</span> <button onclick="sendRequest('${profile.user_id}')">Add</button>`;
         resultsList.appendChild(resultEl);
     });
+    } catch (error) {
+        console.error('Error searching users:', error);
+        alert('Search failed. Please try again.');
+    }
 }
 
 async function sendRequest(friendId) {
-    const { data: { user } } = await supabase.auth.getUser();
-    const { error } = await supabase.from('friends').insert({ user_id_1: user.id, user_id_2: friendId, status: 'requested' });
-    if (error) alert('Error sending request.');
-    else alert('Friend request sent!');
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        
+        const { error } = await supabase.from('friends').insert({ user_id_1: user.id, user_id_2: friendId, status: 'requested' });
+        if (error) {
+            console.error('Error sending request:', error);
+            alert('Error sending request.');
+        } else {
+            alert('Friend request sent!');
+        }
+    } catch (error) {
+        console.error('Error sending request:', error);
+        alert('An error occurred. Please try again.');
+    }
 }
 
 async function acceptRequest(requesterId) {
-    const { data: { user } } = await supabase.auth.getUser();
-    const { error } = await supabase.from('friends').update({ status: 'accepted' }).match({ user_id_1: requesterId, user_id_2: user.id });
-    if (error) alert('Error accepting request.');
-    else loadFriendData();
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        
+        const { error } = await supabase.from('friends').update({ status: 'accepted' }).match({ user_id_1: requesterId, user_id_2: user.id });
+        if (error) {
+            console.error('Error accepting request:', error);
+            alert('Error accepting request.');
+        } else {
+            await loadFriendData();
+        }
+    } catch (error) {
+        console.error('Error accepting request:', error);
+        alert('An error occurred. Please try again.');
+    }
 }
 
 async function declineRequest(requesterId) {
-    const { data: { user } } = await supabase.auth.getUser();
-    const { error } = await supabase.from('friends').delete().match({ user_id_1: requesterId, user_id_2: user.id });
-    if (error) alert('Error declining request.');
-    else loadFriendData();
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        
+        const { error } = await supabase.from('friends').delete().match({ user_id_1: requesterId, user_id_2: user.id });
+        if (error) {
+            console.error('Error declining request:', error);
+            alert('Error declining request.');
+        } else {
+            await loadFriendData();
+        }
+    } catch (error) {
+        console.error('Error declining request:', error);
+        alert('An error occurred. Please try again.');
+    }
 }
 
 async function removeFriend(friendId) {
-    const { data: { user } } = await supabase.auth.getUser();
-    const { error } = await supabase.from('friends').delete().or(`(user_id_1.eq.${user.id},user_id_2.eq.${friendId}),(user_id_1.eq.${friendId},user_id_2.eq.${user.id})`);
-    if (error) alert('Error removing friend.');
-    else loadFriendData();
+    if (!confirm('Are you sure you want to remove this friend?')) return;
+    
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        
+        const { error } = await supabase.from('friends').delete().or(`user_id_1.eq.${user.id},user_id_2.eq.${user.id}`).or(`user_id_1.eq.${friendId},user_id_2.eq.${friendId}`);
+        if (error) {
+            console.error('Error removing friend:', error);
+            alert('Error removing friend.');
+        } else {
+            await loadFriendData();
+        }
+    } catch (error) {
+        console.error('Error removing friend:', error);
+        alert('An error occurred. Please try again.');
+    }
 }
+
+// Export functions to global scope for HTML onclick handlers
+window.searchUsers = searchUsers;
+window.sendRequest = sendRequest;
+window.acceptRequest = acceptRequest;
+window.declineRequest = declineRequest;
+window.removeFriend = removeFriend;
