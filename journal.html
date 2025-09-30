@@ -165,9 +165,10 @@
             <form id="tradeForm">
                 <input type="hidden" id="tradeId">
                 <div class="form-grid">
-                    <div class="form-group">
+                    <div class="form-group" style="position: relative;">
                         <label for="symbol">Symbol</label>
-                        <input type="text" id="symbol" placeholder="e.g., AAPL, BTC/USD" required>
+                        <input type="text" id="symbol" placeholder="e.g., AAPL, BTCUSDT" required autocomplete="off">
+                        <div id="symbolSuggestions" class="symbol-suggestions" style="display: none;"></div>
                     </div>
                     <div class="form-group">
                         <label for="direction">Direction</label>
