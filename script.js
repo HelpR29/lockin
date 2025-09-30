@@ -1,4 +1,4 @@
-// Mobile-optimized JavaScript for LockIn landing page
+// Modern futuristic JavaScript for LockIn landing page
 
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize all interactive features
@@ -6,6 +6,8 @@ document.addEventListener('DOMContentLoaded', function() {
     initScrollEffects();
     initTouchEnhancements();
     initPerformanceOptimizations();
+    initParticleCanvas();
+    initCursorEffects();
 });
 
 // Navigation Toggle
@@ -40,10 +42,25 @@ function initScrollEffects() {
         const scrollY = window.pageYOffset;
         const header = document.querySelector('.header');
 
-        // Header background opacity based on scroll
+        // Enhanced header effect with glassmorphism
         if (header) {
-            const opacity = Math.min(scrollY / 100, 1);
-            header.style.background = `rgba(255, 255, 255, ${0.1 + opacity * 0.1})`;
+            if (scrollY > 50) {
+                header.style.background = 'rgba(15, 6, 40, 0.9)';
+                header.style.backdropFilter = 'blur(20px) saturate(180%)';
+                header.style.boxShadow = '0 8px 32px rgba(0, 240, 255, 0.1)';
+            } else {
+                header.style.background = 'rgba(15, 6, 40, 0.7)';
+                header.style.backdropFilter = 'blur(20px) saturate(180%)';
+                header.style.boxShadow = '0 4px 30px rgba(0, 0, 0, 0.5)';
+            }
+        }
+        
+        // Parallax effect for hero section
+        const hero = document.querySelector('.hero');
+        if (hero && scrollY < window.innerHeight) {
+            const parallaxSpeed = 0.5;
+            hero.style.transform = `translateY(${scrollY * parallaxSpeed}px)`;
+            hero.style.opacity = 1 - (scrollY / window.innerHeight) * 0.5;
         }
 
         ticking = false;
@@ -188,12 +205,157 @@ if ('serviceWorker' in navigator) {
     });
 }
 
+// Particle Canvas Animation
+function initParticleCanvas() {
+    const canvas = document.getElementById('particle-canvas');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+    let animationFrameId;
+    
+    // Set canvas size
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+    
+    // Particle class
+    class Particle {
+        constructor() {
+            this.reset();
+        }
+        
+        reset() {
+            this.x = Math.random() * canvas.width;
+            this.y = Math.random() * canvas.height;
+            this.size = Math.random() * 2 + 1;
+            this.speedX = Math.random() * 0.5 - 0.25;
+            this.speedY = Math.random() * 0.5 - 0.25;
+            this.opacity = Math.random() * 0.5 + 0.2;
+            this.color = Math.random() > 0.5 ? '#00f0ff' : '#a855f7';
+        }
+        
+        update() {
+            this.x += this.speedX;
+            this.y += this.speedY;
+            
+            // Wrap around edges
+            if (this.x > canvas.width) this.x = 0;
+            if (this.x < 0) this.x = canvas.width;
+            if (this.y > canvas.height) this.y = 0;
+            if (this.y < 0) this.y = canvas.height;
+        }
+        
+        draw() {
+            ctx.fillStyle = this.color;
+            ctx.globalAlpha = this.opacity;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+    
+    // Create particles
+    function createParticles() {
+        const particleCount = Math.min(Math.floor((canvas.width * canvas.height) / 15000), 100);
+        particles = [];
+        for (let i = 0; i < particleCount; i++) {
+            particles.push(new Particle());
+        }
+    }
+    
+    createParticles();
+    window.addEventListener('resize', createParticles);
+    
+    // Connect nearby particles
+    function connectParticles() {
+        for (let i = 0; i < particles.length; i++) {
+            for (let j = i + 1; j < particles.length; j++) {
+                const dx = particles[i].x - particles[j].x;
+                const dy = particles[i].y - particles[j].y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < 120) {
+                    ctx.strokeStyle = '#00f0ff';
+                    ctx.globalAlpha = (1 - distance / 120) * 0.15;
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(particles[i].x, particles[i].y);
+                    ctx.lineTo(particles[j].x, particles[j].y);
+                    ctx.stroke();
+                }
+            }
+        }
+    }
+    
+    // Animation loop
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        particles.forEach(particle => {
+            particle.update();
+            particle.draw();
+        });
+        
+        connectParticles();
+        ctx.globalAlpha = 1;
+        
+        animationFrameId = requestAnimationFrame(animate);
+    }
+    
+    animate();
+    
+    // Cleanup on visibility change
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            cancelAnimationFrame(animationFrameId);
+        } else {
+            animate();
+        }
+    });
+}
+
+// Cursor Effects
+function initCursorEffects() {
+    // Skip on touch devices
+    if ('ontouchstart' in window) return;
+    
+    const interactiveElements = document.querySelectorAll('button, a, .feature-card');
+    
+    interactiveElements.forEach(element => {
+        element.addEventListener('mouseenter', function() {
+            document.body.style.cursor = 'pointer';
+        });
+        
+        element.addEventListener('mouseleave', function() {
+            document.body.style.cursor = 'default';
+        });
+    });
+    
+    // Parallax effect on hero visual
+    const heroVisual = document.querySelector('.hero-visual');
+    if (heroVisual) {
+        document.addEventListener('mousemove', function(e) {
+            const moveX = (e.clientX - window.innerWidth / 2) * 0.01;
+            const moveY = (e.clientY - window.innerHeight / 2) * 0.01;
+            
+            heroVisual.style.transform = `translate(${moveX}px, ${moveY}px)`;
+        });
+    }
+}
+
 // Export functions for testing (if needed)
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
         initNavigation,
         initScrollEffects,
         initTouchEnhancements,
-        initPerformanceOptimizations
+        initPerformanceOptimizations,
+        initParticleCanvas,
+        initCursorEffects
     };
 }
