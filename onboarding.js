@@ -217,19 +217,20 @@ async function completeOnboarding() {
         
         if (rulesError) throw rulesError;
         
-        // Initialize user progress system
+        // Initialize user progress system (Beer System)
         const { error: progressError } = await supabase
             .from('user_progress')
             .insert({
                 user_id: user.id,
-                completions: 0,
+                beers_cracked: 0,
+                beers_spilled: 0,
                 streak: 0,
                 longest_streak: 0,
                 discipline_score: 0,
                 level: 1,
                 experience: 0,
                 next_level_xp: 100,
-                current_progress_object: onboardingData.token,
+                progress_token: onboardingData.token,
                 total_check_ins: 0,
                 streak_multiplier: 1.0,
                 level_bonus: 1.0,
