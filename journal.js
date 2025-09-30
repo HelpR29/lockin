@@ -100,6 +100,8 @@ async function saveTrade(e) {
         direction: document.getElementById('direction').value,
         entry_price: parseFloat(document.getElementById('entryPrice').value),
         exit_price: parseFloat(document.getElementById('exitPrice').value) || null,
+        stop_loss: parseFloat(document.getElementById('stopLoss').value) || null,
+        target_price: parseFloat(document.getElementById('targetPrice').value) || null,
         position_size: parseFloat(document.getElementById('positionSize').value),
         status: document.getElementById('status').value,
         notes: document.getElementById('notes').value,
