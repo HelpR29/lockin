@@ -134,7 +134,7 @@
                 modal.style.cssText = `
                     display: flex !important;
                     position: fixed !important;
-                    z-index: 999999 !important;
+                    z-index: 9999999 !important;
                     top: 0 !important;
                     left: 0 !important;
                     width: 100vw !important;
@@ -144,6 +144,7 @@
                     align-items: center !important;
                     visibility: visible !important;
                     opacity: 1 !important;
+                    transform: translateZ(0) !important;
                 `;
                 document.getElementById('customRuleForm')?.reset();
                 console.log('✅ Modal opened with inline styles');
@@ -153,6 +154,10 @@
                 console.log('Computed display:', computed.display);
                 console.log('Computed z-index:', computed.zIndex);
                 console.log('Modal offsetHeight:', modal.offsetHeight);
+                console.log('Modal rect:', modal.getBoundingClientRect());
+                
+                // Force repaint
+                modal.offsetHeight;
             } else {
                 console.error('❌ addRuleModal not found!');
             }
@@ -202,6 +207,7 @@
                     zIndex: window.getComputedStyle(modal).zIndex,
                     visibility: window.getComputedStyle(modal).visibility
                 });
+                console.log('Modal rect:', modal.getBoundingClientRect());
             }
             
             // Test if button click works
@@ -268,7 +274,7 @@
         .modal {
             display: none !important;
             position: fixed !important;
-            z-index: 99999 !important;
+            z-index: 9999999 !important;
             top: 0 !important;
             left: 0 !important;
             width: 100vw !important;
@@ -278,6 +284,23 @@
             align-items: center !important;
             overflow: hidden !important;
             pointer-events: auto !important;
+            transform: translateZ(0) !important;
+        }
+
+        /* Override ALL other modal styles */
+        #addRuleModal {
+            display: flex !important;
+            position: fixed !important;
+            z-index: 9999999 !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            background: rgba(0, 0, 0, 0.95) !important;
+            justify-content: center !important;
+            align-items: center !important;
+            visibility: visible !important;
+            opacity: 1 !important;
         }
         
         .modal[style*="flex"] {
@@ -296,7 +319,7 @@
         
         .modal-content {
             background: #ffffff !important;
-            border: 3px solid #ff0000 !important;
+            border: 5px solid #ff0000 !important;
             border-radius: 20px;
             padding: 2rem;
             max-width: 500px;
@@ -304,6 +327,9 @@
             position: relative;
             animation: modalSlideIn 0.3s ease-out;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
+            color: #000000 !important;
+            z-index: 9999999 !important;
+            transform: translateZ(0) !important;
         }
         
         @keyframes modalSlideIn {
