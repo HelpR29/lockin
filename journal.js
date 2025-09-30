@@ -152,6 +152,25 @@ async function saveTrade(e) {
             alert('Could not save the trade.');
         } else {
             closeModal('tradeModal');
+            
+            // Check for rule violations automatically
+            if (typeof checkTradeForViolations === 'function') {
+                const { data: savedTrade } = await supabase
+                    .from('trades')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .limit(1)
+                    .single();
+                
+                if (savedTrade) {
+                    const violations = await checkTradeForViolations(savedTrade);
+                    if (violations && violations.length > 0) {
+                        const violationMessages = violations.map(v => `• ${v.rule.rule}: ${v.reason}`).join('\n');
+                        alert(`⚠️ Rule Violations Detected:\n\n${violationMessages}\n\n-30 XP penalty applied for each violation.`);
+                    }
+                }
+            }
+            
             await loadTrades();
             
             // Update progress tracker immediately after saving
