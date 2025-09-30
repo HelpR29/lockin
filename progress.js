@@ -46,11 +46,20 @@ const calculateLevelBonus = (level) => {
     return 1.0 + (level * 0.05); // 5% bonus per level
 };
 
-// Achievement Bonus Calculation
+// Achievement Bonus Calculation (rarity-based)
 const calculateAchievementBonus = (achievements) => {
+    // Map rarity to multiplier so rarer achievements give more boost
+    const rarityMap = {
+        common: 1.02,
+        rare: 1.05,
+        epic: 1.1,
+        legendary: 1.2
+    };
     let bonus = 1.0;
-    achievements.forEach(achievement => {
-        bonus *= achievement.bonus_multiplier;
+    achievements.forEach(a => {
+        const rarity = (a.rarity || 'common').toLowerCase();
+        const mult = rarityMap[rarity] || 1.02;
+        bonus *= mult;
     });
     return bonus;
 };
@@ -211,7 +220,7 @@ async function performDailyCheckIn(userId, checkInData) {
             check_ins: progress.total_check_ins + 1,
             streak: newStreak,
             level: levelInfo.level,
-            completions: progress.completions,
+            beers_cracked: progress.beers_cracked,
             discipline_score: newDisciplineScore
         });
         
@@ -319,7 +328,7 @@ async function crackBeer(userId, completionData) {
         
         return {
             success: true,
-            beers_racked: newBeersCracked,
+            beers_cracked: newBeersCracked,
             bottlesRemaining: newBottlesRemaining,
             xpEarned: completionXP,
             leveledUp: levelInfo.level > progress.level,
@@ -455,13 +464,13 @@ async function checkAndUnlockAchievements(userId, stats) {
         if (newlyUnlocked.length > 0) {
             const { data: allUserAchievements } = await supabase
                 .from('user_achievements')
-                .select('achievement_id, achievements(bonus_multiplier)')
+                .select('achievement_id, achievements(rarity)')
                 .eq('user_id', userId);
-            
+
             const achievementBonus = calculateAchievementBonus(
-                allUserAchievements.map(ua => ({ bonus_multiplier: ua.achievements.bonus_multiplier }))
+                (allUserAchievements || []).map(ua => ({ rarity: ua.achievements?.rarity }))
             );
-            
+
             await supabase
                 .from('user_progress')
                 .update({ achievement_bonus: achievementBonus })
