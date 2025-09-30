@@ -39,8 +39,8 @@ async function signUp(email, password, fullName) {
         // Show success message
         alert('Account created successfully! Please check your email to verify your account.');
         
-        // Redirect to login or dashboard
-        window.location.href = 'login.html';
+        // Redirect to onboarding for first-time users
+        window.location.href = 'onboarding.html';
         
         return data;
     } catch (error) {
@@ -60,8 +60,19 @@ async function signIn(email, password) {
 
         if (error) throw error;
 
-        // Redirect to dashboard
-        window.location.href = 'dashboard.html';
+        // Check if user has completed onboarding
+        const { data: profile } = await supabase
+            .from('user_profiles')
+            .select('onboarding_completed')
+            .eq('user_id', data.user.id)
+            .single();
+        
+        // Redirect based on onboarding status
+        if (profile && profile.onboarding_completed) {
+            window.location.href = 'dashboard.html';
+        } else {
+            window.location.href = 'onboarding.html';
+        }
         
         return data;
     } catch (error) {
