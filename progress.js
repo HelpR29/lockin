@@ -73,7 +73,8 @@ const calculateTotalGrowth = (baseProgress, streak, level, achievements) => {
     return baseProgress * streakMultiplier * levelBonus * achievementBonus;
 };
 
-// Calculate projected final balance with compounding
+// Calculate projected final balance with COMPOUND growth
+// Each glass = 15% of CURRENT balance (compounding)
 const calculateProjectedBalance = (startingBalance, targetPercent, totalBottles) => {
     const multiplier = 1 + (targetPercent / 100);
     return startingBalance * Math.pow(multiplier, totalBottles);

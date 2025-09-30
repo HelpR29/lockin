@@ -432,6 +432,12 @@
                 });
             }
             
+            // Always show current balance as the latest point
+            if (goals.current_capital !== goals.starting_capital) {
+                chartData.labels.push('Current');
+                chartData.balances.push(goals.current_capital);
+            }
+            
             // Calculate stats
             const currentBalance = goals.current_capital;
             const totalGain = currentBalance - goals.starting_capital;
