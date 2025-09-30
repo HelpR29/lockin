@@ -120,8 +120,10 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="auth.js"></script>
+    <script src="rules-simple.js?v=3"></script>
+    <script src="script.js"></script>
     
-    <!-- Inline modal functions for immediate availability -->
+    <!-- Inline modal functions - MUST load after rules-simple.js -->
     <script>
         function openAddRuleModal() {
             console.log('🔥 openAddRuleModal called!');
@@ -214,9 +216,6 @@
             });
         });
     </script>
-    
-    <script src="rules-simple.js?v=2"></script>
-    <script src="script.js"></script>
     
     <style>
         /* Modal Styles */
