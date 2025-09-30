@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - LockIn</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Orbitron:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="bg-animation">
+        <div class="grid-overlay"></div>
+        <canvas id="particle-canvas"></canvas>
+    </div>
+    
+    <div class="container">
+        <!-- Header Section -->
+        <header class="header">
+            <div class="logo" onclick="window.location.href='index.html'" style="cursor: pointer;">
+                <div class="logo-icon-wrapper">
+                    <svg class="logo-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Outer circle -->
+                        <circle cx="50" cy="50" r="40" stroke="currentColor" stroke-width="6"/>
+                        <!-- Lock body -->
+                        <rect x="32" y="42" width="36" height="36" rx="4" fill="currentColor"/>
+                        <!-- Lock shackle -->
+                        <path d="M38 42V30C38 23.3726 43.3726 18 50 18C56.6274 18 62 23.3726 62 30V42" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>
+                        <!-- Keyhole -->
+                        <circle cx="50" cy="58" r="4" fill="#2C2C2E"/>
+                        <rect x="48" y="58" width="4" height="10" rx="2" fill="#2C2C2E"/>
+                    </svg>
+                </div>
+                <span class="logo-text">LockIn</span>
+            </div>
+            <nav class="nav">
+                <button class="cta-secondary" onclick="signOut()" style="padding: 0.6rem 1.5rem;">
+                    <span>Sign Out</span>
+                </button>
+            </nav>
+        </header>
+
+        <!-- Dashboard Section -->
+        <section class="dashboard-section">
+            <div class="dashboard-container">
+                <div class="dashboard-header">
+                    <h1 class="dashboard-title">Welcome, <span id="userName">Trader</span>! 🎯</h1>
+                    <p class="dashboard-subtitle">Your discipline journey starts here</p>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="dashboard-stats">
+                    <div class="stat-card">
+                        <div class="stat-card-icon">🍺</div>
+                        <div class="stat-card-value">0</div>
+                        <div class="stat-card-label">Completions</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-icon">📈</div>
+                        <div class="stat-card-value">$0</div>
+                        <div class="stat-card-label">Account Value</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-icon">🔥</div>
+                        <div class="stat-card-value">0</div>
+                        <div class="stat-card-label">Day Streak</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-icon">✅</div>
+                        <div class="stat-card-value">0%</div>
+                        <div class="stat-card-label">Success Rate</div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="dashboard-actions">
+                    <h2 class="section-title" style="font-size: 1.5rem; margin-bottom: 1.5rem;">Quick Actions</h2>
+                    <div class="action-buttons">
+                        <button class="action-button">
+                            <span class="action-icon">📝</span>
+                            <span>Log Trade</span>
+                        </button>
+                        <button class="action-button">
+                            <span class="action-icon">⚙️</span>
+                            <span>Set Rules</span>
+                        </button>
+                        <button class="action-button">
+                            <span class="action-icon">📊</span>
+                            <span>View Reports</span>
+                        </button>
+                        <button class="action-button">
+                            <span class="action-icon">🎯</span>
+                            <span>Set Goals</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="dashboard-recent">
+                    <h2 class="section-title" style="font-size: 1.5rem; margin-bottom: 1.5rem;">Recent Activity</h2>
+                    <div class="activity-list">
+                        <div class="activity-empty">
+                            <p>No activity yet. Start by logging your first trade!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="auth.js"></script>
+    <script>
+        // Check if user is logged in
+        async function initDashboard() {
+            const user = await checkAuth();
+            
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            // Display user name
+            const userName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Trader';
+            document.getElementById('userName').textContent = userName;
+        }
+        
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', initDashboard);
+    </script>
+    <script src="script.js"></script>
+</body>
+</html>
