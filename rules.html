@@ -56,8 +56,8 @@
                     </div>
 
                     <div class="rules-actions">
-                        <button class="cta-primary" onclick="window.openAddRuleModal()">+ Add Custom Rule</button>
-                        <button class="cta-secondary" onclick="window.openTemplateModal()">Add from Template</button>
+                        <button class="cta-primary" id="addCustomRuleBtn">+ Add Custom Rule</button>
+                        <button class="cta-secondary" id="addTemplateBtn">Add from Template</button>
                     </div>
                 </div>
             </div>
@@ -131,14 +131,12 @@
             console.log('Modal element:', modal);
             if (modal) {
                 console.log('Setting display to flex...');
-                modal.setAttribute('style', `
+                modal.style.cssText = `
                     display: flex !important;
                     position: fixed !important;
                     z-index: 999999 !important;
-                    left: 0 !important;
                     top: 0 !important;
-                    right: 0 !important;
-                    bottom: 0 !important;
+                    left: 0 !important;
                     width: 100vw !important;
                     height: 100vh !important;
                     background: rgba(0, 0, 0, 0.95) !important;
@@ -146,14 +144,15 @@
                     align-items: center !important;
                     visibility: visible !important;
                     opacity: 1 !important;
-                `);
+                `;
                 document.getElementById('customRuleForm')?.reset();
-                console.log('✅ Modal forcibly opened with inline styles');
-                
-                // Also log computed style to debug
+                console.log('✅ Modal opened with inline styles');
+
+                // Debug computed style
                 const computed = window.getComputedStyle(modal);
                 console.log('Computed display:', computed.display);
                 console.log('Computed z-index:', computed.zIndex);
+                console.log('Modal offsetHeight:', modal.offsetHeight);
             } else {
                 console.error('❌ addRuleModal not found!');
             }
@@ -186,53 +185,72 @@
         window.openModal = openModal;
         window.closeModal = closeModal;
         
+        // Debug function for troubleshooting
+        window.debugModal = function() {
+            console.log('🔍 Debug Info:');
+            console.log('Modal element exists:', !!document.getElementById('addRuleModal'));
+            console.log('Button exists:', !!document.getElementById('addCustomRuleBtn'));
+            console.log('Functions exist:', {
+                openAddRuleModal: typeof window.openAddRuleModal,
+                openTemplateModal: typeof window.openTemplateModal
+            });
+            
+            const modal = document.getElementById('addRuleModal');
+            if (modal) {
+                console.log('Modal computed styles:', {
+                    display: window.getComputedStyle(modal).display,
+                    zIndex: window.getComputedStyle(modal).zIndex,
+                    visibility: window.getComputedStyle(modal).visibility
+                });
+            }
+        };
+        
         console.log('✅ Modal functions loaded inline');
         
         // Add event listeners when DOM is ready
         document.addEventListener('DOMContentLoaded', () => {
             console.log('🔧 Attaching button listeners...');
             
-            // Find all "Add Custom Rule" buttons
-            const buttons = document.querySelectorAll('button');
-            buttons.forEach(btn => {
-                if (btn.textContent.includes('Add Custom Rule')) {
-                    console.log('Found Add Custom Rule button:', btn);
-                    btn.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        console.log('Button clicked!');
-                        openAddRuleModal();
-                    });
-                }
-                if (btn.textContent.includes('Add from Template')) {
-                    console.log('Found Add from Template button:', btn);
-                    btn.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        console.log('Template button clicked!');
-                        openTemplateModal();
-                    });
-                }
-            });
+            // Attach to specific button IDs
+            const addCustomBtn = document.getElementById('addCustomRuleBtn');
+            const addTemplateBtn = document.getElementById('addTemplateBtn');
+            
+            if (addCustomBtn) {
+                console.log('Found Add Custom Rule button:', addCustomBtn);
+                addCustomBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Add Custom Rule button clicked!');
+                    openAddRuleModal();
+                });
+            }
+            
+            if (addTemplateBtn) {
+                console.log('Found Add Template button:', addTemplateBtn);
+                addTemplateBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Add Template button clicked!');
+                    openTemplateModal();
+                });
+            }
         });
     </script>
     
     <style>
         /* Modal Styles */
         .modal {
-            display: none;
-            position: fixed;
+            display: none !important;
+            position: fixed !important;
             z-index: 99999 !important;
-            left: 0;
-            top: 0;
-            right: 0;
-            bottom: 0;
-            width: 100vw;
-            height: 100vh;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
             background-color: rgba(0, 0, 0, 0.95) !important;
-            justify-content: center;
-            align-items: center;
-            overflow: auto;
+            justify-content: center !important;
+            align-items: center !important;
+            overflow: hidden !important;
             pointer-events: auto !important;
         }
         
@@ -251,14 +269,15 @@
         }
         
         .modal-content {
-            background: var(--card-bg);
-            border: 1px solid var(--glass-border);
+            background: #ffffff !important;
+            border: 3px solid #ff0000 !important;
             border-radius: 20px;
             padding: 2rem;
             max-width: 500px;
             width: 90%;
             position: relative;
             animation: modalSlideIn 0.3s ease-out;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
         }
         
         @keyframes modalSlideIn {
