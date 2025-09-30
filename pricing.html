@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pricing - LockIn</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Orbitron:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="bg-animation">
+    <div class="grid-overlay"></div>
+    <canvas id="particle-canvas"></canvas>
+  </div>
+  <div class="container">
+    <header class="header">
+      <div class="logo" onclick="window.location.href='index.html'" style="cursor: pointer;">
+        <div class="logo-icon-wrapper">
+          <svg class="logo-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="50" cy="50" r="40" stroke="currentColor" stroke-width="6" />
+            <rect x="32" y="42" width="36" height="36" rx="4" fill="currentColor" />
+            <path d="M38 42V30C38 23.3726 43.3726 18 50 18C56.6274 18 62 23.3726 62 30V42" stroke="currentColor" stroke-width="6" stroke-linecap="round" />
+            <circle cx="50" cy="58" r="4" fill="#2C2C2E" />
+            <rect x="48" y="58" width="4" height="10" rx="2" fill="#2C2C2E" />
+          </svg>
+        </div>
+        <span class="logo-text">LockIn</span>
+      </div>
+      <nav class="nav">
+        <button class="cta-secondary" onclick="window.location.href='dashboard.html'" style="padding: 0.7rem 1.8rem;">
+          <span>Dashboard</span>
+        </button>
+      </nav>
+    </header>
+
+    <section class="dashboard-section">
+      <div class="dashboard-container">
+        <div class="dashboard-header">
+          <h1 class="dashboard-title">Choose Your Plan</h1>
+          <p class="dashboard-subtitle">Upgrade to unlock advanced analytics and more.</p>
+        </div>
+
+        <div class="features-grid" style="max-width:1000px;margin:0 auto;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));">
+          <div class="feature-card">
+            <div class="feature-glow"></div>
+            <h3 class="feature-title">Free</h3>
+            <p class="feature-description">$0 / forever</p>
+            <ul style="text-align:left; margin:1rem 0; color: var(--text-secondary);">
+              <li>• Basic analytics</li>
+              <li>• Progress tracker</li>
+              <li>• Journaling</li>
+            </ul>
+            <button class="cta-secondary" onclick="selectPlan('free')">Stay on Free</button>
+          </div>
+
+          <div class="feature-card" style="border:1px solid var(--primary-orange)">
+            <div class="feature-glow"></div>
+            <h3 class="feature-title">Premium Monthly</h3>
+            <p class="feature-description">$9 / month</p>
+            <ul style="text-align:left; margin:1rem 0; color: var(--text-secondary);">
+              <li>• Advanced analytics</li>
+              <li>• Weekly & Monthly reports</li>
+              <li>• Priority features</li>
+            </ul>
+            <button class="cta-primary" onclick="selectPlan('premium_monthly')">Upgrade $9/mo</button>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-glow"></div>
+            <h3 class="feature-title">Premium Yearly</h3>
+            <p class="feature-description">$99 / year</p>
+            <ul style="text-align:left; margin:1rem 0; color: var(--text-secondary);">
+              <li>• All Premium features</li>
+              <li>• 2 months free</li>
+            </ul>
+            <button class="cta-primary" onclick="selectPlan('premium_yearly')">Upgrade Yearly</button>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-glow"></div>
+            <h3 class="feature-title">Lifetime</h3>
+            <p class="feature-description">$199 one-time</p>
+            <ul style="text-align:left; margin:1rem 0; color: var(--text-secondary);">
+              <li>• All Premium features</li>
+              <li>• Lifetime access</li>
+            </ul>
+            <button class="cta-primary" onclick="selectPlan('lifetime')">Get Lifetime</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="auth.js"></script>
+  <script src="pricing.js"></script>
+</body>
+</html>
