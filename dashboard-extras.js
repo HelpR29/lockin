@@ -1,4 +1,28 @@
-// Dashboard Extras: Recent Activity, Profile, Settings, Leaderboard
+// Dashboard Extras: Recent Activity, Profile, Settings, Leaderboard, Social Sharing
+
+// Quick Share Button (for when user cracks a glass)
+async function showQuickShareButton() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const [progressRes, customRes] = await Promise.all([
+        supabase.from('user_progress').select('*').eq('user_id', user.id).single(),
+        supabase.from('user_customization').select('*').eq('user_id', user.id).single()
+    ]);
+
+    const progress = progressRes.data;
+    const username = user.user_metadata?.full_name || 'Trader';
+
+    // Show share prompt
+    if (confirm('🎉 Glass cracked! Share your achievement?')) {
+        await shareCard('completion', {
+            username,
+            completions: progress.beers_cracked,
+            streak: progress.current_streak || 0,
+            discipline: 100 // Calculate from trades/violations
+        });
+    }
+}
 
 // Load Recent Activity (trades)
 async function loadRecentActivity() {
