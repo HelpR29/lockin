@@ -104,11 +104,27 @@ async function openProfileModal() {
     // Derive level from XP to avoid stale DB level mismatch
     const xp = (progress?.experience ?? 0);
     let derived = null;
+    // Inline fallback identical to progress.js
+    function _calcLevelFromXP_local(val) {
+        let level = 1;
+        let totalXPNeeded = 0;
+        let nextLevelXP = 100;
+        while (val >= totalXPNeeded + nextLevelXP) {
+            totalXPNeeded += nextLevelXP;
+            level++;
+            nextLevelXP = Math.floor(100 * Math.pow(1.5, level - 1));
+        }
+        return { level, nextLevelXP };
+    }
     try {
         if (typeof calculateLevelFromXP === 'function') {
             derived = calculateLevelFromXP(xp);
+        } else {
+            derived = _calcLevelFromXP_local(xp);
         }
-    } catch (_) { /* ignore */ }
+    } catch (_) {
+        derived = _calcLevelFromXP_local(xp);
+    }
     const displayLevel = (derived?.level ?? progress?.level ?? 1);
     
     // Fetch avatar from onboarding (with error handling)
