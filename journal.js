@@ -13,8 +13,7 @@ window.openViolationsModal = async function openViolationsModal(tradeId) {
         const { data: viols } = await supabase
             .from('rule_violations')
             .select('id, rule_id, notes, violation_date, violated_at')
-            .eq('trade_id', tradeId)
-            .order('violation_date', { ascending: false });
+            .eq('trade_id', tradeId);
 
         const list = viols || [];
         // Attempt to fetch rule texts from both possible tables
@@ -33,6 +32,7 @@ window.openViolationsModal = async function openViolationsModal(tradeId) {
             }
             items.push({ when: v.violation_date || v.violated_at, rule: ruleText, notes: v.notes });
         }
+        items.sort((a,b) => new Date(b.when||0) - new Date(a.when||0));
 
         const modal = document.createElement('div');
         modal.className = 'modal';
