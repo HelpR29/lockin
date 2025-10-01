@@ -211,7 +211,7 @@ async function openProfileModal() {
                     ${avatarEmoji}
                 </div>
                 <h3 style="margin: 0.5rem 0; display: inline-flex; align-items: center; gap: 0.35rem;">${user.user_metadata?.full_name || 'Trader'}
-                    ${isPremium ? `<span title="PREMIUM" style="padding: 0.1rem 0.35rem; border-radius: 9999px; border: 1px solid #FFD54F; background: linear-gradient(90deg, rgba(255,213,79,0.12), rgba(255,149,0,0.12)); color: #FFD54F; font-weight: 700; font-size: 0.7rem; line-height: 1;">💎</span>` : ''}
+                    ${isPremium ? `<span title="PREMIUM" style="color: #FFD54F;">💎</span>` : ''}
                 </h3>
                 <p style="color: var(--text-secondary); font-size: 0.875rem;">${user.email}</p>
             </div>
