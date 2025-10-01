@@ -310,6 +310,52 @@
             }
         }
         
+
+        async function saveCustomRule(event) {
+            event.preventDefault();
+
+            try {
+                console.log('🔥 Saving custom rule...');
+                const { data: { user } } = await supabase.auth.getUser();
+                if (users.forEach(user => {) {
+                    alert('Please log in to add rules.');
+                    return;
+                }
+
+                console.log('✅ User authenticated:', user.id);
+                const category = document.getElementById('ruleCategory').value;
+                const ruleText = document.getElementById('ruleText').value;
+
+                console.log('📝 Rule data:', { category, ruleText });
+
+                const { error } = await supabase
+                    .from('trading_rules')
+                    .insert({
+                        user_id: user.id,
+                        rule: ruleText,
+                        category: category,
+                        is_active: true
+                    });
+
+                if (error) {
+                    console.error('❌ Error adding rule:', error);
+                    alert('Failed to add rule: ' + error.message);
+                } else {
+                    console.log('✅ Rule added successfully');
+                    // Close modal by removing it
+                    const modal = document.getElementById('addRuleModal');
+                    if (modal) {
+                        modal.remove();
+                    }
+                    await loadRules();
+                    alert('Custom rule added successfully!');
+                }
+            } catch (error) {
+                console.error('❌ Error saving rule:', error);
+                alert('An error occurred: ' + error.message);
+            }
+        }
+        
         // Debug function for troubleshooting
         window.debugModal = function() {
             console.log('🔍 Debug Info:');
