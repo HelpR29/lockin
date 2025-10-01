@@ -346,9 +346,6 @@ async function editRule(id, currentRule, category) {
                 alert('Failed to update rule: ' + error.message);
             } else {
                 console.log('✅ Rule updated successfully');
-                await loadRules();
-                // Show success message
-                console.log('🔄 Refreshing rules list...');
                 // Force a page reload to ensure fresh data
                 setTimeout(() => {
                     window.location.reload();
@@ -358,6 +355,7 @@ async function editRule(id, currentRule, category) {
             console.error('Error updating rule:', error);
             alert('An error occurred: ' + error.message);
         }
+    }
 }
 
 // Delete Rule Function
