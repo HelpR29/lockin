@@ -210,26 +210,26 @@
                                 <div style="font-size: 0.75rem; color: var(--text-secondary);">Avg P&L</div>
                                 <div style="font-size: 1.25rem; font-weight: 700; color: var(--primary);" id="avgPnl">$0</div>
                             </div>
-                            <div style="background: rgba(255, 149, 0, 0.1); padding: 0.75rem; border-radius: 8px; text-align: center;">
+                            <div style="background: rgba(255, 149, 0, 0.1); padding: 0.75rem; border-radius: 8px; text-align: center;" data-premium="true">
                                 <div style="font-size: 0.75rem; color: var(--text-secondary);">Day Win %</div>
                                 <div style="font-size: 1.25rem; font-weight: 700;" id="dayWinRate">--%</div>
                             </div>
-                            <div style="background: rgba(244, 67, 54, 0.1); padding: 0.75rem; border-radius: 8px; text-align: center;">
+                            <div style="background: rgba(244, 67, 54, 0.1); padding: 0.75rem; border-radius: 8px; text-align: center;" data-premium="true">
                                 <div style="font-size: 0.75rem; color: var(--text-secondary);">Max Drawdown</div>
                                 <div style="font-size: 1.25rem; font-weight: 700;" id="maxDrawdown">$0</div>
                             </div>
-                            <div style="background: rgba(76, 175, 80, 0.1); padding: 0.75rem; border-radius: 8px; text-align: center;">
+                            <div style="background: rgba(76, 175, 80, 0.1); padding: 0.75rem; border-radius: 8px; text-align: center;" data-premium="true">
                                 <div style="font-size: 0.75rem; color: var(--text-secondary);">Avg Win</div>
                                 <div style="font-size: 1.25rem; font-weight: 700; color: #4CAF50;" id="avgWin">$0</div>
                             </div>
-                            <div style="background: rgba(244, 67, 54, 0.1); padding: 0.75rem; border-radius: 8px; text-align: center;">
+                            <div style="background: rgba(244, 67, 54, 0.1); padding: 0.75rem; border-radius: 8px; text-align: center;" data-premium="true">
                                 <div style="font-size: 0.75rem; color: var(--text-secondary);">Avg Loss</div>
                                 <div style="font-size: 1.25rem; font-weight: 700; color: #F44336;" id="avgLoss">$0</div>
                             </div>
                         </div>
                         
                         <!-- Cumulative P&L Chart (Premium) -->
-                        <div id="cumulativeChartContainer" style="background: var(--card-bg); border: 1px solid var(--glass-border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; display: none;">
+                        <div id="cumulativeChartContainer" data-premium="true" style="background: var(--card-bg); border: 1px solid var(--glass-border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; display: none;">
                             <h4 style="margin: 0 0 1rem 0;">📈 Cumulative P&L</h4>
                             <div style="height: 200px;">
                                 <canvas id="cumulativePnLChart"></canvas>
@@ -368,6 +368,7 @@
     <!-- Chart.js for Price Charts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="auth.js"></script>
