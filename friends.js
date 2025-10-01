@@ -8,6 +8,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         await loadFriendData();
         await loadLeaderboard();
+
+        // Wire ranking controls
+        const sortSel = document.getElementById('rankingSortSelect');
+        const filterSel = document.getElementById('rankingFilterSelect');
+        if (sortSel) sortSel.addEventListener('change', () => loadLeaderboard());
+        if (filterSel) filterSel.addEventListener('change', () => loadLeaderboard());
     } catch (error) {
         console.error('Error initializing friends:', error);
         alert('Failed to load friends. Please refresh the page.');
@@ -192,12 +198,41 @@ async function loadLeaderboard() {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        // Fetch top 50 users by XP
-        const { data: leaderboard, error } = await supabase
+        // Show skeleton while loading
+        const leaderboardEl = document.getElementById('leaderboardList');
+        if (leaderboardEl) {
+            leaderboardEl.innerHTML = Array.from({length: 6}).map(() => `
+                <div class="user-item" style="opacity:0.6;">
+                    <div style="display:flex; align-items:center; gap:0.75rem; width:100%;">
+                        <div style="width:2.5rem; height:1rem; background: rgba(255,255,255,0.07); border-radius:4px;"></div>
+                        <div style="flex:1; height:1rem; background: rgba(255,255,255,0.07); border-radius:4px;"></div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Inputs
+        const sortSel = document.getElementById('rankingSortSelect');
+        const filterSel = document.getElementById('rankingFilterSelect');
+        const sortVal = sortSel ? sortSel.value : 'xp';
+        const filterVal = filterSel ? filterSel.value : 'all';
+
+        // Build base query
+        let query = supabase
             .from('user_progress')
-            .select('user_id, experience, level')
-            .order('experience', { ascending: false })
-            .limit(50);
+            .select('user_id, experience, level');
+
+        // Order by
+        if (sortVal === 'level') query = query.order('level', { ascending: false });
+        else if (sortVal === 'username') {
+            // We'll sort by username client-side after join, so use XP as secondary order
+            query = query.order('experience', { ascending: false });
+        } else {
+            query = query.order('experience', { ascending: false });
+        }
+
+        query = query.limit(100);
+        const { data: leaderboard, error } = await query;
 
         if (error) {
             console.error('Error loading leaderboard:', error);
@@ -219,10 +254,34 @@ async function loadLeaderboard() {
         const profileMap = new Map();
         (profiles || []).forEach(p => profileMap.set(p.user_id, { username: p.username || 'User', is_premium: !!p.is_premium }));
 
-        const leaderboardEl = document.getElementById('leaderboardList');
-        leaderboardEl.innerHTML = '';
+        // Apply filter: friends only
+        let rows = leaderboard;
+        if (filterVal === 'friends') {
+            // Use existing friendships to filter
+            const { data: friendships } = await supabase
+                .from('friends')
+                .select('user_id_1, user_id_2, status')
+                .or(`user_id_1.eq.${user.id},user_id_2.eq.${user.id}`);
+            const friendIds = new Set();
+            (friendships || []).forEach(f => {
+                if (f.status === 'accepted') friendIds.add(f.user_id_1 === user.id ? f.user_id_2 : f.user_id_1);
+            });
+            rows = rows.filter(r => friendIds.has(r.user_id));
+        }
 
-        leaderboard.forEach((entry, index) => {
+        // Client sort by username if selected
+        if (sortVal === 'username') {
+            rows = rows.sort((a, b) => {
+                const A = (profileMap.get(a.user_id)?.username || '').toLowerCase();
+                const B = (profileMap.get(b.user_id)?.username || '').toLowerCase();
+                return A.localeCompare(B);
+            });
+        }
+
+        const leaderboardEl2 = document.getElementById('leaderboardList');
+        leaderboardEl2.innerHTML = '';
+
+        rows.forEach((entry, index) => {
             const profile = profileMap.get(entry.user_id) || { username: 'User', is_premium: false };
             const badge = profile.is_premium ? '<span title="PREMIUM" style="color: #FFD54F; margin-left: 0.25rem;">💎</span>' : '';
             const isCurrentUser = entry.user_id === user.id;
@@ -242,7 +301,7 @@ async function loadLeaderboard() {
                     </div>
                 </div>
             `;
-            leaderboardEl.appendChild(itemEl);
+            leaderboardEl2.appendChild(itemEl);
         });
     } catch (error) {
         console.error('Error loading leaderboard:', error);
