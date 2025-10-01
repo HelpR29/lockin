@@ -776,6 +776,47 @@
         @media (max-width: 1360px) {
             #signOutBtn { margin-left: 0.5rem !important; padding: 0.5rem 1rem !important; }
         }
+
+        /* ===== Dashboard cards spacing ===== */
+        .beer-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            column-gap: 1.25rem; /* 20px */
+            row-gap: 1.25rem;
+            margin-top: 0.75rem;
+        }
+        .beer-stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1rem 1.25rem;
+        }
+        .dashboard-stats {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            column-gap: 1.25rem;
+            row-gap: 1.25rem;
+            margin-top: 1rem;
+        }
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1.25rem;
+        }
+        .level-progress-section { margin-top: 1.25rem; }
+
+        /* Responsive columns for stats */
+        @media (max-width: 1200px) {
+            .dashboard-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        }
+        @media (max-width: 992px) {
+            .beer-stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .dashboard-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+        @media (max-width: 640px) {
+            .beer-stats-grid, .dashboard-stats { grid-template-columns: 1fr; }
+        }
     
         .share-modal {
             display: flex;
