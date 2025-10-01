@@ -3,25 +3,42 @@
 // Load user profile and display username
 async function loadUserProfile() {
     try {
+        console.log('🔄 Loading user profile...');
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
+        if (!user) {
+            console.error('❌ No user found');
+            return;
+        }
+        
+        console.log('👤 User ID:', user.id);
 
         // Get username from user_profiles table
-        const { data: profile } = await supabase
+        const { data: profile, error } = await supabase
             .from('user_profiles')
             .select('username, avatar')
             .eq('user_id', user.id)
             .single();
 
+        if (error) {
+            console.error('❌ Error fetching profile:', error);
+            return;
+        }
+        
+        console.log('📊 Profile data:', profile);
+
         if (profile && profile.username) {
             const userNameEl = document.getElementById('userName');
             if (userNameEl) {
                 userNameEl.textContent = profile.username;
+                console.log('✅ Updated username to:', profile.username);
+            } else {
+                console.error('❌ userName element not found in DOM');
             }
-            console.log('✅ Loaded username:', profile.username);
+        } else {
+            console.warn('⚠️ No username in profile:', profile);
         }
     } catch (error) {
-        console.error('Error loading user profile:', error);
+        console.error('❌ Error loading user profile:', error);
     }
 }
 
