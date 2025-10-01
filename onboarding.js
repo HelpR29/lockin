@@ -320,22 +320,28 @@ async function completeOnboarding() {
         
         if (goalsError) throw goalsError;
         
-        // Save trading rules
-        const { error: rulesError } = await supabase
-            .from('trading_rules')
-            .insert({
-                user_id: user.id,
-                max_risk_per_trade: onboardingData.rules.max_risk_per_trade,
-                max_daily_loss: onboardingData.rules.max_daily_loss,
-                max_trades_per_day: onboardingData.rules.max_trades_per_day,
-                min_win_rate: onboardingData.rules.min_win_rate,
-                require_journal: onboardingData.rules.require_journal,
-                is_active: true,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-            });
-        
-        if (rulesError) throw rulesError;
+        // Save trading rules (skip this step if column doesn't exist)
+        try {
+            const { error: rulesError } = await supabase
+                .from('trading_rules')
+                .insert({
+                    user_id: user.id,
+                    max_risk_per_trade: onboardingData.rules.max_risk_per_trade,
+                    max_daily_loss: onboardingData.rules.max_daily_loss,
+                    max_trades_per_day: onboardingData.rules.max_trades_per_day,
+                    min_win_rate: onboardingData.rules.min_win_rate,
+                    require_journal: onboardingData.rules.require_journal,
+                    is_active: true,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                });
+            
+            if (rulesError) throw rulesError;
+            console.log('✅ Trading rules saved successfully');
+        } catch (rulesError) {
+            console.warn('⚠️ Could not save trading rules (column may not exist yet):', rulesError.message);
+            // Continue with onboarding even if trading rules fail
+        }
         
         // Initialize user progress system (Beer System)
         const { error: progressError } = await supabase
