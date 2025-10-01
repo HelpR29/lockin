@@ -441,7 +441,7 @@ function showOnboardingSuccess() {
                 <h2 style="color: var(--success, #4CAF50); margin-bottom: 1rem;">Setup Complete!</h2>
                 <p style="margin-bottom: 1rem;">Welcome to LockIn! Your trading discipline journey begins now.</p>
                 <p style="color: var(--text-secondary); font-size: 0.9rem;">
-                    Redirecting to your dashboard in 2 seconds...
+                    Redirecting to your dashboard in 4 seconds...
                 </p>
                 <div style="
                     margin-top: 1.5rem;
@@ -455,7 +455,7 @@ function showOnboardingSuccess() {
                         width: 100%;
                         height: 100%;
                         background: var(--primary);
-                        animation: progressBar 2.5s linear;
+                        animation: progressBar 4s linear;
                     "></div>
                 </div>
             </div>
