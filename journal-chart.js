@@ -1,52 +1,106 @@
-// P&L Chart Integration
-// Tracks profit/loss over time
+// P&L Chart Integration using AlphaVantage + Chart.js
+// Tracks profit/loss over time and displays trade price charts
 
-let pnlChart = null;
+let journalChart = null;
+let currentTradeForChart = null;
 
 // Initialize chart on page load
 document.addEventListener('DOMContentLoaded', async () => {
-    await initializePnLChart();
+    const canvas = document.getElementById('tradeChartCanvas');
+    if (canvas) {
+        await initializeJournalChart();
+    }
 });
 
 async function initializeJournalChart() {
     try {
-        const container = document.getElementById('chartContainerJournal');
-        if (!container) return;
+        const canvas = document.getElementById('tradeChartCanvas');
+        if (!canvas) {
+            console.warn('Trade chart canvas not found');
+            return;
+        }
         
-        const config = {
-            width: container.offsetWidth,
-            height: container.offsetHeight,
-            theme: {
-                candle: {
-                    UpBodyColour: "#26a69a",
-                    UpWickColour: "#26a69a", 
-                    DnBodyColour: "#ef5350",
-                    DnWickColour: "#ef5350"
+        const ctx = canvas.getContext('2d');
+        
+        // Initialize empty Chart.js chart
+        journalChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Price',
+                    data: [],
+                    borderColor: '#FF9500',
+                    backgroundColor: 'rgba(255, 149, 0, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        labels: {
+                            color: '#fff'
+                        }
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        borderColor: '#FF9500',
+                        borderWidth: 1
+                    }
                 },
-                volume: {
-                    UpColour: "#26a69a80",
-                    DnColour: "#ef535080"
+                scales: {
+                    x: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: '#999'
+                        }
+                    },
+                    y: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: '#999'
+                        }
+                    }
                 }
             }
-        };
+        });
         
-        // Initialize chart (will show empty until trade is selected)
-        journalChart = new TradeXChart(container, config);
+        console.log('✅ Journal chart initialized');
         
     } catch (error) {
         console.error('Error initializing journal chart:', error);
     }
 }
 
-// Load chart for specific trade
+// Load chart for specific trade using AlphaVantage data
 async function loadTradeChart(trade) {
     try {
+        if (!journalChart) {
+            console.log('Chart not initialized, initializing now...');
+            await initializeJournalChart();
+        }
+        
         currentTradeForChart = trade;
+        
+        console.log('Loading chart for trade:', trade.symbol);
         
         // Determine asset type from symbol
         const isStock = !trade.symbol.includes('USDT') && !trade.symbol.includes('BTC') && !trade.symbol.includes('/');
         
-        // Fetch chart data
+        // Fetch chart data from AlphaVantage (stocks) or Binance (crypto)
         let chartData;
         if (isStock) {
             chartData = await fetchStockDataForTrade(trade.symbol);
@@ -58,12 +112,22 @@ async function loadTradeChart(trade) {
             throw new Error('No chart data available');
         }
         
-        // Update chart with data
+        // Update Chart.js with new data
         if (journalChart) {
-            journalChart.setData(chartData);
+            const labels = chartData.map(d => new Date(d.time).toLocaleDateString());
+            const prices = chartData.map(d => d.close);
             
-            // Add trade level markers
-            addTradeLevelMarkers(trade);
+            journalChart.data.labels = labels;
+            journalChart.data.datasets[0].data = prices;
+            journalChart.data.datasets[0].label = `${trade.symbol} - ${trade.direction.toUpperCase()}`;
+            
+            // Add horizontal lines for entry, stop, target
+            journalChart.options.plugins.annotation = {
+                annotations: createTradeAnnotations(trade)
+            };
+            
+            journalChart.update();
+            console.log('✅ Chart updated with', chartData.length, 'data points');
         }
         
         // Update chart info
@@ -71,64 +135,89 @@ async function loadTradeChart(trade) {
         
     } catch (error) {
         console.error('Error loading trade chart:', error);
-        alert('Could not load chart for this symbol. Try a different timeframe or symbol.');
+        alert('Could not load chart data. AlphaVantage API limit may be reached or symbol not found.');
     }
 }
 
-function addTradeLevelMarkers(trade) {
-    if (!journalChart) return;
-    
-    // Add horizontal lines for entry, exit, stop, target
-    const markers = [];
+// Create annotation lines for Chart.js
+function createTradeAnnotations(trade) {
+    const annotations = {};
     
     // Entry level (green)
     if (trade.entry_price) {
-        markers.push({
-            type: 'horizontal',
-            price: trade.entry_price,
-            color: '#4CAF50',
-            label: `Entry: ${trade.entry_price}`,
-            width: 2
-        });
+        annotations.entryLine = {
+            type: 'line',
+            yMin: trade.entry_price,
+            yMax: trade.entry_price,
+            borderColor: '#4CAF50',
+            borderWidth: 2,
+            label: {
+                display: true,
+                content: `Entry: $${trade.entry_price}`,
+                position: 'end',
+                backgroundColor: '#4CAF50',
+                color: '#fff'
+            }
+        };
     }
     
     // Exit level (blue)
     if (trade.exit_price) {
-        markers.push({
-            type: 'horizontal',
-            price: trade.exit_price,
-            color: '#2196F3',
-            label: `Exit: ${trade.exit_price}`,
-            width: 2
-        });
+        annotations.exitLine = {
+            type: 'line',
+            yMin: trade.exit_price,
+            yMax: trade.exit_price,
+            borderColor: '#2196F3',
+            borderWidth: 2,
+            label: {
+                display: true,
+                content: `Exit: $${trade.exit_price}`,
+                position: 'end',
+                backgroundColor: '#2196F3',
+                color: '#fff'
+            }
+        };
     }
     
-    // Stop loss (red)
+    // Stop loss (red, dashed)
     if (trade.stop_loss) {
-        markers.push({
-            type: 'horizontal',
-            price: trade.stop_loss,
-            color: '#F44336',
-            label: `Stop: ${trade.stop_loss}`,
-            width: 2,
-            style: 'dashed'
-        });
+        annotations.stopLine = {
+            type: 'line',
+            yMin: trade.stop_loss,
+            yMax: trade.stop_loss,
+            borderColor: '#F44336',
+            borderWidth: 2,
+            borderDash: [5, 5],
+            label: {
+                display: true,
+                content: `Stop: $${trade.stop_loss}`,
+                position: 'start',
+                backgroundColor: '#F44336',
+                color: '#fff'
+            }
+        };
     }
     
-    // Target price (yellow)
+    // Target price (yellow, dashed)
     if (trade.target_price) {
-        markers.push({
-            type: 'horizontal',
-            price: trade.target_price,
-            color: '#FFC107',
-            label: `Target: ${trade.target_price}`,
-            width: 2,
-            style: 'dashed'
-        });
+        annotations.targetLine = {
+            type: 'line',
+            yMin: trade.target_price,
+            yMax: trade.target_price,
+            borderColor: '#FFC107',
+            borderWidth: 2,
+            borderDash: [5, 5],
+            label: {
+                display: true,
+                content: `Target: $${trade.target_price}`,
+                position: 'start',
+                backgroundColor: '#FFC107',
+                color: '#000'
+            }
+        };
     }
     
-    // Apply markers to chart
-    journalChart.addMarkers(markers);
+    return annotations;
 }
 
 function updateChartInfo(trade) {

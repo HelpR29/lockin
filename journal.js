@@ -203,7 +203,22 @@ function openLogTradeModal() {
     document.getElementById('tradeId').value = '';
     document.getElementById('tradeModalTitle').textContent = 'Log New Trade';
     document.querySelectorAll('.emotion-tags .tag').forEach(tag => tag.classList.remove('selected'));
+    
+    // Show trade type fields based on selection
+    const tradeTypeSelect = document.getElementById('tradeType');
+    if (tradeTypeSelect) {
+        tradeTypeSelect.dispatchEvent(new Event('change'));
+    }
+    
     openModal('tradeModal');
+}
+
+function closeModal(id) {
+    const modal = document.getElementById(id);
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
 
 function openModal(id) {
     const modal = document.getElementById(id);
@@ -361,5 +376,3 @@ window.viewTradeOnChart = viewTradeOnChart;
 window.closeTrade = closeTrade;
 window.recalculateUserLevel = recalculateUserLevel;
 window.calculateLevelFromXP = calculateLevelFromXP;
-
-}
