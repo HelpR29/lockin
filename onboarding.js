@@ -236,6 +236,38 @@ async function completeOnboarding() {
         
         console.log('Saving onboarding data:', onboardingData);
         
+        // Clean up any existing incomplete records first
+        try {
+            // Delete any existing incomplete user_profiles record
+            await supabase
+                .from('user_profiles')
+                .delete()
+                .eq('user_id', user.id)
+                .eq('onboarding_completed', false);
+            
+            // Delete any existing user_goals record (in case of incomplete onboarding)
+            await supabase
+                .from('user_goals')
+                .delete()
+                .eq('user_id', user.id);
+                
+            // Delete any existing trading_rules record (in case of incomplete onboarding)
+            await supabase
+                .from('trading_rules')
+                .delete()
+                .eq('user_id', user.id);
+                
+            // Delete any existing user_progress record (in case of incomplete onboarding)
+            await supabase
+                .from('user_progress')
+                .delete()
+                .eq('user_id', user.id);
+                
+            console.log('✅ Cleaned up any existing incomplete records');
+        } catch (cleanupError) {
+            console.log('Cleanup warning (non-critical):', cleanupError);
+        }
+        
         // Update auth user metadata with full name
         await supabase.auth.updateUser({
             data: {
