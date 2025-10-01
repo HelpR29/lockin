@@ -21,13 +21,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     
     // Check if user has already completed onboarding
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
         .from('user_profiles')
         .select('*')
         .eq('user_id', user.id)
         .single();
     
+    // If profile doesn't exist or there's an error, user needs to complete onboarding
+    if (profileError || !profile) {
+        console.log('No profile found or error fetching profile, user needs onboarding');
+        return; // Stay on onboarding page
+    }
+    
+    // If profile exists but onboarding is not completed, also stay on onboarding
+    if (profile && !profile.onboarding_completed) {
+        console.log('Profile exists but onboarding not completed, continuing onboarding');
+        return; // Stay on onboarding page
+    }
+    
+    // Only redirect to dashboard if onboarding is fully completed
     if (profile && profile.onboarding_completed) {
+        console.log('Onboarding already completed, redirecting to dashboard');
         window.location.href = 'dashboard.html';
     }
 });
@@ -276,7 +290,8 @@ async function completeOnboarding() {
                 min_win_rate: onboardingData.rules.min_win_rate,
                 require_journal: onboardingData.rules.require_journal,
                 is_active: true,
-                created_at: new Date().toISOString()
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
             });
         
         if (rulesError) throw rulesError;
