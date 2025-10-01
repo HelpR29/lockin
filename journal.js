@@ -13,6 +13,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadTrades();
 
     document.getElementById('tradeForm').addEventListener('submit', saveTrade);
+    // Toggle Exit field based on Status
+    const statusSel = document.getElementById('status');
+    if (statusSel) {
+        statusSel.addEventListener('change', handleStatusChange);
+        handleStatusChange();
+    }
     document.querySelectorAll('.emotion-tags .tag').forEach(tag => {
         tag.addEventListener('click', () => tag.classList.toggle('selected'));
     });
@@ -226,6 +232,8 @@ async function saveTrade(e) {
         const emotions = Array.from(document.querySelectorAll('.emotion-tags .tag.selected')).map(tag => tag.dataset.emotion);
 
         const tradeType = document.getElementById('tradeType').value;
+        const statusVal = document.getElementById('status').value;
+        const exitVal = statusVal === 'closed' ? (parseFloat(document.getElementById('exitPrice').value) || null) : null;
         
         const tradeData = {
             user_id: user.id,
@@ -233,13 +241,13 @@ async function saveTrade(e) {
             trade_type: tradeType,
             direction: document.getElementById('direction').value,
             entry_price: parseFloat(document.getElementById('entryPrice').value),
-            exit_price: parseFloat(document.getElementById('exitPrice').value) || null,
+            exit_price: exitVal,
             stop_loss: parseFloat(document.getElementById('stopLoss').value) || null,
             target_price: parseFloat(document.getElementById('targetPrice').value) || null,
             strike_price: (tradeType === 'call' || tradeType === 'put') ? parseFloat(document.getElementById('strikePrice').value) || null : null,
             expiry_date: (tradeType === 'call' || tradeType === 'put') ? document.getElementById('expiryDate').value || null : null,
             position_size: parseFloat(document.getElementById('positionSize').value),
-            status: document.getElementById('status').value,
+            status: statusVal,
             notes: document.getElementById('notes').value,
             emotions: emotions
         };

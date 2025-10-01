@@ -65,6 +65,14 @@
             width: 20px;
             height: 3px;
         }
+
+        /* Trade form layout and spacing improvements */
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .form-group { margin-bottom: 0.75rem; }
+        .emotion-tags { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.25rem; }
+        .emotion-tags .tag { padding: 0.4rem 0.8rem; border-radius: 999px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.05); }
+        #tradeForm .cta-primary-large { margin-top: 0.9rem; width: 100%; }
+        #notes { width: 100%; min-height: 110px; }
         
         @media (max-width: 1200px) {
             .journal-layout {
@@ -315,9 +323,9 @@
                         <label for="entryPrice">Entry Price</label>
                         <input type="number" id="entryPrice" step="any" required>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group" id="exitGroup" style="display: none;">
                         <label for="exitPrice">Exit Price</label>
-                        <input type="number" id="exitPrice" step="any">
+                        <input type="number" id="exitPrice" step="any" placeholder="Auto (set on close)">
                     </div>
                     <div class="form-group">
                         <label for="stopLoss">Stop Loss</label>
@@ -334,6 +342,7 @@
                     <div class="form-group">
                         <label for="status">Status</label>
                         <select id="status"><option value="open">Open</option><option value="closed">Closed</option></select>
+                        <div id="exitHint" style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.35rem;">Exit price is set automatically when you close the trade from the list.</div>
                     </div>
                     
                     <!-- Options-specific fields (hidden by default) -->
