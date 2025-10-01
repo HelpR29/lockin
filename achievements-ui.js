@@ -228,7 +228,7 @@ async function loadLeaderboard() {
         console.log('🏆 Leaderboard data with premium status (raw):', rows);
 
         // Fallback: if is_premium missing from view result, fetch from user_profiles
-        if (rows.length && rows.every(r => typeof r.is_premium === 'undefined')) {
+        if (rows.length && rows.every(r => r.is_premium == null)) {
             const ids = rows.map(r => r.user_id);
             const { data: profiles, error: profErr } = await supabase
                 .from('user_profiles')
@@ -241,6 +241,27 @@ async function loadLeaderboard() {
             } else {
                 console.warn('Could not enrich is_premium from user_profiles:', profErr);
             }
+        }
+
+        // Ensure current user's premium flag is correct
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const self = rows.find(r => r.user_id === user.id);
+                if (self && self.is_premium !== true) {
+                    const { data: me } = await supabase
+                        .from('user_profiles')
+                        .select('is_premium')
+                        .eq('user_id', user.id)
+                        .single();
+                    if (me?.is_premium) {
+                        self.is_premium = true;
+                        console.log('✅ Enforced premium for current user on leaderboard rendering');
+                    }
+                }
+            }
+        } catch (enrichErr) {
+            console.warn('Self premium enrichment failed:', enrichErr);
         }
 
         renderLeaderboard(rows);
