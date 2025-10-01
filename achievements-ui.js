@@ -4,6 +4,7 @@ let currentTab = 'achievements';
 
 // Initialize page
 document.addEventListener('DOMContentLoaded', async () => {
+    console.log('🧩 achievements-ui loaded');
     await loadStarBalance();
     await loadAchievements();
     await loadRewardShop();
@@ -223,8 +224,26 @@ async function loadLeaderboard() {
             .order('discipline_score', { ascending: false})
             .limit(50);
 
-        console.log('🏆 Leaderboard data with premium status:', leaderboard);
-        renderLeaderboard(leaderboard || []);
+        let rows = leaderboard || [];
+        console.log('🏆 Leaderboard data with premium status (raw):', rows);
+
+        // Fallback: if is_premium missing from view result, fetch from user_profiles
+        if (rows.length && rows.every(r => typeof r.is_premium === 'undefined')) {
+            const ids = rows.map(r => r.user_id);
+            const { data: profiles, error: profErr } = await supabase
+                .from('user_profiles')
+                .select('user_id, is_premium')
+                .in('user_id', ids);
+            if (!profErr && Array.isArray(profiles)) {
+                const map = new Map(profiles.map(p => [p.user_id, !!p.is_premium]));
+                rows = rows.map(r => ({ ...r, is_premium: map.get(r.user_id) || false }));
+                console.log('🔁 Enriched leaderboard with user_profiles.is_premium');
+            } else {
+                console.warn('Could not enrich is_premium from user_profiles:', profErr);
+            }
+        }
+
+        renderLeaderboard(rows);
     } catch (error) {
         console.error('Error loading leaderboard:', error);
     }
