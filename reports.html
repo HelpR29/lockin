@@ -29,9 +29,44 @@
                 </div>
                 <span class="logo-text">LockIn</span>
             </div>
-            <nav class="nav">
-                <button class="cta-secondary" onclick="window.location.href='dashboard.html'" style="padding: 0.7rem 1.8rem;">
-                    <span>Dashboard</span>
+            <nav class="nav" style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: nowrap; overflow: hidden;">
+                <a href="dashboard.html" style="color: var(--text-primary); text-decoration: none; padding: 0.5rem 1rem; border-radius: 8px; transition: background 0.3s; font-size: 0.9rem; display: flex; align-items: center; gap: 0.35rem;" onmouseover="this.style.background='rgba(255,149,0,0.1)'" onmouseout="this.style.background='transparent'">
+                    <span style="font-size: 1.1rem;">🏠</span>
+                    <span class="nav-label">Home</span>
+                </a>
+                <a href="journal.html" style="color: var(--text-primary); text-decoration: none; padding: 0.5rem 1rem; border-radius: 8px; transition: background 0.3s; font-size: 0.9rem; display: flex; align-items: center; gap: 0.35rem;" onmouseover="this.style.background='rgba(255,149,0,0.1)'" onmouseout="this.style.background='transparent'">
+                    <span style="font-size: 1.1rem;">📝</span>
+                    <span class="nav-label">Journal</span>
+                </a>
+                <a href="rules.html" style="color: var(--text-primary); text-decoration: none; padding: 0.5rem 1rem; border-radius: 8px; transition: background 0.3s; font-size: 0.9rem; display: flex; align-items: center; gap: 0.35rem;" onmouseover="this.style.background='rgba(255,149,0,0.1)'" onmouseout="this.style.background='transparent'">
+                    <span style="font-size: 1.1rem;">⚙️</span>
+                    <span class="nav-label">Rules</span>
+                </a>
+                <a href="reports.html" style="color: var(--text-primary); text-decoration: none; padding: 0.5rem 1rem; border-radius: 8px; transition: background 0.3s; font-size: 0.9rem; display: flex; align-items: center; gap: 0.35rem;" onmouseover="this.style.background='rgba(255,149,0,0.1)'" onmouseout="this.style.background='transparent'">
+                    <span style="font-size: 1.1rem;">📊</span>
+                    <span class="nav-label">Reports</span>
+                </a>
+                <a href="achievements.html" style="color: var(--text-primary); text-decoration: none; padding: 0.5rem 1rem; border-radius: 8px; transition: background 0.3s; font-size: 0.9rem; display: flex; align-items: center; gap: 0.35rem;" onmouseover="this.style.background='rgba(255,149,0,0.1)'" onmouseout="this.style.background='transparent'">
+                    <span style="font-size: 1.1rem;">🏆</span>
+                    <span class="nav-label">Achievements</span>
+                </a>
+                <a href="friends.html" style="color: var(--text-primary); text-decoration: none; padding: 0.5rem 1rem; border-radius: 8px; transition: background 0.3s; font-size: 0.9rem; display: flex; align-items: center; gap: 0.35rem;" onmouseover="this.style.background='rgba(255,149,0,0.1)'" onmouseout="this.style.background='transparent'">
+                    <span style="font-size: 1.1rem;">👥</span>
+                    <span class="nav-label">Friends</span>
+                </a>
+                <div class="notification-bell" style="position: relative; cursor: pointer; padding: 0.5rem;" onclick="toggleNotifications()">
+                    <span style="font-size: 1.5rem;">🔔</span>
+                    <span id="notificationBadge" class="notification-badge" style="display: none; position: absolute; top: 0; right: 0; background: var(--danger); color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 0.7rem; display: flex; align-items: center; justify-content: center; font-weight: bold;">0</span>
+                </div>
+                <div id="xpWidget" style="display: flex; align-items: center; gap: 0.5rem; margin-left: auto; max-width: 260px; min-width: 0; white-space: nowrap; overflow: hidden;">
+                    <span id="headerLevelLabel" style="font-size: 0.8rem; color: var(--text-secondary);">Lv <span id="headerCurrentLevel">1</span></span>
+                    <div id="headerXpBarContainer" style="width: 120px; height: 8px; background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border); border-radius: 6px; overflow: hidden; flex: 0 0 120px;" title="">
+                        <div id="headerXpBarFill" style="height: 100%; width: 0%; background: linear-gradient(90deg, #FF9500, #FFC107);"></div>
+                    </div>
+                    <span id="headerXpProgress" style="font-size: 0.75rem; color: var(--text-secondary); min-width: 70px; text-align: right;">0 / 100 XP</span>
+                </div>
+                <button class="cta-secondary" id="signOutBtn" onclick="handleSignOut();" style="padding: 0.6rem 1.5rem; margin-left: 1rem; cursor: pointer; pointer-events: auto; position: relative; z-index: 9999;">
+                    <span>Sign Out</span>
                 </button>
             </nav>
         </header>
@@ -105,6 +140,33 @@
     <script src="psychology-report.js"></script>
     <script src="reports.js"></script>
     <script src="script.js"></script>
+    <script src="dashboard-extras.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js" defer></script>
+    <script src="xp-live-update.js"></script>
+    <script>
+        // Header responsiveness and sign-out support
+        async function handleSignOut() {
+            try { await supabase.auth.signOut(); } catch(e) { console.error(e); }
+            localStorage.clear(); sessionStorage.clear(); window.location.replace('/index.html');
+        }
+        window.handleSignOut = handleSignOut;
+    </script>
+    <style>
+        /* Match dashboard header responsiveness */
+        #headerXpProgress { display: none; }
+        @media (max-width: 1700px) {
+            .header .nav { gap: 0.45rem !important; }
+            .header .nav a { padding: 0.5rem 0.75rem !important; }
+            .header .nav .nav-label { display: none; }
+            #headerXpBarContainer { flex-basis: 100px; width: 100px; }
+            #xpWidget { max-width: 220px; }
+        }
+        @media (max-width: 1400px) { #headerLevelLabel { display: none; } }
+        @media (max-width: 1350px) { #headerXpBarContainer { flex-basis: 90px; width: 90px; } }
+        @media (max-width: 1200px) { .header .notification-bell { display: none; } }
+        @media (max-width: 1024px) { #headerXpBarContainer { display: none; } }
+        @media (max-width: 980px) { #xpWidget { display: none; } }
+    </style>
     
     <style>
         .psychology-card {
