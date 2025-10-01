@@ -337,7 +337,39 @@ async function closeTrade(tradeId) {
         } else {
             // Partial close - create new closed trade and update original
             
+            // Check if there are already partial closes for this symbol
+            const { data: relatedTrades } = await supabase
+                .from('trades')
+                .select('exit_price, position_size, status')
+                .eq('user_id', user.id)
+                .eq('symbol', trade.symbol)
+                .eq('entry_price', trade.entry_price)
+                .eq('status', 'closed');
+            
+            // Calculate running average exit price
+            let totalClosedSize = closeSize;
+            let totalClosedValue = exitPrice * closeSize;
+            
+            if (relatedTrades && relatedTrades.length > 0) {
+                relatedTrades.forEach(rt => {
+                    if (rt.exit_price) {
+                        totalClosedSize += rt.position_size;
+                        totalClosedValue += rt.exit_price * rt.position_size;
+                    }
+                });
+            }
+            
+            const avgExitPrice = totalClosedValue / totalClosedSize;
+            
             // 1. Create a new "closed" trade for the partial exit
+            const partialCloseNote = 
+                `📊 Partial Close #${(relatedTrades?.length || 0) + 1}\n` +
+                `Closed: ${closeSize}/${maxSize} @ $${exitPrice}\n` +
+                `P/L: ${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)} (${pnlPercent >= 0 ? '+' : ''}${pnlPercent}%)\n` +
+                `Average Exit: $${avgExitPrice.toFixed(2)}\n` +
+                `Remaining: ${maxSize - closeSize}\n\n` +
+                `Original Entry Notes:\n${trade.notes || 'None'}`;
+            
             const { error: insertError } = await supabase
                 .from('trades')
                 .insert({
@@ -353,7 +385,7 @@ async function closeTrade(tradeId) {
                     expiry_date: trade.expiry_date,
                     position_size: closeSize,
                     status: 'closed',
-                    notes: `Partial close of ${trade.symbol} (${closeSize}/${maxSize})\n\nOriginal notes: ${trade.notes || 'None'}`,
+                    notes: partialCloseNote,
                     emotions: trade.emotions
                 });
             
@@ -361,11 +393,21 @@ async function closeTrade(tradeId) {
             
             // 2. Update original trade to reduce position size
             const remainingSize = maxSize - closeSize;
+            const updateNote = 
+                `${trade.notes || ''}\n\n` +
+                `━━━━━━━━━━━━━━━━━\n` +
+                `📉 Partial Close History:\n` +
+                `[${new Date().toLocaleString()}]\n` +
+                `Closed: ${closeSize} @ $${exitPrice}\n` +
+                `P/L: ${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}\n` +
+                `Avg Exit So Far: $${avgExitPrice.toFixed(2)}\n` +
+                `Remaining: ${remainingSize}`;
+            
             const { error: updateError } = await supabase
                 .from('trades')
                 .update({ 
                     position_size: remainingSize,
-                    notes: `${trade.notes || ''}\n\n[${new Date().toLocaleDateString()}] Partial close: ${closeSize} closed at $${exitPrice}, ${remainingSize} remaining`
+                    notes: updateNote
                 })
                 .eq('id', tradeId);
             
@@ -401,11 +443,28 @@ async function closeTrade(tradeId) {
             await updatePnLChart();
         }
         
-        const message = isFullClose 
-            ? `✅ Trade fully closed! P&L calculated. +10 XP earned!`
-            : `✅ Partially closed ${closeSize} of ${maxSize}! ${maxSize - closeSize} still open. +10 XP earned!`;
-        
-        alert(message);
+        // Show detailed success message
+        if (isFullClose) {
+            alert(
+                `✅ TRADE FULLY CLOSED\n\n` +
+                `${trade.symbol}: ${closeSize} ${trade.trade_type === 'stock' ? 'shares' : 'contracts'}\n` +
+                `Entry: $${trade.entry_price}\n` +
+                `Exit: $${exitPrice}\n` +
+                `Change: ${pnlPercent >= 0 ? '+' : ''}${pnlPercent}%\n\n` +
+                `💰 P/L: ${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}\n\n` +
+                `+10 XP earned! 🎯`
+            );
+        } else {
+            alert(
+                `📊 PARTIAL CLOSE SUCCESSFUL\n\n` +
+                `${trade.symbol}\n` +
+                `Closed: ${closeSize} @ $${exitPrice}\n` +
+                `Remaining: ${maxSize - closeSize}\n\n` +
+                `💰 This Close: ${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}\n` +
+                `📈 Change: ${pnlPercent >= 0 ? '+' : ''}${pnlPercent}%\n\n` +
+                `+10 XP earned! 🎯`
+            );
+        }
         
     } catch (error) {
         console.error('Error closing trade:', error);
