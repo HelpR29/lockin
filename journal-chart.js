@@ -4,6 +4,12 @@
 let journalChart = null;
 let currentTradeForChart = null;
 
+// Register annotation plugin
+if (typeof Chart !== 'undefined' && typeof ChartAnnotation !== 'undefined') {
+    Chart.register(ChartAnnotation);
+    console.log('✅ Chart.js annotation plugin registered');
+}
+
 // Initialize chart on page load
 document.addEventListener('DOMContentLoaded', async () => {
     const canvas = document.getElementById('tradeChartCanvas');
@@ -121,17 +127,30 @@ async function loadTradeChart(trade) {
             journalChart.data.datasets[0].data = prices;
             journalChart.data.datasets[0].label = `${trade.symbol} - ${trade.direction.toUpperCase()}`;
             
-            // Add horizontal lines for entry, stop, target
+            // Add horizontal lines for entry, exit, stop, target
+            const annotations = createTradeAnnotations(trade);
+            console.log('📊 Adding annotations:', Object.keys(annotations));
+            
+            if (!journalChart.options.plugins) {
+                journalChart.options.plugins = {};
+            }
+            
             journalChart.options.plugins.annotation = {
-                annotations: createTradeAnnotations(trade)
+                annotations: annotations
             };
             
             journalChart.update();
             console.log('✅ Chart updated with', chartData.length, 'data points');
         }
         
-        // Update chart info
+        // Update chart info and show container
         updateChartInfo(trade);
+        
+        // Show the chart container
+        const chartContainer = document.getElementById('chartContainer');
+        if (chartContainer) {
+            chartContainer.style.display = 'block';
+        }
         
     } catch (error) {
         console.error('Error loading trade chart:', error);
@@ -225,12 +244,57 @@ function updateChartInfo(trade) {
     const chartSymbol = document.getElementById('chartSymbol');
     const chartDirection = document.getElementById('chartDirection');
     
+    // Calculate Risk:Reward ratios
+    let plannedRR = null;
+    let actualRR = null;
+    let rrDisplay = '';
+    
+    if (trade.stop_loss && trade.entry_price) {
+        const risk = Math.abs(trade.entry_price - trade.stop_loss);
+        
+        // Planned R:R (using target)
+        if (trade.target_price) {
+            const plannedReward = Math.abs(trade.target_price - trade.entry_price);
+            plannedRR = (plannedReward / risk).toFixed(2);
+        }
+        
+        // Actual R:R (using actual exit)
+        if (trade.exit_price) {
+            const actualReward = Math.abs(trade.exit_price - trade.entry_price);
+            // Adjust for direction
+            const direction = trade.direction === 'long' ? 1 : -1;
+            const profitDirection = (trade.exit_price - trade.entry_price) * direction;
+            const actualRewardAdjusted = profitDirection;
+            
+            actualRR = (actualRewardAdjusted / risk).toFixed(2);
+        }
+        
+        // Build display
+        if (plannedRR && actualRR) {
+            const rrColor = actualRR >= 0 ? '#4CAF50' : '#F44336';
+            rrDisplay = ` | Planned R:R: ${plannedRR}:1 | Actual R:R: <span style="color: ${rrColor}">${actualRR}:1</span>`;
+        } else if (plannedRR) {
+            rrDisplay = ` | Planned R:R: ${plannedRR}:1`;
+        }
+    }
+    
     if (chartInfo && chartSymbol && chartDirection) {
         chartSymbol.textContent = trade.symbol;
-        chartDirection.textContent = trade.direction.toUpperCase();
+        chartDirection.innerHTML = trade.direction.toUpperCase() + rrDisplay;
         chartDirection.style.color = trade.direction === 'long' ? '#4CAF50' : '#ef5350';
         chartInfo.style.display = 'block';
     }
+    
+    // Log trade details for debugging
+    console.log('📋 Trade details:', {
+        symbol: trade.symbol,
+        entry: trade.entry_price,
+        exit: trade.exit_price,
+        stop: trade.stop_loss,
+        target: trade.target_price,
+        plannedRR: plannedRR ? `${plannedRR}:1` : 'N/A',
+        actualRR: actualRR ? `${actualRR}:1` : 'N/A'
+    });
 }
 
 async function fetchCryptoDataForTrade(symbol) {
