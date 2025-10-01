@@ -8,6 +8,67 @@ async function displayNotesSummary(html) {
     box.innerHTML = html;
 }
 
+// ---------- Notes Summarization (LLM with local fallback) ----------
+async function summarizeNotesWithLLM(trades) {
+    const key = (window.OPENAI_API_KEY) || (localStorage.getItem('lockin_openai_key'));
+    const notes = (trades || []).filter(t => t?.notes && t.notes.trim().length > 0);
+    if (notes.length === 0) return '<div>No notes found to analyze.</div>';
+    const compact = notes.slice(0, 50).map((t, i) => `#${i+1} ${t.symbol} (${t.direction || 'long'} ${t.trade_type || 'stock'}) — ${t.status || 'open'}\nNotes: ${t.notes}`).join('\n\n');
+
+    if (!key) {
+        return generateLocalNotesSummary(trades);
+    }
+
+    const sys = 'You are a trading coach. Summarize user trade journal notes into concise, actionable insights. Extract recurring reasons for entries/exits, common mistakes, emotional patterns, and top 5 improvements with concrete actions. Respond in simple HTML using short paragraphs and bullet lists.';
+    const user = `Analyze the following trade notes (up to 50 most recent with notes). Return HTML only.\n\n${compact}`;
+
+    const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${key}`
+        },
+        body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages: [
+                { role: 'system', content: sys },
+                { role: 'user', content: user }
+            ],
+            temperature: 0.4,
+            max_tokens: 700
+        })
+    });
+
+    if (!resp.ok) {
+        // Fallback to local on any API failure
+        return generateLocalNotesSummary(trades);
+    }
+    const data = await resp.json();
+    const content = data?.choices?.[0]?.message?.content?.trim();
+    return content || generateLocalNotesSummary(trades);
+}
+
+function generateLocalNotesSummary(trades) {
+    const notes = (trades || []).filter(t => t?.notes && t.notes.trim().length > 0).map(t => t.notes.toLowerCase());
+    if (notes.length === 0) return '<div>No notes found to analyze.</div>';
+    const text = notes.join('\n');
+    const has = (k) => text.includes(k);
+    const takeaways = [];
+    if (has('late') || has('chase') || has('fomo')) takeaways.push('Avoid chasing late moves; wait for confirmation or retest.');
+    if (has('stop') === false && has('sl') === false) takeaways.push('Specify stop loss and target on every trade to enforce R:R.');
+    if (has('news')) takeaways.push('Account for news/catalyst risk in your plan.');
+    if (has('support') || has('resistance')) takeaways.push('Be precise with levels; pre-mark support/resistance and only trade around them.');
+    if (has('pullback') || has('breakout')) takeaways.push('Define entry criteria for pullbacks/breakouts to reduce discretion.');
+
+    return `
+      <div>
+        <div style="margin-bottom: 0.5rem;">Local summary (no API key). Add your OpenAI key to localStorage as <code>lockin_openai_key</code> for deeper insights.</div>
+        <ul style="margin: 0; padding-left: 1.25rem;">
+          ${takeaways.map(t=> `<li>${t}</li>`).join('') || '<li>Write more detailed notes to unlock stronger insights.</li>'}
+        </ul>
+      </div>`;
+}
+
 async function generateAIAnalysis() {
     const btn = document.getElementById('analyzeBtn');
     const btnText = document.getElementById('analyzeBtnText');

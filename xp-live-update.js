@@ -20,7 +20,7 @@ async function updateXPBar() {
 
     const { data: progress } = await supabase
       .from('user_progress')
-      .select('experience, level')
+      .select('experience, level, next_level_xp')
       .eq('user_id', user.id)
       .single();
 
@@ -32,6 +32,25 @@ async function updateXPBar() {
     const xpForNextLevel = info.nextLevelXP;
     const currentLevelXP = info.currentLevelXP;
     const xpPercentage = Math.max(0, Math.min(100, info.progress));
+
+        // Persist level correction if DB is stale (runs only on change)
+        if ((progress.level !== currentLevel) || (progress.next_level_xp !== xpForNextLevel)) {
+          if (window.__lockin_lastSyncedLevel !== currentLevel) {
+            try {
+              await supabase
+                .from('user_progress')
+                .update({ level: currentLevel, next_level_xp: xpForNextLevel })
+                .eq('user_id', user.id);
+              window.__lockin_lastSyncedLevel = currentLevel;
+            } catch (e) {
+              // Non-fatal; just log once per session
+              if (!window.__lockin_levelSyncWarned) {
+                console.warn('Level sync failed:', e);
+                window.__lockin_levelSyncWarned = true;
+              }
+            }
+          }
+        }
 
         // Update XP display elements (Dashboard)
         const xpProgressEl = document.getElementById('xpProgress');

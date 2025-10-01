@@ -81,20 +81,12 @@ function gatePremiumAnalytics() {
         }
     });
 
-    if (!isPremiumUser && analyzeBtn) {
-        analyzeBtn.addEventListener('click', (event) => {
-            event.preventDefault();
-            if (typeof showPremiumModal === 'function') {
-                showPremiumModal();
-            } else {
-                alert('Upgrade to Premium to unlock AI Trading Analysis.');
-            }
-        }, { once: true });
-        analyzeBtn.classList.add('premium-locked-button');
-        analyzeBtn.querySelector('span#analyzeBtnText').textContent = 'Upgrade for AI Analysis';
-    } else if (isPremiumUser && analyzeBtn) {
+    // Analyze button is free for all users: always enable and bind
+    if (analyzeBtn) {
+        analyzeBtn.disabled = false;
         analyzeBtn.classList.remove('premium-locked-button');
-        analyzeBtn.querySelector('span#analyzeBtnText').textContent = 'Analyze My Trades';
+        const label = analyzeBtn.querySelector('span#analyzeBtnText');
+        if (label) label.textContent = 'Analyze My Trades';
         analyzeBtn.onclick = () => generateAIAnalysis();
     }
 }
