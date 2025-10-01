@@ -8,6 +8,22 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Orbitron:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        /* Header responsiveness to avoid cramping (match dashboard) */
+        #headerXpProgress { display: none; }
+        @media (max-width: 1700px) {
+            .header .nav { gap: 0.45rem !important; }
+            .header .nav a { padding: 0.5rem 0.75rem !important; }
+            .header .nav .nav-label { display: none; }
+            #headerXpBarContainer { flex-basis: 100px; width: 100px; }
+            #xpWidget { max-width: 220px; }
+        }
+        @media (max-width: 1400px) { #headerLevelLabel { display: none; } }
+        @media (max-width: 1350px) { #headerXpBarContainer { flex-basis: 90px; width: 90px; } }
+        @media (max-width: 1200px) { .header .notification-bell { display: none; } }
+        @media (max-width: 1024px) { #headerXpBarContainer { display: none; } }
+        @media (max-width: 980px) { #xpWidget { display: none; } }
+    </style>
 </head>
 <body>
     <div class="bg-animation">
@@ -29,9 +45,52 @@
                 </div>
                 <span class="logo-text">LockIn</span>
             </div>
-            <nav class="nav">
-                <button class="cta-secondary" onclick="window.location.href='dashboard.html'" style="padding: 0.7rem 1.8rem;">
-                    <span>Dashboard</span>
+            <nav class="nav" style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: nowrap; overflow: hidden;">
+                <a href="dashboard.html" style="color: var(--text-primary); text-decoration: none; padding: 0.5rem 1rem; border-radius: 8px; transition: background 0.3s; font-size: 0.9rem; display: flex; align-items: center; gap: 0.35rem;" onmouseover="this.style.background='rgba(255,149,0,0.1)'" onmouseout="this.style.background='transparent'">
+                    <span style="font-size: 1.1rem;">🏠</span>
+                    <span class="nav-label">Home</span>
+                </a>
+                <a href="journal.html" style="color: var(--text-primary); text-decoration: none; padding: 0.5rem 1rem; border-radius: 8px; transition: background 0.3s; font-size: 0.9rem; display: flex; align-items: center; gap: 0.35rem;" onmouseover="this.style.background='rgba(255,149,0,0.1)'" onmouseout="this.style.background='transparent'">
+                    <span style="font-size: 1.1rem;">📝</span>
+                    <span class="nav-label">Journal</span>
+                </a>
+                <a href="rules.html" style="color: var(--text-primary); text-decoration: none; padding: 0.5rem 1rem; border-radius: 8px; transition: background 0.3s; font-size: 0.9rem; display: flex; align-items: center; gap: 0.35rem;" onmouseover="this.style.background='rgba(255,149,0,0.1)'" onmouseout="this.style.background='transparent'">
+                    <span style="font-size: 1.1rem;">⚙️</span>
+                    <span class="nav-label">Rules</span>
+                </a>
+                <a href="reports.html" style="color: var(--text-primary); text-decoration: none; padding: 0.5rem 1rem; border-radius: 8px; transition: background 0.3s; font-size: 0.9rem; display: flex; align-items: center; gap: 0.35rem;" onmouseover="this.style.background='rgba(255,149,0,0.1)'" onmouseout="this.style.background='transparent'">
+                    <span style="font-size: 1.1rem;">📊</span>
+                    <span class="nav-label">Reports</span>
+                </a>
+                <a href="achievements.html" style="color: var(--text-primary); text-decoration: none; padding: 0.5rem 1rem; border-radius: 8px; transition: background 0.3s; font-size: 0.9rem; display: flex; align-items: center; gap: 0.35rem;" onmouseover="this.style.background='rgba(255,149,0,0.1)'" onmouseout="this.style.background='transparent'">
+                    <span style="font-size: 1.1rem;">🏆</span>
+                    <span class="nav-label">Achievements</span>
+                </a>
+                <a href="friends.html" style="color: var(--text-primary); text-decoration: none; padding: 0.5rem 1rem; border-radius: 8px; transition: background 0.3s; font-size: 0.9rem; display: flex; align-items: center; gap: 0.35rem;" onmouseover="this.style.background='rgba(255,149,0,0.1)'" onmouseout="this.style.background='transparent'">
+                    <span style="font-size: 1.1rem;">👥</span>
+                    <span class="nav-label">Friends</span>
+                </a>
+                <a onclick="openProfileModal()" style="color: var(--text-primary); text-decoration: none; padding: 0.5rem 1rem; border-radius: 8px; transition: background 0.3s; cursor: pointer; font-size: 0.9rem; display: flex; align-items: center; gap: 0.35rem;" onmouseover="this.style.background='rgba(255,149,0,0.1)'" onmouseout="this.style.background='transparent'">
+                    <span style="font-size: 1.1rem;">👤</span>
+                    <span class="nav-label">Profile</span>
+                </a>
+                <a onclick="openSettingsModal()" style="color: var(--text-primary); text-decoration: none; padding: 0.5rem 1rem; border-radius: 8px; transition: background 0.3s; cursor: pointer; font-size: 0.9rem; display: flex; align-items: center; gap: 0.35rem;" onmouseover="this.style.background='rgba(255,149,0,0.1)'" onmouseout="this.style.background='transparent'">
+                    <span style="font-size: 1.1rem;">⚙️</span>
+                    <span class="nav-label">Settings</span>
+                </a>
+                <div class="notification-bell" style="position: relative; cursor: pointer; padding: 0.5rem;" onclick="toggleNotifications()">
+                    <span style="font-size: 1.5rem;">🔔</span>
+                    <span id="notificationBadge" class="notification-badge" style="display: none; position: absolute; top: 0; right: 0; background: var(--danger); color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 0.7rem; display: flex; align-items: center; justify-content: center; font-weight: bold;">0</span>
+                </div>
+                <div id="xpWidget" style="display: flex; align-items: center; gap: 0.5rem; margin-left: auto; max-width: 260px; min-width: 0; white-space: nowrap; overflow: hidden;">
+                    <span id="headerLevelLabel" style="font-size: 0.8rem; color: var(--text-secondary);">Lv <span id="headerCurrentLevel">1</span></span>
+                    <div id="headerXpBarContainer" style="width: 120px; height: 8px; background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border); border-radius: 6px; overflow: hidden; flex: 0 0 120px;" title="">
+                        <div id="headerXpBarFill" style="height: 100%; width: 0%; background: linear-gradient(90deg, #FF9500, #FFC107);"></div>
+                    </div>
+                    <span id="headerXpProgress" style="font-size: 0.75rem; color: var(--text-secondary); min-width: 70px; text-align: right;">0 / 100 XP</span>
+                </div>
+                <button class="cta-secondary" id="signOutBtn" onclick="handleSignOut();" style="padding: 0.6rem 1.5rem; margin-left: 1rem; cursor: pointer; pointer-events: auto; position: relative; z-index: 9999;">
+                    <span>Sign Out</span>
                 </button>
             </nav>
         </header>
@@ -120,128 +179,30 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="auth.js"></script>
+    <script src="progress.js"></script>
+    <script src="notifications.js"></script>
+    <script src="dashboard-extras.js"></script>
     <script src="rules-simple.js?v=3"></script>
     <script src="script.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js" defer></script>
+    <script src="xp-live-update.js"></script>
+    <script>
+        async function handleSignOut() {
+            try { await supabase.auth.signOut(); } catch(e) { console.error(e); }
+            localStorage.clear(); sessionStorage.clear(); window.location.replace('/index.html');
+        }
+        window.handleSignOut = handleSignOut;
+    </script>
     
     <!-- Inline modal functions - MUST load after rules-simple.js -->
     <script>
         function openAddRuleModal() {
-            console.log('🔥 openAddRuleModal called!');
-            
-            // Create a completely new modal that overrides everything
-            let modal = document.getElementById('addRuleModal');
-            
-            if (modal) {
-                // Remove existing modal to avoid conflicts
-                modal.remove();
-            }
-            
-            // Create fresh modal
-            modal = document.createElement('div');
-            modal.id = 'addRuleModal';
-            modal.innerHTML = `
-                <div style="
-                    background: #ffffff !important;
-                    border: 10px solid #ff0000 !important;
-                    border-radius: 20px !important;
-                    padding: 3rem !important;
-                    max-width: 600px !important;
-                    width: 90vw !important;
-                    position: relative !important;
-                    color: #000000 !important;
-                    font-family: Arial, sans-serif !important;
-                    font-size: 18px !important;
-                    box-shadow: 0 20px 60px rgba(0,0,0,0.8) !important;
-                    z-index: 9999999 !important;
-                ">
-                    <span style="
-                        position: absolute !important;
-                        top: 1rem !important;
-                        right: 1rem !important;
-                        font-size: 3rem !important;
-                        color: #000000 !important;
-                        cursor: pointer !important;
-                        line-height: 1 !important;
-                    " onclick="document.getElementById('addRuleModal').remove()">&times;</span>
-                    <h2 style="color: #000000 !important; margin-bottom: 2rem !important; font-size: 2rem !important;">Add Custom Rule</h2>
-                    <p style="color: #000000 !important; font-size: 1.2rem !important; margin-bottom: 2rem !important;">Create your own trading rule to add to your collection.</p>
-                    <form id="customRuleForm" onsubmit="window.saveCustomRule(event)">
-                        <div style="margin-bottom: 2rem !important;">
-                            <label style="display: block !important; color: #000000 !important; font-weight: bold !important; margin-bottom: 0.5rem !important;">Category:</label>
-                            <select id="ruleCategory" required style="
-                                width: 100% !important;
-                                padding: 1rem !important;
-                                background: #f0f0f0 !important;
-                                border: 2px solid #000000 !important;
-                                border-radius: 8px !important;
-                                color: #000000 !important;
-                                font-size: 1rem !important;
-                            ">
-                                <option value="Risk Management">⚠️ Risk Management</option>
-                                <option value="Entry Rules">📥 Entry Rules</option>
-                                <option value="Exit Rules">📤 Exit Rules</option>
-                                <option value="Psychology">🧠 Psychology</option>
-                                <option value="General">📋 General</option>
-                            </select>
-                        </div>
-                        <div style="margin-bottom: 2rem !important;">
-                            <label style="display: block !important; color: #000000 !important; font-weight: bold !important; margin-bottom: 0.5rem !important;">Rule Description:</label>
-                            <textarea id="ruleText" rows="4" required placeholder="Enter your trading rule here..." style="
-                                width: 100% !important;
-                                padding: 1rem !important;
-                                background: #f0f0f0 !important;
-                                border: 2px solid #000000 !important;
-                                border-radius: 8px !important;
-                                color: #000000 !important;
-                                font-size: 1rem !important;
-                                resize: vertical !important;
-                            "></textarea>
-                        </div>
-                        <button type="submit" style="
-                            background: #000000 !important;
-                            color: #ffffff !important;
-                            padding: 1rem 2rem !important;
-                            border: none !important;
-                            border-radius: 8px !important;
-                            font-size: 1.2rem !important;
-                            font-weight: bold !important;
-                            cursor: pointer !important;
-                            width: 100% !important;
-                        ">Add Rule</button>
-                    </form>
-                </div>
-            `;
-            
-            // Apply ultra-aggressive styling to modal container
-            modal.style.cssText = `
-                display: flex !important;
-                position: fixed !important;
-                z-index: 2147483647 !important;
-                top: 0 !important;
-                left: 0 !important;
-                width: 100vw !important;
-                height: 100vh !important;
-                background: rgba(0, 0, 0, 0.95) !important;
-                justify-content: center !important;
-                align-items: center !important;
-                visibility: visible !important;
-                opacity: 1 !important;
-                pointer-events: auto !important;
-                transform: translateZ(0) !important;
-                will-change: transform !important;
-            `;
-            
-            document.body.appendChild(modal);
-            
-            console.log('✅ Fresh modal created and opened');
-            
-            // Force multiple repaints
-            modal.offsetHeight;
-            document.body.offsetHeight;
-            setTimeout(() => {
-                modal.offsetHeight;
-                console.log('Modal rect after delay:', modal.getBoundingClientRect());
-            }, 100);
+            const modal = document.getElementById('addRuleModal');
+            if (!modal) return;
+            // Reset form fields
+            const form = document.getElementById('customRuleForm');
+            if (form) form.reset();
+            modal.style.display = 'flex';
         }
         
         function openTemplateModal() {
@@ -568,131 +529,13 @@
                 alert('Failed to load default rules: ' + error.message);
             }
         }
-        
         window.loadDefaultRulesInline = loadDefaultRulesInline;
     </script>
     
     <style>
-        /* Modal Styles */
-        .modal {
-            display: none !important;
-            position: fixed !important;
-            z-index: 9999999 !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 100vw !important;
-            height: 100vh !important;
-            background-color: rgba(0, 0, 0, 0.95) !important;
-            justify-content: center !important;
-            align-items: center !important;
-            overflow: hidden !important;
-            pointer-events: auto !important;
-            transform: translateZ(0) !important;
-        }
-
-        /* Override ALL other modal styles */
-        #addRuleModal {
-            display: flex !important;
-            position: fixed !important;
-            z-index: 9999999 !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 100vw !important;
-            height: 100vh !important;
-            background: rgba(0, 0, 0, 0.95) !important;
-            justify-content: center !important;
-            align-items: center !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-        }
-        
-        .modal[style*="flex"] {
-            display: flex !important;
-        }
-        
-        /* Ensure background canvas doesn't block modal */
-        .bg-animation {
-            z-index: 1;
-        }
-        
-        .container {
-            z-index: 10;
-            position: relative;
-        }
-        
-        .modal-content {
-            background: #ffffff !important;
-            border: 5px solid #ff0000 !important;
-            border-radius: 20px;
-            padding: 2rem;
-            max-width: 500px;
-            width: 90%;
-            position: relative;
-            animation: modalSlideIn 0.3s ease-out;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
-            color: #000000 !important;
-            z-index: 9999999 !important;
-            transform: translateZ(0) !important;
-        }
-        
-        @keyframes modalSlideIn {
-            from {
-                transform: translateY(-50px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-        
-        .close-button {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            font-size: 2rem;
-            color: var(--text-secondary);
-            cursor: pointer;
-            line-height: 1;
-            transition: color 0.2s;
-        }
-        
-        .close-button:hover {
-            color: var(--primary);
-        }
-        
-        .modal-content h2 {
-            margin-bottom: 1.5rem;
-            color: var(--primary);
-        }
-        
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: var(--text-primary);
-            font-weight: 500;
-        }
-        
-        .form-group select,
-        .form-group input,
-        .form-group textarea {
-            width: 100%;
-            padding: 0.75rem;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--glass-border);
-            border-radius: 8px;
-            color: var(--text-primary);
-            font-family: inherit;
-        }
-        
-        .form-group textarea {
-            resize: vertical;
-            min-height: 100px;
-        }
+        /* Page-specific tweaks: rely on global modal styles in styles.css */
+        .form-group textarea { min-height: 100px; }
+        .cta-primary-large { width: 100%; }
         
         @keyframes slideIn {
             from {
