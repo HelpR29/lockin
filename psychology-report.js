@@ -466,3 +466,4 @@ function renderRulesPerformance(trades, rules, violations) {
             ` : ''}
         </div>
     `;
+}
