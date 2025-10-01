@@ -442,6 +442,12 @@
         
         // Show error state when progress data fails to load
         function showProgressError() {
+            // Prevent duplicate error messages
+            if (document.querySelector('.progress-error')) {
+                console.log('⚠️ Progress error already displayed');
+                return;
+            }
+            
             console.log('Showing progress error state...');
             
             // Hide main dashboard content
