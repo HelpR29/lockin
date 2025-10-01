@@ -75,7 +75,19 @@
                     <!-- Ranking -->
                     <div class="social-card full-width">
                         <h3>🏆 Ranking</h3>
-                        <p style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 1rem;">Ranked by total XP earned</p>
+                        <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap: wrap; margin-bottom: 1rem;">
+                            <label style="font-size:0.875rem; color: var(--text-secondary);">Sort</label>
+                            <select id="rankingSortSelect" style="background: var(--card-bg); color: var(--text-primary); border:1px solid var(--glass-border); border-radius:8px; padding:0.4rem 0.6rem;">
+                                <option value="xp" selected>XP (desc)</option>
+                                <option value="level">Level (desc)</option>
+                                <option value="username">Username (A→Z)</option>
+                            </select>
+                            <label style="font-size:0.875rem; color: var(--text-secondary); margin-left:0.5rem;">Filter</label>
+                            <select id="rankingFilterSelect" style="background: var(--card-bg); color: var(--text-primary); border:1px solid var(--glass-border); border-radius:8px; padding:0.4rem 0.6rem;">
+                                <option value="all" selected>All users</option>
+                                <option value="friends">Friends only</option>
+                            </select>
+                        </div>
                         <div id="leaderboardList" class="user-list">
                             <!-- Leaderboard will be loaded here -->
                         </div>
