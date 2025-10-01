@@ -633,111 +633,7 @@ CREATE INDEX idx_rule_violations_date ON rule_violations(violation_date DESC);
 CREATE TRIGGER update_user_progress_updated_at BEFORE UPDATE ON user_progress
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- 19. Rule Categories
-CREATE TABLE rule_categories (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    name TEXT NOT NULL UNIQUE,
-    description TEXT,
-    display_order INTEGER
-);
-
-INSERT INTO rule_categories (name, description, display_order) VALUES
-('Risk Management', 'Rules for managing capital and risk.', 1),
-('Entry Criteria', 'Rules defining when to enter a trade.', 2),
-('Position Sizing', 'Rules for determining trade size.', 3),
-('Trade Management', 'Rules for managing an open position.', 4),
-('Psychology', 'Rules for maintaining mental discipline.', 5);
-
--- 20. Rule Templates
-CREATE TABLE rule_templates (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    category_id UUID REFERENCES rule_categories NOT NULL,
-    name TEXT NOT NULL,
-    description TEXT,
-    default_value TEXT,
-    value_type TEXT, -- e.g., 'percentage', 'number', 'boolean'
-    is_core_rule BOOLEAN DEFAULT false
-);
-
-INSERT INTO rule_templates (category_id, name, description, default_value, value_type)
-SELECT id, 'Max Risk per Trade', 'Maximum percentage of account to risk on a single trade.', '2.0', 'percentage' FROM rule_categories WHERE name = 'Risk Management';
-
-INSERT INTO rule_templates (category_id, name, description, default_value, value_type)
-SELECT id, 'Max Daily Loss', 'Maximum percentage of account to lose in a single day.', '5.0', 'percentage' FROM rule_categories WHERE name = 'Risk Management';
-
-INSERT INTO rule_templates (category_id, name, description, default_value, value_type)
-SELECT id, 'Max Trades per Day', 'Maximum number of trades to execute in a single day.', '3', 'number' FROM rule_categories WHERE name = 'Trade Management';
-
-INSERT INTO rule_templates (category_id, name, description, default_value, value_type)
-SELECT id, 'No FOMO Entries', 'Do not enter a trade based on fear of missing out.', 'true', 'boolean' FROM rule_categories WHERE name = 'Psychology';
-
--- 21. User Defined Rules
-CREATE TABLE user_defined_rules (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    user_id UUID REFERENCES auth.users NOT NULL,
-    category_id UUID REFERENCES rule_categories NOT NULL,
-    template_id UUID REFERENCES rule_templates,
-    rule_text TEXT NOT NULL,
-    is_active BOOLEAN DEFAULT true,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
-);
-
-ALTER TABLE user_defined_rules ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Users can manage their own rules" ON user_defined_rules FOR ALL USING (auth.uid() = user_id);
-
--- 22. Trade Rule Violations
-CREATE TABLE trade_rule_violations (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    trade_id UUID REFERENCES trades NOT NULL,
-    rule_id UUID REFERENCES user_defined_rules NOT NULL,
-    violation_time TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
-);
-
-ALTER TABLE trade_rule_violations ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Users can view their own violations" ON trade_rule_violations FOR SELECT USING (auth.uid() = (SELECT user_id FROM trades WHERE id = trade_id));
-
--- Add indexes
-CREATE INDEX idx_user_defined_rules_user_id ON user_defined_rules(user_id);
-CREATE INDEX idx_trade_rule_violations_trade_id ON trade_rule_violations(trade_id);
-
--- 23. Friends Table
-CREATE TABLE friends (
-    user_id_1 UUID REFERENCES auth.users NOT NULL,
-    user_id_2 UUID REFERENCES auth.users NOT NULL,
-    status TEXT NOT NULL, -- 'requested', 'accepted'
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
-    PRIMARY KEY (user_id_1, user_id_2)
-);
-
-ALTER TABLE friends ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Users can see their own friendships" ON friends FOR SELECT USING (auth.uid() = user_id_1 OR auth.uid() = user_id_2);
-CREATE POLICY "Users can manage their own friendships" ON friends FOR ALL USING (auth.uid() = user_id_1 OR auth.uid() = user_id_2);
-
--- 24. Leaderboard Table (can be a materialized view for performance)
--- For simplicity, we'll create a basic table. In production, this would be updated periodically.
-CREATE TABLE leaderboards (
-    user_id UUID REFERENCES auth.users NOT NULL PRIMARY KEY,
-    username TEXT,
-    beers_cracked INTEGER, 
-    longest_streak INTEGER,
-    discipline_score NUMERIC,
-    last_updated TIMESTAMP WITH TIME ZONE
-);
-
-ALTER TABLE leaderboards ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Public can read leaderboards" ON leaderboards FOR SELECT USING (true);
-
--- Add indexes for social features
-CREATE INDEX idx_friends_user_id_1 ON friends(user_id_1);
-CREATE INDEX idx_friends_user_id_2 ON friends(user_id_2);
-CREATE INDEX idx_leaderboards_beers_cracked ON leaderboards(beers_cracked DESC);
-CREATE INDEX idx_leaderboards_longest_streak ON leaderboards(longest_streak DESC);
-
-
--- Success message
-SELECT 'Database schema with Social Features created successfully!' as message;
-
--- 25. Monetization: Plans
+-- 19. Monetization: Plans
 CREATE TABLE plans (
     code TEXT PRIMARY KEY, -- 'free', 'premium_monthly', 'premium_yearly', 'lifetime'
     name TEXT NOT NULL,
@@ -757,7 +653,7 @@ INSERT INTO plans (code, name, price_cents, interval, is_lifetime) VALUES
 ('lifetime', 'Lifetime Access', 19999, NULL, true)
 ON CONFLICT (code) DO NOTHING;
 
--- 26. Monetization: User Subscriptions
+-- 20. Monetization: User Subscriptions
 CREATE TABLE user_subscriptions (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id UUID REFERENCES auth.users NOT NULL,
@@ -782,7 +678,7 @@ CREATE TRIGGER update_user_subscriptions_updated_at BEFORE UPDATE ON user_subscr
 CREATE INDEX idx_user_subscriptions_user_id ON user_subscriptions(user_id);
 CREATE INDEX idx_user_subscriptions_status ON user_subscriptions(status);
 
--- 27. Monetization: Feature Flags per plan
+-- 21. Monetization: Feature Flags per plan
 CREATE TABLE plan_features (
     plan_code TEXT REFERENCES plans(code) NOT NULL,
     feature_key TEXT NOT NULL,
@@ -803,7 +699,7 @@ INSERT INTO plan_features (plan_code, feature_key, enabled) VALUES
 ('lifetime', 'lifetime_access', true)
 ON CONFLICT DO NOTHING;
 
--- 28. Privacy & Security settings
+-- 22. Privacy & Security settings
 CREATE TABLE privacy_settings (
     user_id UUID PRIMARY KEY REFERENCES auth.users,
     share_with_friends BOOLEAN DEFAULT false,
@@ -819,7 +715,7 @@ CREATE POLICY "Users manage own privacy" ON privacy_settings FOR ALL USING (auth
 CREATE TRIGGER update_privacy_settings_updated_at BEFORE UPDATE ON privacy_settings
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- 29. Security hardening notes
+-- 23. Security hardening notes
 -- Ensure RLS is enabled (done throughout). Use Supabase policies.
 -- For sensitive content encryption, store client-side encrypted blobs in future iterations.
 

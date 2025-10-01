@@ -295,7 +295,6 @@ async function completeOnboarding() {
                 experience: 0,
                 next_level_xp: 100,
                 progress_token: onboardingData.token,
-                total_check_ins: 0,
                 streak_multiplier: 1.0,
                 level_bonus: 1.0,
                 achievement_bonus: 1.0,
@@ -376,8 +375,6 @@ window.selectAvatar = selectAvatar;
 window.nextStep = nextStep;
 window.prevStep = prevStep;
 window.saveProfile = saveProfile;
-window.saveGoals = saveGoals;
-window.completeOnboarding = completeOnboarding;
 window.saveGoals = saveGoals;
 window.saveRules = saveRules;
 window.selectToken = selectToken;
