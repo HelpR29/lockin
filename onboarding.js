@@ -451,6 +451,7 @@ function showOnboardingSuccess() {
             }
         `;
         document.head.appendChild(style);
+}
     }
 }
 
