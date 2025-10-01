@@ -256,7 +256,8 @@ async function completeOnboarding() {
                 markets: onboardingData.profile.markets,
                 progress_token: onboardingData.token,
                 onboarding_completed: true,
-                created_at: new Date().toISOString()
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
             });
         
         if (profileError) throw profileError;
@@ -274,7 +275,9 @@ async function completeOnboarding() {
                 bottles_cracked: 0,
                 max_loss_percent: onboardingData.goals.max_loss_percent,
                 beers_spilled: 0,
-                created_at: new Date().toISOString()
+                is_active: true,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
             });
         
         if (goalsError) throw goalsError;
