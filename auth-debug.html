@@ -1,0 +1,139 @@
+
+<html>
+<head>
+    <title>Auth Debug</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+        .error { color: red; background: #ffe6e6; padding: 10px; border-radius: 5px; margin: 10px 0; }
+        .success { color: green; background: #e6ffe6; padding: 10px; border-radius: 5px; margin: 10px 0; }
+        .info { color: blue; background: #e6f3ff; padding: 10px; border-radius: 5px; margin: 10px 0; }
+        button { padding: 10px 20px; margin: 10px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 5px; }
+        button:hover { background: #0056b3; }
+        pre { background: #f8f9fa; padding: 15px; border-radius: 5px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Authentication Debug Tool</h1>
+    <div id="output"></div>
+    
+    <button onclick="checkAuthStatus()">Check Auth Status</button>
+    <button onclick="clearUserData()">Clear User Data (if logged in)</button>
+    <button onclick="testDatabaseConnection()">Test Database Connection</button>
+    <button onclick="window.location.href='index.html'">Go to Login</button>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // You'll need to replace these with your actual Supabase credentials
+        const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+        
+        // Initialize Supabase
+        let supabase;
+        try {
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        } catch (e) {
+            console.error('Failed to initialize Supabase:', e);
+        }
+        
+        function log(message, type = 'info') {
+            const output = document.getElementById('output');
+            const div = document.createElement('div');
+            div.className = type;
+            div.innerHTML = '<pre>' + new Date().toLocaleTimeString() + ' - ' + message + '</pre>';
+            output.appendChild(div);
+            console.log(message);
+        }
+        
+        async function checkAuthStatus() {
+            log('🔍 Checking authentication status...');
+            
+            try {
+                const { data: { user }, error } = await supabase.auth.getUser();
+                
+                if (error) {
+                    log('❌ Auth error: ' + error.message, 'error');
+                    return;
+                }
+                
+                if (user) {
+                    log('✅ User authenticated: ' + user.email + ' (ID: ' + user.id + ')', 'success');
+                } else {
+                    log('❌ No user authenticated', 'error');
+                }
+            } catch (err) {
+                log('❌ Exception during auth check: ' + err.message, 'error');
+            }
+        }
+        
+        async function clearUserData() {
+            log('🧹 Attempting to clear user data...');
+            
+            try {
+                const { data: { user }, error } = await supabase.auth.getUser();
+                
+                    log('❌ Cannot clear data - not authenticated', 'error');
+                    return;
+                }
+                
+                log('✅ User authenticated: ' + user.email);
+                
+                // Delete user data in reverse dependency order
+                const tables = ['trading_rules', 'user_progress', 'user_goals', 'user_profiles'];
+                
+                for (const table of tables) {
+                    try {
+                        const { error } = await supabase
+                            .from(table)
+                            .delete()
+                            .eq('user_id', user.id);
+                        
+                        if (error) {
+                            log('⚠️ Error deleting from ' + table + ': ' + error.message, 'error');
+                        } else {
+                            log('✅ Cleared ' + table, 'success');
+                        }
+                    } catch (err) {
+                        log('⚠️ Exception deleting from ' + table + ': ' + err.message, 'error');
+                    }
+                }
+                
+                log('🎉 Data cleanup complete! Redirecting to onboarding...', 'success');
+                
+                setTimeout(() => {
+                    window.location.href = 'onboarding.html';
+                }, 2000);
+                
+            } catch (err) {
+                log('❌ Exception during cleanup: ' + err.message, 'error');
+            }
+        }
+        
+        async function testDatabaseConnection() {
+            log('🔗 Testing database connection...');
+            
+            try {
+                // Try to query a simple table
+                const { data, error } = await supabase
+                    .from('user_profiles')
+                    .select('count')
+                    .limit(1);
+                
+                if (error) {
+                    log('❌ Database error: ' + error.message, 'error');
+                } else {
+                    log('✅ Database connection successful', 'success');
+                }
+            } catch (err) {
+                log('❌ Connection exception: ' + err.message, 'error');
+            }
+        }
+        
+        // Auto-check on load
+        window.onload = function() {
+            log('🔧 Debug page loaded');
+            log('Current URL: ' + window.location.href);
+            log('Supabase initialized: ' + (supabase ? 'YES' : 'NO'));
+        };
+    </script>
+</body>
+</html>

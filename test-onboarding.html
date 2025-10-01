@@ -1,0 +1,101 @@
+
+<html>
+<head>
+    <title>Onboarding Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .step { display: none; padding: 20px; border: 1px solid #ddd; margin: 10px 0; }
+        .step.active { display: block; background: #f0f8ff; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <h1>Onboarding JavaScript Test</h1>
+    <div id="output"></div>
+    
+    <div class="step active" id="step1">
+        <h2>Step 1: Welcome</h2>
+        <p>This tests if JavaScript is working.</p>
+        <button onclick="testNextStep()">Test Next Step Function</button>
+        <button onclick="testAuth()">Test Authentication</button>
+    </div>
+    
+    <div class="step" id="step2">
+        <h2>Step 2: Profile</h2>
+        <button onclick="goBack()">Go Back</button>
+    </div>
+    
+    <script>
+        let currentStep = 1;
+        
+        function log(message, type = 'info') {
+            const output = document.getElementById('output');
+            const div = document.createElement('div');
+            div.className = type;
+            div.innerHTML = '<pre>' + new Date().toLocaleTimeString() + ' - ' + message + '</pre>';
+            output.appendChild(div);
+        }
+        
+        function testNextStep() {
+            log('🔄 Testing nextStep() function...');
+            
+            try {
+                if (currentStep < 2) {
+                    document.getElementById('step' + currentStep).classList.remove('active');
+                    currentStep++;
+                    document.getElementById('step' + currentStep).classList.add('active');
+                    log('✅ Successfully advanced to step ' + currentStep, 'success');
+                }
+            } catch (error) {
+                log('❌ Error in nextStep: ' + error.message, 'error');
+            }
+        }
+        
+        function goBack() {
+            log('🔄 Testing prevStep() function...');
+            
+            try {
+                if (currentStep > 1) {
+                    document.getElementById('step' + currentStep).classList.remove('active');
+                    currentStep--;
+                    document.getElementById('step' + currentStep).classList.add('active');
+                    log('✅ Successfully went back to step ' + currentStep, 'success');
+                }
+            } catch (error) {
+                log('❌ Error in prevStep: ' + error.message, 'error');
+            }
+        }
+        
+        function testAuth() {
+            log('🔐 Testing authentication...');
+            
+            // Simple test - check if we're in incognito
+            log('Current URL: ' + window.location.href);
+            log('User Agent: ' + navigator.userAgent.substring(0, 100) + '...');
+            log('Cookie enabled: ' + navigator.cookieEnabled);
+            
+            // Test localStorage
+            try {
+                localStorage.setItem('test', 'value');
+                const retrieved = localStorage.getItem('test');
+                if (retrieved === 'value') {
+                    log('✅ localStorage working', 'success');
+                    localStorage.removeItem('test');
+                } else {
+                    log('❌ localStorage not working properly', 'error');
+                }
+            } catch (e) {
+                log('❌ localStorage error: ' + e.message, 'error');
+            }
+        }
+        
+        // Auto-test on load
+        window.onload = function() {
+            log('🔧 Test page loaded successfully');
+            log('JavaScript is working!');
+        };
+    </script>
+</body>
+</html>
