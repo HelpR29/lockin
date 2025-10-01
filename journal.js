@@ -509,7 +509,7 @@ async function closeTrade(tradeId) {
                 });
             
             if (insertError) throw insertError;
-            
+
             // 2. Update original trade to reduce position size
             const remainingSize = maxSize - closeSize;
             const updateNote = 
@@ -533,6 +533,29 @@ async function closeTrade(tradeId) {
             if (updateError) throw updateError;
         }
         
+        // Show detailed success message
+        if (isFullClose) {
+            alert(
+                `✅ TRADE FULLY CLOSED\n\n` +
+                `${trade.symbol}: ${closeSize} ${trade.trade_type === 'stock' ? 'shares' : 'contracts'}\n` +
+                `Entry: $${trade.entry_price}\n` +
+                `Exit: $${exitPrice}\n` +
+                `Change: ${pnlPercent >= 0 ? '+' : ''}${pnlPercent}%\n\n` +
+                `💰 P/L: ${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}\n\n` +
+                `+10 XP earned! 🎯`
+            );
+        } else {
+            alert(
+                `📊 PARTIAL CLOSE SUCCESSFUL\n\n` +
+                `${trade.symbol}\n` +
+                `Closed: ${closeSize} @ $${exitPrice}\n` +
+                `Remaining: ${maxSize - closeSize}\n\n` +
+                `💰 This Close: ${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}\n` +
+                `📈 Change: ${pnlPercent >= 0 ? '+' : ''}${pnlPercent}%\n\n` +
+                `+10 XP earned! 🎯`
+            );
+        }
+
         // Award XP for closing trade
         if (user) {
             const { data: progress } = await supabase
@@ -563,7 +586,8 @@ async function closeTrade(tradeId) {
         }
         
         // Reset status on open modal
-        document.getElementById('trade-status').value = 'open';
+        const statusEl = document.getElementById('status');
+        if (statusEl) statusEl.value = 'open';
 }
 
 // -------- Local, free AI-like summarization of notes --------
@@ -612,29 +636,7 @@ function summarizeTradeNotes(text, trade) {
     const tldr = firstSentence.trim().slice(0, 140) + (firstSentence.length>140 ? '…' : '');
     return `<div style="color: var(--text-primary);">${found.join('')}<div>• TL;DR: ${tldr}</div></div>`;
 }
-        // Show detailed success message
-        if (isFullClose) {
-            alert(
-                `✅ TRADE FULLY CLOSED\n\n` +
-                `${trade.symbol}: ${closeSize} ${trade.trade_type === 'stock' ? 'shares' : 'contracts'}\n` +
-                `Entry: $${trade.entry_price}\n` +
-                `Exit: $${exitPrice}\n` +
-                `Change: ${pnlPercent >= 0 ? '+' : ''}${pnlPercent}%\n\n` +
-                `💰 P/L: ${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}\n\n` +
-                `+10 XP earned! 🎯`
-            );
-        } else {
-            alert(
-                `📊 PARTIAL CLOSE SUCCESSFUL\n\n` +
-                `${trade.symbol}\n` +
-                `Closed: ${closeSize} @ $${exitPrice}\n` +
-                `Remaining: ${maxSize - closeSize}\n\n` +
-                `💰 This Close: ${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}\n` +
-                `📈 Change: ${pnlPercent >= 0 ? '+' : ''}${pnlPercent}%\n\n` +
-                `+10 XP earned! 🎯`
-            );
-        }
-        
+
     } catch (error) {
         console.error('Error closing trade:', error);
         alert('An error occurred. Please try again.');
