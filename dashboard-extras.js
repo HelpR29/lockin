@@ -107,7 +107,7 @@ async function openProfileModal() {
     }
 
     // Derive level from XP to avoid stale DB level mismatch
-    const xp = (progress?.experience ?? 0);
+    let xp = Number(progress?.experience ?? 0);
     let derived = null;
     // Inline fallback identical to progress.js
     function _calcLevelFromXP_local(val) {
@@ -130,7 +130,24 @@ async function openProfileModal() {
     } catch (_) {
         derived = _calcLevelFromXP_local(xp);
     }
-    const displayLevel = (derived?.level ?? progress?.level ?? 1);
+    let displayLevel = (derived?.level ?? progress?.level ?? 1);
+    let currentLevelXP = (derived?.currentLevelXP ?? null);
+    let nextLevelXP = (derived?.nextLevelXP ?? null);
+
+    // Fallback: if XP is 0 but header widget shows values, parse them
+    try {
+        if ((!xp || xp === 0) && document.getElementById('headerXpProgress')) {
+            const txt = document.getElementById('headerXpProgress').textContent || '';
+            const m = txt.match(/(\d+)\s*\/\s*(\d+)/);
+            if (m) {
+                currentLevelXP = Number(m[1]);
+                nextLevelXP = Number(m[2]);
+                // If level element exists, use it
+                const hdrLvl = document.getElementById('headerCurrentLevel');
+                if (hdrLvl) displayLevel = Number(hdrLvl.textContent) || displayLevel;
+            }
+        }
+    } catch (_) { /* ignore */ }
     
     // Fetch avatar from onboarding (with error handling)
     let avatarEmoji = '👤'; // default
@@ -171,8 +188,9 @@ async function openProfileModal() {
                         <div style="font-size: 0.875rem; color: var(--text-secondary);">Level</div>
                     </div>
                     <div>
-                        <div style="font-size: 2rem; font-weight: 700; color: var(--primary);">${xp}</div>
-                        <div style="font-size: 0.875rem; color: var(--text-secondary);">Total XP</div>
+                        <div style="font-size: 2rem; font-weight: 700; color: var(--primary);">${Number.isFinite(xp) && xp > 0 ? xp : (currentLevelXP ?? 0)}</div>
+                        <div style="font-size: 0.875rem; color: var(--text-secondary);">${Number.isFinite(xp) && xp > 0 ? 'Total XP' : 'Current XP'}</div>
+                        ${currentLevelXP != null && nextLevelXP != null ? `<div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem;">${currentLevelXP} / ${nextLevelXP} this level</div>` : ''}
                     </div>
                     <div>
                         <div style="font-size: 2rem; font-weight: 700; color: #4CAF50;">${progress?.beers_cracked || 0}</div>
