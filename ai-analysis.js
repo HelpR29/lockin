@@ -10,42 +10,103 @@ async function displayNotesSummary(html) {
 
 // ---------- Notes Summarization (LLM with local fallback) ----------
 async function summarizeNotesWithLLM(trades) {
-    const key = (window.OPENAI_API_KEY) || (localStorage.getItem('lockin_openai_key'));
     const notes = (trades || []).filter(t => t?.notes && t.notes.trim().length > 0);
     if (notes.length === 0) return '<div>No notes found to analyze.</div>';
     const compact = notes.slice(0, 50).map((t, i) => `#${i+1} ${t.symbol} (${t.direction || 'long'} ${t.trade_type || 'stock'}) — ${t.status || 'open'}\nNotes: ${t.notes}`).join('\n\n');
 
-    if (!key) {
-        return generateLocalNotesSummary(trades);
-    }
-
     const sys = 'You are a trading coach. Summarize user trade journal notes into concise, actionable insights. Extract recurring reasons for entries/exits, common mistakes, emotional patterns, and top 5 improvements with concrete actions. Respond in simple HTML using short paragraphs and bullet lists.';
     const user = `Analyze the following trade notes (up to 50 most recent with notes). Return HTML only.\n\n${compact}`;
 
-    const resp = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${key}`
-        },
-        body: JSON.stringify({
-            model: 'gpt-4o-mini',
-            messages: [
-                { role: 'system', content: sys },
-                { role: 'user', content: user }
-            ],
-            temperature: 0.4,
-            max_tokens: 700
-        })
-    });
+    // Provider selection
+    const gemKey = (localStorage.getItem('lockin_gemini_key') || '').trim();
+    const gemModel = (localStorage.getItem('lockin_gemini_model') || 'gemini-1.5-flash').trim();
+    const customBase = (localStorage.getItem('lockin_llm_base_url') || '').trim();
+    const customModel = (localStorage.getItem('lockin_llm_model') || '').trim();
+    const openaiKey = (window.OPENAI_API_KEY) || (localStorage.getItem('lockin_openai_key'));
 
-    if (!resp.ok) {
-        // Fallback to local on any API failure
-        return generateLocalNotesSummary(trades);
+    // 1) Gemini
+    if (gemKey) {
+        try {
+            const endpoint = `${(customBase && customBase.includes('generativelanguage.googleapis.com')) ? customBase.replace(/\/$/, '') : 'https://generativelanguage.googleapis.com/v1beta'}/models/${encodeURIComponent(gemModel)}:generateContent?key=${encodeURIComponent(gemKey)}`;
+            const combined = `System Instruction:\n${sys}\n\nUser:\n${user}`;
+            const resp = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ role: 'user', parts: [{ text: combined }] }],
+                    generationConfig: { temperature: 0.4, maxOutputTokens: 700 }
+                })
+            });
+            if (resp.ok) {
+                const data = await resp.json();
+                const text = data?.candidates?.[0]?.content?.parts?.map(p => p?.text || '').join('')?.trim();
+                if (text) return text;
+            }
+        } catch (e) {
+            console.warn('Gemini call failed, trying other providers.', e);
+        }
     }
-    const data = await resp.json();
-    const content = data?.choices?.[0]?.message?.content?.trim();
-    return content || generateLocalNotesSummary(trades);
+
+    // 2) Custom OpenAI-compatible endpoint
+    if (customBase) {
+        try {
+            const url = `${customBase.replace(/\/$/, '')}/chat/completions`;
+            const headers = { 'Content-Type': 'application/json' };
+            if (openaiKey) headers['Authorization'] = `Bearer ${openaiKey}`;
+            const resp = await fetch(url, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({
+                    model: customModel || 'deepseek-r1',
+                    messages: [
+                        { role: 'system', content: sys },
+                        { role: 'user', content: user }
+                    ],
+                    temperature: 0.4,
+                    max_tokens: 700
+                })
+            });
+            if (resp.ok) {
+                const data = await resp.json();
+                const content = data?.choices?.[0]?.message?.content?.trim();
+                if (content) return content;
+            }
+        } catch (e) {
+            console.warn('Custom OpenAI-compatible call failed.', e);
+        }
+    }
+
+    // 3) OpenAI
+    if (openaiKey) {
+        try {
+            const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${openaiKey}`
+                },
+                body: JSON.stringify({
+                    model: 'gpt-4o-mini',
+                    messages: [
+                        { role: 'system', content: sys },
+                        { role: 'user', content: user }
+                    ],
+                    temperature: 0.4,
+                    max_tokens: 700
+                })
+            });
+            if (resp.ok) {
+                const data = await resp.json();
+                const content = data?.choices?.[0]?.message?.content?.trim();
+                if (content) return content;
+            }
+        } catch (e) {
+            console.warn('OpenAI call failed.', e);
+        }
+    }
+
+    // 4) Fallback local
+    return generateLocalNotesSummary(trades);
 }
 
 function generateLocalNotesSummary(trades) {
