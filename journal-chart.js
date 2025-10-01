@@ -4,10 +4,24 @@
 let journalChart = null;
 let currentTradeForChart = null;
 
-// Register annotation plugin
-if (typeof Chart !== 'undefined' && typeof ChartAnnotation !== 'undefined') {
-    Chart.register(ChartAnnotation);
-    console.log('✅ Chart.js annotation plugin registered');
+// Register Chart.js plugins
+if (typeof Chart !== 'undefined') {
+    if (typeof ChartAnnotation !== 'undefined') {
+        Chart.register(ChartAnnotation);
+        console.log('✅ Chart.js annotation plugin registered');
+    }
+
+window.resetChartZoom = function() {
+    if (journalChart && typeof journalChart.resetZoom === 'function') {
+        journalChart.resetZoom();
+    }
+    const btn = document.getElementById('resetZoomBtn');
+    if (btn) btn.style.display = 'none';
+};
+    if (typeof window.ChartZoom !== 'undefined') {
+        Chart.register(window.ChartZoom);
+        console.log('✅ Chart.js zoom plugin registered');
+    }
 }
 
 // Initialize chart on page load
@@ -60,7 +74,32 @@ async function initializeJournalChart() {
                         titleColor: '#fff',
                         bodyColor: '#fff',
                         borderColor: '#FF9500',
-                        borderWidth: 1
+                        borderWidth: 1,
+                        callbacks: {
+                            label: function(context) {
+                                const price = context.formattedValue;
+                                return ` Price: $${price}`;
+                            }
+                        }
+                    },
+                    zoom: {
+                        limits: {
+                            x: { min: 'original', max: 'original' }
+                        },
+                        zoom: {
+                            wheel: { enabled: true },
+                            pinch: { enabled: true },
+                            drag: { enabled: true, modifierKey: 'shift' },
+                            mode: 'x'
+                        },
+                        pan: {
+                            enabled: true,
+                            mode: 'x'
+                        },
+                        onZoomComplete: () => {
+                            const btn = document.getElementById('resetZoomBtn');
+                            if (btn) btn.style.display = 'inline-block';
+                        }
                     }
                 },
                 scales: {
@@ -145,152 +184,56 @@ async function loadTradeChart(trade) {
         
         // Update chart info and show container
         updateChartInfo(trade);
-        
         // Show the chart container
         const chartContainer = document.getElementById('chartContainer');
         if (chartContainer) {
             chartContainer.style.display = 'block';
         }
-        
+
+        const resetButton = document.getElementById('resetZoomBtn');
+        if (resetButton && journalChart) {
+            resetButton.style.display = 'none';
+            resetButton.addEventListener('click', () => {
+                if (journalChart) {
+                    journalChart.resetZoom();
+                    resetButton.style.display = 'none';
+                }
+            });
+        }
+
     } catch (error) {
         console.error('Error loading trade chart:', error);
         alert('Could not load chart data. AlphaVantage API limit may be reached or symbol not found.');
     }
 }
-
-// Create annotation lines for Chart.js
-function createTradeAnnotations(trade) {
-    const annotations = {};
-    
-    // Entry level (green)
-    if (trade.entry_price) {
-        annotations.entryLine = {
-            type: 'line',
-            yMin: trade.entry_price,
-            yMax: trade.entry_price,
-            borderColor: '#4CAF50',
-            borderWidth: 2,
-            label: {
-                display: true,
-                content: `Entry: $${trade.entry_price}`,
-                position: 'end',
-                backgroundColor: '#4CAF50',
-                color: '#fff'
-            }
-        };
-    }
-    
-    // Exit level (blue)
-    if (trade.exit_price) {
-        annotations.exitLine = {
-            type: 'line',
-            yMin: trade.exit_price,
-            yMax: trade.exit_price,
-            borderColor: '#2196F3',
-            borderWidth: 2,
-            label: {
-                display: true,
-                content: `Exit: $${trade.exit_price}`,
-                position: 'end',
-                backgroundColor: '#2196F3',
-                color: '#fff'
-            }
-        };
-    }
-    
-    // Stop loss (red, dashed)
-    if (trade.stop_loss) {
-        annotations.stopLine = {
-            type: 'line',
-            yMin: trade.stop_loss,
-            yMax: trade.stop_loss,
-            borderColor: '#F44336',
-            borderWidth: 2,
-            borderDash: [5, 5],
-            label: {
-                display: true,
-                content: `Stop: $${trade.stop_loss}`,
-                position: 'start',
-                backgroundColor: '#F44336',
-                color: '#fff'
-            }
-        };
-    }
-    
-    // Target price (yellow, dashed)
-    if (trade.target_price) {
-        annotations.targetLine = {
-            type: 'line',
-            yMin: trade.target_price,
-            yMax: trade.target_price,
-            borderColor: '#FFC107',
-            borderWidth: 2,
-            borderDash: [5, 5],
-            label: {
-                display: true,
-                content: `Target: $${trade.target_price}`,
-                position: 'start',
-                backgroundColor: '#FFC107',
-                color: '#000'
-            }
-        };
-    }
-    
-    return annotations;
-}
+{{ ... }}
 
 function updateChartInfo(trade) {
     const chartInfo = document.getElementById('chartInfo');
     const chartSymbol = document.getElementById('chartSymbol');
     const chartDirection = document.getElementById('chartDirection');
-    
+    const header = document.querySelector('#chartContainer h3 span');
+
     // Calculate Risk:Reward ratios
     let plannedRR = null;
     let actualRR = null;
     let rrDisplay = '';
     
-    if (trade.stop_loss && trade.entry_price) {
-        const risk = Math.abs(trade.entry_price - trade.stop_loss);
-        
-        // Planned R:R (using target)
-        if (trade.target_price) {
-            const plannedReward = Math.abs(trade.target_price - trade.entry_price);
-            plannedRR = (plannedReward / risk).toFixed(2);
-        }
-        
-        // Actual R:R (using actual exit)
-        if (trade.exit_price) {
-            const actualReward = Math.abs(trade.exit_price - trade.entry_price);
-            // Adjust for direction
-            const direction = trade.direction === 'long' ? 1 : -1;
-            const profitDirection = (trade.exit_price - trade.entry_price) * direction;
-            const actualRewardAdjusted = profitDirection;
-            
-            actualRR = (actualRewardAdjusted / risk).toFixed(2);
-        }
-        
-        // Build display
-        if (plannedRR && actualRR) {
-            const rrColor = actualRR >= 0 ? '#4CAF50' : '#F44336';
-            rrDisplay = ` | Planned R:R: ${plannedRR}:1 | Actual R:R: <span style="color: ${rrColor}">${actualRR}:1</span>`;
-        } else if (plannedRR) {
-            rrDisplay = ` | Planned R:R: ${plannedRR}:1`;
-        }
-    }
-    
-    if (chartInfo && chartSymbol && chartDirection) {
+{{ ... }}
         chartSymbol.textContent = trade.symbol;
         chartDirection.innerHTML = trade.direction.toUpperCase() + rrDisplay;
         chartDirection.style.color = trade.direction === 'long' ? '#4CAF50' : '#ef5350';
         chartInfo.style.display = 'block';
     }
-    
+    if (header) {
+        header.textContent = `${trade.symbol} - ${trade.direction.toUpperCase()} ${rrDisplay.replace(/\s\|\s/g, ' • ')}`;
+    }
+
     // Log trade details for debugging
-    console.log('📋 Trade details:', {
+    console.log('📊 Trade details:', {
         symbol: trade.symbol,
         entry: trade.entry_price,
         exit: trade.exit_price,
-        stop: trade.stop_loss,
         target: trade.target_price,
         plannedRR: plannedRR ? `${plannedRR}:1` : 'N/A',
         actualRR: actualRR ? `${actualRR}:1` : 'N/A'

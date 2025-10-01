@@ -1,9 +1,14 @@
+let isPremiumUser = false;
+
 document.addEventListener('DOMContentLoaded', async () => {
     const user = await checkAuth();
     if (!user) {
         window.location.href = 'login.html';
         return;
     }
+
+    await checkPremiumStatus();
+    gatePremiumAnalytics();
 
     await loadTrades();
 
@@ -12,6 +17,91 @@ document.addEventListener('DOMContentLoaded', async () => {
         tag.addEventListener('click', () => tag.classList.toggle('selected'));
     });
 });
+
+async function checkPremiumStatus() {
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data: profile } = await supabase
+            .from('user_profiles')
+            .select('is_premium')
+            .eq('user_id', user.id)
+            .single();
+
+        isPremiumUser = !!profile?.is_premium;
+        console.log('💎 Premium status (journal):', isPremiumUser ? 'PREMIUM' : 'FREE');
+    } catch (error) {
+        console.error('Error checking premium status:', error);
+        isPremiumUser = false;
+    }
+}
+
+function gatePremiumAnalytics() {
+    const premiumEls = document.querySelectorAll('[data-premium="true"]');
+    const analyzeBtn = document.getElementById('analyzeBtn');
+
+    premiumEls.forEach(el => {
+        if (isPremiumUser) {
+            unlockPremiumElement(el);
+        } else {
+            if (!el.classList.contains('premium-locked')) {
+                el.classList.add('premium-locked');
+                el.style.position = 'relative';
+                el.style.filter = 'grayscale(0.6)';
+                el.style.opacity = '0.65';
+
+                const mask = document.createElement('div');
+                mask.className = 'premium-mask';
+                mask.style.position = 'absolute';
+                mask.style.inset = '0';
+                mask.style.display = 'flex';
+                mask.style.alignItems = 'center';
+                mask.style.justifyContent = 'center';
+                mask.style.background = 'rgba(0,0,0,0.3)';
+                mask.style.borderRadius = '12px';
+                mask.style.fontSize = '0.75rem';
+                mask.style.letterSpacing = '0.02em';
+                mask.style.color = 'var(--text-secondary)';
+                mask.style.cursor = 'pointer';
+                mask.textContent = '🔒 Premium Feature';
+                mask.addEventListener('click', () => {
+                    if (typeof showPremiumModal === 'function') {
+                        showPremiumModal();
+                    } else {
+                        alert('Unlock this feature with LockIn Premium.');
+                    }
+                });
+                el.appendChild(mask);
+            }
+        }
+    });
+
+    if (!isPremiumUser && analyzeBtn) {
+        analyzeBtn.addEventListener('click', (event) => {
+            event.preventDefault();
+            if (typeof showPremiumModal === 'function') {
+                showPremiumModal();
+            } else {
+                alert('Upgrade to Premium to unlock AI Trading Analysis.');
+            }
+        }, { once: true });
+        analyzeBtn.classList.add('premium-locked-button');
+        analyzeBtn.querySelector('span#analyzeBtnText').textContent = 'Upgrade for AI Analysis';
+    } else if (isPremiumUser && analyzeBtn) {
+        analyzeBtn.classList.remove('premium-locked-button');
+        analyzeBtn.querySelector('span#analyzeBtnText').textContent = 'Analyze My Trades';
+        analyzeBtn.onclick = () => generateAIAnalysis();
+    }
+}
+
+function unlockPremiumElement(el) {
+    el.classList.remove('premium-locked');
+    el.style.filter = '';
+    el.style.opacity = '';
+    const mask = el.querySelector('.premium-mask');
+    if (mask) mask.remove();
+}
 
 // Stub functions for future implementation
 async function editTrade(tradeId) {
