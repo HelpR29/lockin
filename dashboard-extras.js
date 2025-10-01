@@ -169,7 +169,7 @@ async function openProfileModal() {
         }
     } catch (_) { /* ignore */ }
     
-    // Fetch avatar from onboarding (with error handling)
+    // Fetch avatar from onboarding (emoji fallback) and user_profiles (photo)
     let avatarEmoji = '👤'; // default
     try {
         const { data: onboardingData, error } = await supabase
@@ -177,13 +177,19 @@ async function openProfileModal() {
             .select('avatar')
             .eq('user_id', user.id)
             .single();
-        
         if (!error && onboardingData?.avatar) {
             avatarEmoji = onboardingData.avatar;
         }
-    } catch (err) {
-        console.log('No onboarding data, using default avatar');
-    }
+    } catch (_) { /* ignore */ }
+    let avatarUrl = null;
+    try {
+        const { data: profileAvatar } = await supabase
+            .from('user_profiles')
+            .select('avatar_url')
+            .eq('user_id', user.id)
+            .single();
+        avatarUrl = profileAvatar?.avatar_url || null;
+    } catch (_) { /* ignore */ }
     
     // Fetch premium status for inline badge
     let isPremium = false;
@@ -201,15 +207,16 @@ async function openProfileModal() {
     const modal = document.createElement('div');
     modal.className = 'modal';
     modal.style.display = 'flex';
+    const avatarBlock = avatarUrl
+        ? `<img src="${avatarUrl}" alt="avatar" style="width:120px;height:120px;border-radius:50%;object-fit:cover;display:block;margin:0 auto 1rem;">`
+        : `<div style="width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), #FFB84D); margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; font-size: 4rem;">${avatarEmoji}</div>`;
     modal.innerHTML = `
         <div class="modal-content" style="max-width: 500px;">
             <span class="close-button" onclick="this.closest('.modal').remove()">&times;</span>
             <h2 style="margin-bottom: 2rem; text-align: center;">👤 Your Profile</h2>
             
             <div style="text-align: center; margin-bottom: 2rem;">
-                <div style="width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), #FFB84D); margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; font-size: 4rem;">
-                    ${avatarEmoji}
-                </div>
+                ${avatarBlock}
                 <h3 style="margin: 0.5rem 0; display: inline-flex; align-items: center; gap: 0.35rem;">${user.user_metadata?.full_name || 'Trader'}
                     ${isPremium ? `<span title="PREMIUM" style="color: #FFD54F;">💎</span>` : ''}
                 </h3>
@@ -327,6 +334,18 @@ async function openSettingsModal() {
             </div>
             
             <div style="margin-bottom: 2rem;">
+                <h3 style="font-size: 1.125rem; margin-bottom: 1rem;">Profile Photo</h3>
+                <div style="display:flex; align-items:center; gap:1rem;">
+                    <div id="settingsAvatarPreview" style="width:64px; height:64px; border-radius:50%; overflow:hidden; background: linear-gradient(135deg, var(--primary), #FFB84D); display:flex; align-items:center; justify-content:center; font-size:2rem;">👤</div>
+                    <div style="display:flex; gap:0.5rem;">
+                        <button class="cta-primary" id="uploadAvatarBtn" onclick="selectAndUploadAvatar()">Upload Photo</button>
+                        <button class="cta-secondary" id="removeAvatarBtn" onclick="removeAvatar()">Remove</button>
+                    </div>
+                </div>
+                <div id="premiumPhotoNote" style="font-size:0.8rem; color:var(--text-secondary); margin-top:0.5rem;"></div>
+            </div>
+            
+            <div style="margin-bottom: 2rem;">
                 <h3 style="font-size: 1.125rem; margin-bottom: 1rem;">Premium</h3>
                 <div id="premiumStatusLine" style="background: var(--card-bg); border: 1px solid var(--glass-border); border-radius: 12px; padding: 0.75rem; margin-bottom: 0.75rem;">
                     Status: <strong id="premiumStatusValue">Checking...</strong>
@@ -373,11 +392,11 @@ async function openSettingsModal() {
     `;
     document.body.appendChild(modal);
 
-    // Populate premium/reset status
+    // Populate premium/reset status and avatar preview
     try {
         const { data: prof } = await supabase
             .from('user_profiles')
-            .select('is_premium, reset_used')
+            .select('is_premium, reset_used, avatar_url')
             .eq('user_id', user.id)
             .single();
         const isPremium = !!prof?.is_premium;
@@ -391,6 +410,24 @@ async function openSettingsModal() {
         }
         const resetNote = document.getElementById('resetNote');
         if (resetNote && resetUsed) resetNote.textContent = 'Reset already used.';
+        // Avatar preview
+        const preview = document.getElementById('settingsAvatarPreview');
+        if (preview) {
+            if (prof?.avatar_url) {
+                preview.innerHTML = `<img src="${prof.avatar_url}" alt="avatar" style="width:100%; height:100%; object-fit:cover;">`;
+            } else {
+                preview.textContent = '👤';
+            }
+        }
+        // Gate upload for non-premium
+        const uploadBtn = document.getElementById('uploadAvatarBtn');
+        const note = document.getElementById('premiumPhotoNote');
+        if (uploadBtn && !isPremium) {
+            uploadBtn.disabled = true;
+            if (note) note.textContent = 'Uploading a profile photo is a Premium feature.';
+        } else if (note) {
+            note.textContent = '';
+        }
     } catch (_) { /* ignore */ }
 }
 
@@ -518,3 +555,57 @@ async function openUserProfileById(userId) {
     } catch (e) { console.warn('openUserProfileById failed', e); }
 }
 window.openUserProfileById = openUserProfileById;
+
+// Avatar upload/remove (Premium)
+async function selectAndUploadAvatar() {
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        // Verify premium
+        const { data: prof } = await supabase.from('user_profiles').select('is_premium').eq('user_id', user.id).single();
+        if (!prof?.is_premium) return alert('Profile photos are a Premium feature.');
+        // Create file picker
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/jpeg,image/png,image/webp';
+        input.onchange = async (e) => {
+            const file = e.target.files && e.target.files[0];
+            if (!file) return;
+            if (file.size > 2 * 1024 * 1024) return alert('Max size is 2MB.');
+            const path = `${user.id}/${Date.now()}_${file.name}`;
+            const { error: upErr } = await supabase.storage.from('avatars').upload(path, file, { upsert: true, contentType: file.type });
+            if (upErr) { alert('Upload failed. Ensure the "avatars" bucket exists and is public.'); return; }
+            const { data: pub } = supabase.storage.from('avatars').getPublicUrl(path);
+            const publicUrl = pub?.publicUrl;
+            if (!publicUrl) return alert('Could not get public URL.');
+            await supabase.from('user_profiles').update({ avatar_url: publicUrl }).eq('user_id', user.id);
+            // Update UI
+            const preview = document.getElementById('settingsAvatarPreview');
+            if (preview) preview.innerHTML = `<img src="${publicUrl}" alt="avatar" style="width:100%; height:100%; object-fit:cover;">`;
+            const dashAvatar = document.getElementById('dashboardAvatar');
+            if (dashAvatar) dashAvatar.innerHTML = `<img src="${publicUrl}" alt="avatar" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+            alert('✅ Profile photo updated');
+        };
+        input.click();
+    } catch (e) {
+        console.error('selectAndUploadAvatar failed', e);
+        alert('Upload failed.');
+    }
+}
+
+async function removeAvatar() {
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        await supabase.from('user_profiles').update({ avatar_url: null }).eq('user_id', user.id);
+        const preview = document.getElementById('settingsAvatarPreview');
+        if (preview) preview.textContent = '👤';
+        const dashAvatar = document.getElementById('dashboardAvatar');
+        if (dashAvatar) dashAvatar.textContent = '👤';
+        alert('Profile photo removed');
+    } catch (e) {
+        console.error('removeAvatar failed', e);
+    }
+}
+window.selectAndUploadAvatar = selectAndUploadAvatar;
+window.removeAvatar = removeAvatar;
