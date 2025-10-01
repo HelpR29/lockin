@@ -535,3 +535,5 @@ window.saveGoals = saveGoals;
 window.saveRules = saveRules;
 window.selectToken = selectToken;
 window.completeOnboarding = completeOnboarding;
+window.nextStep = nextStep;
+window.prevStep = prevStep;
