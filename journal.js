@@ -244,57 +244,169 @@ async function viewTradeOnChart(tradeId) {
     }
 }
 
-// Close an open trade (only changes status, maintains discipline)
+// Close trade - supports partial closes
 async function closeTrade(tradeId) {
-    if (!confirm('Are you sure you want to close this trade? This action cannot be undone.')) {
-        return;
-    }
-    
     try {
-        const { error } = await supabase
+        // Get the trade details first
+        const { data: trade, error: fetchError } = await supabase
             .from('trades')
-            .update({ status: 'closed' })
-            .eq('id', tradeId);
+            .select('*')
+            .eq('id', tradeId)
+            .single();
         
-        if (error) {
-            console.error('Error closing trade:', error);
-            alert('Failed to close trade. Please try again.');
-        } else {
-            // Reload trades to show updated status and P&L
-            await loadTrades();
-            
-            // Award XP for closing trade (10 XP per closed trade)
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-                const { data: progress } = await supabase
-                    .from('user_progress')
-                    .select('experience, level')
-                    .eq('user_id', user.id)
-                    .single();
-                
-                // Calculate new XP and level
-                const newXP = (progress?.experience || 0) + 10;
-                
-                // Calculate level from XP
-                const levelInfo = calculateLevelFromXP(newXP);
-                
-                await supabase
-                    .from('user_progress')
-                    .update({ 
-                        experience: newXP,
-                        level: levelInfo.level,
-                        next_level_xp: levelInfo.nextLevelXP
-                    })
-                    .eq('user_id', user.id);
-            }
-            
-            // Update progress tracker
-            if (typeof updatePnLChart === 'function') {
-                await updatePnLChart();
-            }
-            
-            alert('Trade closed successfully! P&L calculated. +10 XP earned!');
+        if (fetchError || !trade) {
+            console.error('Error fetching trade:', fetchError);
+            alert('Failed to load trade details.');
+            return;
         }
+        
+        // Ask how many contracts/shares to close
+        const maxSize = trade.position_size;
+        const closeAmount = prompt(
+            `📊 Close Position: ${trade.symbol}\n\n` +
+            `Entry Price: $${trade.entry_price}\n` +
+            `Position Size: ${maxSize} ${trade.trade_type === 'stock' ? 'shares' : 'contracts'}\n\n` +
+            `How many do you want to close? (1-${maxSize})`,
+            maxSize
+        );
+        
+        if (!closeAmount) return; // User cancelled
+        
+        const closeSize = parseFloat(closeAmount);
+        
+        // Validate input
+        if (isNaN(closeSize) || closeSize <= 0 || closeSize > maxSize) {
+            alert(`Invalid amount. Please enter a number between 1 and ${maxSize}.`);
+            return;
+        }
+        
+        // ALWAYS ask for actual exit price (real-time market price)
+        const exitPriceInput = prompt(
+            `💰 Exit Price\n\n` +
+            `Closing: ${closeSize} ${trade.trade_type === 'stock' ? 'shares' : 'contracts'}\n` +
+            `Entry was: $${trade.entry_price}\n\n` +
+            `What price did you sell at?`,
+            trade.entry_price
+        );
+        
+        if (!exitPriceInput) return;
+        
+        const exitPrice = parseFloat(exitPriceInput);
+        if (isNaN(exitPrice) || exitPrice <= 0) {
+            alert('Invalid exit price. Please enter a valid number.');
+            return;
+        }
+        
+        // Calculate P&L for this partial close
+        const isOption = trade.trade_type === 'call' || trade.trade_type === 'put';
+        const multiplier = isOption ? 100 : 1;
+        const pnl = (exitPrice - trade.entry_price) * closeSize * multiplier * (trade.direction === 'short' ? -1 : 1);
+        const pnlPercent = ((exitPrice - trade.entry_price) / trade.entry_price * 100).toFixed(2);
+        
+        const isFullClose = closeSize === maxSize;
+        
+        // Show detailed confirmation with P&L
+        if (!confirm(
+            `${isFullClose ? '✅ CLOSE ENTIRE POSITION' : '📊 PARTIAL CLOSE'}\n\n` +
+            `Symbol: ${trade.symbol}\n` +
+            `Closing: ${closeSize} of ${maxSize} ${trade.trade_type === 'stock' ? 'shares' : 'contracts'}\n` +
+            `${isFullClose ? '' : `Remaining: ${maxSize - closeSize}\n`}\n` +
+            `Entry Price: $${trade.entry_price}\n` +
+            `Exit Price: $${exitPrice}\n` +
+            `Price Change: ${pnlPercent >= 0 ? '+' : ''}${pnlPercent}%\n\n` +
+            `💰 P/L: ${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}\n\n` +
+            `This action cannot be undone.`
+        )) {
+            return;
+        }
+        
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (isFullClose) {
+            // Full close - just update status and exit price
+            const { error } = await supabase
+                .from('trades')
+                .update({ 
+                    status: 'closed',
+                    exit_price: exitPrice
+                })
+                .eq('id', tradeId);
+            
+            if (error) throw error;
+            
+        } else {
+            // Partial close - create new closed trade and update original
+            
+            // 1. Create a new "closed" trade for the partial exit
+            const { error: insertError } = await supabase
+                .from('trades')
+                .insert({
+                    user_id: user.id,
+                    symbol: trade.symbol,
+                    trade_type: trade.trade_type,
+                    direction: trade.direction,
+                    entry_price: trade.entry_price,
+                    exit_price: exitPrice,
+                    stop_loss: trade.stop_loss,
+                    target_price: trade.target_price,
+                    strike_price: trade.strike_price,
+                    expiry_date: trade.expiry_date,
+                    position_size: closeSize,
+                    status: 'closed',
+                    notes: `Partial close of ${trade.symbol} (${closeSize}/${maxSize})\n\nOriginal notes: ${trade.notes || 'None'}`,
+                    emotions: trade.emotions
+                });
+            
+            if (insertError) throw insertError;
+            
+            // 2. Update original trade to reduce position size
+            const remainingSize = maxSize - closeSize;
+            const { error: updateError } = await supabase
+                .from('trades')
+                .update({ 
+                    position_size: remainingSize,
+                    notes: `${trade.notes || ''}\n\n[${new Date().toLocaleDateString()}] Partial close: ${closeSize} closed at $${exitPrice}, ${remainingSize} remaining`
+                })
+                .eq('id', tradeId);
+            
+            if (updateError) throw updateError;
+        }
+        
+        // Award XP for closing trade
+        if (user) {
+            const { data: progress } = await supabase
+                .from('user_progress')
+                .select('experience, level')
+                .eq('user_id', user.id)
+                .single();
+            
+            const newXP = (progress?.experience || 0) + 10;
+            const levelInfo = calculateLevelFromXP(newXP);
+            
+            await supabase
+                .from('user_progress')
+                .update({ 
+                    experience: newXP,
+                    level: levelInfo.level,
+                    next_level_xp: levelInfo.nextLevelXP
+                })
+                .eq('user_id', user.id);
+        }
+        
+        // Reload trades
+        await loadTrades();
+        
+        // Update progress tracker
+        if (typeof updatePnLChart === 'function') {
+            await updatePnLChart();
+        }
+        
+        const message = isFullClose 
+            ? `✅ Trade fully closed! P&L calculated. +10 XP earned!`
+            : `✅ Partially closed ${closeSize} of ${maxSize}! ${maxSize - closeSize} still open. +10 XP earned!`;
+        
+        alert(message);
+        
     } catch (error) {
         console.error('Error closing trade:', error);
         alert('An error occurred. Please try again.');
