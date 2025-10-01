@@ -567,3 +567,6 @@ async function getUserProgressSummary(userId) {
         return null;
     }
 }
+
+// Export function globally
+window.recalculateUserLevel = recalculateUserLevel;
