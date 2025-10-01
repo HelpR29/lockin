@@ -365,7 +365,12 @@
                     e.preventDefault();
                     e.stopPropagation();
                     console.log('🎯 Add Custom Rule button clicked!');
-                    openAddRuleModal();
+                    // Check if premium (loaded from rules-simple.js)
+                    if (typeof isPremiumUser !== 'undefined' && !isPremiumUser) {
+                        showPremiumModal();
+                    } else {
+                        openAddRuleModal();
+                    }
                 });
                 console.log('✅ Event listener attached to Add Custom Rule button');
             } else {
@@ -378,6 +383,11 @@
                     e.preventDefault();
                     e.stopPropagation();
                     console.log('🎯 Load Default Rules button clicked!');
+                    // Check if premium (loaded from rules-simple.js)
+                    if (typeof isPremiumUser !== 'undefined' && !isPremiumUser) {
+                        showPremiumModal();
+                        return;
+                    }
                     if (confirm('This will add 70 comprehensive trading rules to your account. Continue?')) {
                         // Call the function from rules-simple.js
                         if (typeof window.initializeDefaultRules === 'function') {
