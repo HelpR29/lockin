@@ -374,12 +374,18 @@
             
             if (addTemplateBtn) {
                 console.log('✅ Found Load Default Rules button:', addTemplateBtn);
-                addTemplateBtn.addEventListener('click', (e) => {
+                addTemplateBtn.addEventListener('click', async (e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     console.log('🎯 Load Default Rules button clicked!');
                     if (confirm('This will add 70 comprehensive trading rules to your account. Continue?')) {
-                        initializeDefaultRules();
+                        // Call the function from rules-simple.js
+                        if (typeof window.initializeDefaultRules === 'function') {
+                            await window.initializeDefaultRules();
+                        } else {
+                            console.error('❌ initializeDefaultRules not found! Loading inline...');
+                            await loadDefaultRulesInline();
+                        }
                     }
                 });
                 console.log('✅ Event listener attached to Load Default Rules button');
@@ -389,6 +395,121 @@
 
             console.log('✅ All event listeners attached successfully');
         });
+        
+        // Inline version of initializeDefaultRules (fallback)
+        async function loadDefaultRulesInline() {
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) {
+                    alert('Please log in first.');
+                    return;
+                }
+
+                const defaultRules = [
+                    // Risk Management (12 rules)
+                    { category: "Risk Management", rule: "Never risk more than 2% of account per trade" },
+                    { category: "Risk Management", rule: "Always use stop loss orders on every trade" },
+                    { category: "Risk Management", rule: "Don't add to losing positions (no averaging down)" },
+                    { category: "Risk Management", rule: "Maximum 3 open positions at once" },
+                    { category: "Risk Management", rule: "Risk no more than 6% of account in total at any time" },
+                    { category: "Risk Management", rule: "Use proper position sizing based on stop loss distance" },
+                    { category: "Risk Management", rule: "Never use more than 2:1 leverage" },
+                    { category: "Risk Management", rule: "Set maximum daily loss limit at 5% of account" },
+                    { category: "Risk Management", rule: "Take profits at predetermined targets" },
+                    { category: "Risk Management", rule: "Adjust position size based on volatility (ATR)" },
+                    { category: "Risk Management", rule: "Never risk more on one trade than you can afford to lose" },
+                    { category: "Risk Management", rule: "Review and adjust stop losses as trade moves in your favor" },
+                    
+                    // Entry Rules (15 rules)
+                    { category: "Entry Rules", rule: "Wait for confirmation before entering any trade" },
+                    { category: "Entry Rules", rule: "Only trade during market hours (9:30 AM - 4:00 PM ET)" },
+                    { category: "Entry Rules", rule: "No trading in first 15 minutes of market open" },
+                    { category: "Entry Rules", rule: "No trading in last 15 minutes before market close" },
+                    { category: "Entry Rules", rule: "Must have 3:1 minimum reward-to-risk ratio" },
+                    { category: "Entry Rules", rule: "Only enter trades that align with the trend" },
+                    { category: "Entry Rules", rule: "Confirm entry with volume analysis" },
+                    { category: "Entry Rules", rule: "Check multiple timeframes before entry" },
+                    { category: "Entry Rules", rule: "Wait for pullback to support/resistance in trending markets" },
+                    { category: "Entry Rules", rule: "Avoid trading during major news events unless planned" },
+                    { category: "Entry Rules", rule: "Enter only when you have a clear plan" },
+                    { category: "Entry Rules", rule: "Look for confluence of at least 2 technical indicators" },
+                    { category: "Entry Rules", rule: "Avoid chasing breakouts - wait for retest" },
+                    { category: "Entry Rules", rule: "Check correlation with market indices before entry" },
+                    { category: "Entry Rules", rule: "Only trade setups you have backtested" },
+                    
+                    // Exit Rules (12 rules)
+                    { category: "Exit Rules", rule: "Always take profits at predetermined targets" },
+                    { category: "Exit Rules", rule: "Move stop to breakeven after 50% of profit target hit" },
+                    { category: "Exit Rules", rule: "Exit immediately if trade thesis is invalidated" },
+                    { category: "Exit Rules", rule: "Don't hold overnight unless specifically planned" },
+                    { category: "Exit Rules", rule: "Trail stops on winning trades" },
+                    { category: "Exit Rules", rule: "Exit before major economic announcements" },
+                    { category: "Exit Rules", rule: "Scale out at multiple profit targets" },
+                    { category: "Exit Rules", rule: "Never move stop loss further away from entry" },
+                    { category: "Exit Rules", rule: "Exit when price action becomes choppy/unclear" },
+                    { category: "Exit Rules", rule: "Take partial profits at first target, let rest run" },
+                    { category: "Exit Rules", rule: "Exit all positions before long weekends/holidays" },
+                    { category: "Exit Rules", rule: "Don't let winners turn into losers - lock in profits" },
+                    
+                    // Psychology (15 rules)
+                    { category: "Psychology", rule: "No revenge trading after a loss" },
+                    { category: "Psychology", rule: "Take a break after 2 consecutive losses" },
+                    { category: "Psychology", rule: "Don't trade when emotional, stressed, or tired" },
+                    { category: "Psychology", rule: "Journal every trade with emotions and reasoning" },
+                    { category: "Psychology", rule: "Accept that losses are part of trading" },
+                    { category: "Psychology", rule: "Don't overtrade - quality over quantity" },
+                    { category: "Psychology", rule: "Avoid trading when angry or frustrated" },
+                    { category: "Psychology", rule: "Don't check positions obsessively - trust your plan" },
+                    { category: "Psychology", rule: "Never trade to 'make back' losses quickly" },
+                    { category: "Psychology", rule: "Stay humble - market can change anytime" },
+                    { category: "Psychology", rule: "Don't compare yourself to other traders" },
+                    { category: "Psychology", rule: "Celebrate small wins, learn from all trades" },
+                    { category: "Psychology", rule: "Take breaks during losing streaks" },
+                    { category: "Psychology", rule: "Focus on process, not just profits" },
+                    { category: "Psychology", rule: "Meditate or exercise before trading session" },
+                    
+                    // General (16 rules)
+                    { category: "General", rule: "Follow your trading plan always" },
+                    { category: "General", rule: "Review all trades weekly" },
+                    { category: "General", rule: "No FOMO (Fear of Missing Out) trading" },
+                    { category: "General", rule: "Keep risk-reward ratio consistent" },
+                    { category: "General", rule: "Maintain detailed trading journal" },
+                    { category: "General", rule: "Backtest new strategies before live trading" },
+                    { category: "General", rule: "Review and update trading plan monthly" },
+                    { category: "General", rule: "Track all metrics and statistics" },
+                    { category: "General", rule: "Never trade based on tips or rumors" },
+                    { category: "General", rule: "Do your own analysis before every trade" },
+                    { category: "General", rule: "Stick to your watchlist - don't chase random stocks" },
+                    { category: "General", rule: "Set realistic goals and expectations" },
+                    { category: "General", rule: "Continuously educate yourself about markets" },
+                    { category: "General", rule: "Paper trade new strategies first" },
+                    { category: "General", rule: "Never trade with money you can't afford to lose" },
+                    { category: "General", rule: "Stay disciplined even during winning streaks" }
+                ];
+
+                console.log('📦 Inserting', defaultRules.length, 'default rules...');
+                
+                for (const ruleData of defaultRules) {
+                    await supabase.from('trading_rules').insert({
+                        user_id: user.id,
+                        rule: ruleData.rule,
+                        category: ruleData.category,
+                        is_active: true,
+                        times_followed: 0,
+                        times_violated: 0
+                    });
+                }
+                
+                console.log('✅ Default rules initialized successfully!');
+                alert('🎉 70 comprehensive trading rules added!');
+                window.location.reload();
+            } catch (error) {
+                console.error('Error initializing default rules:', error);
+                alert('Failed to load default rules: ' + error.message);
+            }
+        }
+        
+        window.loadDefaultRulesInline = loadDefaultRulesInline;
     </script>
     
     <style>
