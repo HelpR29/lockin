@@ -53,6 +53,20 @@ async function loadStarBalance() {
 // Load Achievements
 async function loadAchievements() {
     try {
+        // Skeletons for achievements grids
+        const freeGrid = document.getElementById('freeAchievementsGrid');
+        const premiumGrid = document.getElementById('premiumAchievementsGrid');
+        const skeletonCard = () => `
+            <div class="achievement-card" style="opacity:0.7;">
+                <div class="achievement-icon">⭐</div>
+                <div class="achievement-name" style="height:1rem; background: rgba(255,255,255,0.06); border-radius:6px;"></div>
+                <div class="achievement-description" style="height:1.5rem; background: rgba(255,255,255,0.04); border-radius:6px; margin-top:0.5rem;"></div>
+                <div class="achievement-rewards" style="opacity:0.6;">
+                    <span class="reward-badge">&nbsp;</span>
+                </div>
+            </div>`;
+        if (freeGrid) freeGrid.innerHTML = Array.from({length: 4}).map(skeletonCard).join('');
+        if (premiumGrid) premiumGrid.innerHTML = Array.from({length: 4}).map(skeletonCard).join('');
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
@@ -105,6 +119,25 @@ function renderAchievementGrid(containerId, achievements, earnedSet) {
 // Load Reward Shop
 async function loadRewardShop() {
     try {
+        // Skeletons for shop grid
+        const shop = document.getElementById('shopGrid');
+        if (shop) {
+            shop.innerHTML = Array.from({length: 4}).map(() => `
+                <div class="shop-item-card" style="opacity:0.7;">
+                    <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1rem;">
+                        <div style="font-size:3rem;">🛍️</div>
+                        <div style="flex:1;">
+                            <div style="height:1rem; background: rgba(255,255,255,0.06); border-radius:6px; margin-bottom:0.4rem;"></div>
+                            <div style="height:1rem; background: rgba(255,255,255,0.04); border-radius:6px;"></div>
+                        </div>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding-top:1rem; border-top:1px solid var(--glass-border);">
+                        <div style="width:60px; height:1.25rem; background: rgba(255,255,255,0.06); border-radius:6px;"></div>
+                        <button class="cta-primary" disabled style="opacity:0.6;">Purchase</button>
+                    </div>
+                </div>
+            `).join('');
+        }
         const { data: rewards } = await supabase
             .from('reward_shop')
             .select('*')
