@@ -316,7 +316,9 @@ async function completeOnboarding() {
                 streak_multiplier: 1.0,
                 level_bonus: 1.0,
                 achievement_bonus: 1.0,
-                total_growth_multiplier: 1.0
+                total_growth_multiplier: 1.0,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
             });
         
         if (progressError) console.warn('Progress init warning:', progressError);
