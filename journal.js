@@ -190,19 +190,11 @@ function openLogTradeModal() {
     document.getElementById('tradeModalTitle').textContent = 'Log New Trade';
     document.querySelectorAll('.emotion-tags .tag').forEach(tag => tag.classList.remove('selected'));
     openModal('tradeModal');
-}
 
 function openModal(id) {
     const modal = document.getElementById(id);
     if (modal) {
         modal.style.display = 'flex';
-    }
-}
-
-function closeModal(id) {
-    const modal = document.getElementById(id);
-    if (modal) {
-        modal.style.display = 'none';
     }
 }
 
@@ -247,13 +239,23 @@ async function closeTrade(tradeId) {
             if (user) {
                 const { data: progress } = await supabase
                     .from('user_progress')
-                    .select('total_check_ins')
+                    .select('experience, level')
                     .eq('user_id', user.id)
                     .single();
                 
+                // Calculate new XP and level
+                const newXP = (progress?.experience || 0) + 10;
+                
+                // Calculate level from XP
+                const levelInfo = calculateLevelFromXP(newXP);
+                
                 await supabase
                     .from('user_progress')
-                    .update({ total_check_ins: (progress?.total_check_ins || 0) + 10 })
+                    .update({ 
+                        experience: newXP,
+                        level: levelInfo.level,
+                        next_level_xp: levelInfo.nextLevelXP
+                    })
                     .eq('user_id', user.id);
             }
             
@@ -270,6 +272,48 @@ async function closeTrade(tradeId) {
     }
 }
 
+// Recalculate user level based on current XP (for fixing existing users)
+async function recalculateUserLevel() {
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            alert('Please log in first.');
+            return;
+        }
+        
+        const { data: progress } = await supabase
+            .from('user_progress')
+            .select('experience')
+            .eq('user_id', user.id)
+            .single();
+        
+        if (!progress) {
+            alert('No progress data found.');
+            return;
+        }
+        
+        const levelInfo = calculateLevelFromXP(progress.experience);
+        
+        const { error } = await supabase
+            .from('user_progress')
+            .update({
+                level: levelInfo.level,
+                next_level_xp: levelInfo.nextLevelXP
+            })
+            .eq('user_id', user.id);
+        
+        if (error) {
+            console.error('Error updating level:', error);
+            alert('Failed to recalculate level.');
+        } else {
+            alert(`✅ Level recalculated! Current level: ${levelInfo.level}, XP: ${progress.experience}`);
+        }
+    } catch (error) {
+        console.error('Error recalculating level:', error);
+        alert('Error recalculating level.');
+    }
+}
+
 // Export functions to global scope for HTML onclick handlers
 window.openLogTradeModal = openLogTradeModal;
 window.editTrade = editTrade;
@@ -278,3 +322,4 @@ window.openModal = openModal;
 window.closeModal = closeModal;
 window.viewTradeOnChart = viewTradeOnChart;
 window.closeTrade = closeTrade;
+window.recalculateUserLevel = recalculateUserLevel;
