@@ -220,6 +220,27 @@ async function purchaseReward(rewardId) {
 // Load Leaderboard
 async function loadLeaderboard() {
     try {
+        // Skeleton loaders
+        const podium = document.getElementById('podium');
+        const table = document.getElementById('leaderboardTable');
+        if (podium) {
+            podium.innerHTML = `
+                <div class="podium-place"><div class="podium-user"><div style="height: 110px; background: rgba(255,255,255,0.06); border-radius: 12px;"></div></div><div class="podium-base" style="height:140px; opacity:0.4;">&nbsp;</div></div>
+                <div class="podium-place"><div class="podium-user"><div style="height: 140px; background: rgba(255,255,255,0.06); border-radius: 12px;"></div></div><div class="podium-base" style="height:180px; opacity:0.4;">&nbsp;</div></div>
+                <div class="podium-place"><div class="podium-user"><div style="height: 90px; background: rgba(255,255,255,0.06); border-radius: 12px;"></div></div><div class="podium-base" style="height:100px; opacity:0.4;">&nbsp;</div></div>
+            `;
+        }
+        if (table) {
+            table.innerHTML = Array.from({length: 6}).map(() => `
+                <div class="leaderboard-row">
+                    <div style="width:40px; height:1rem; background: rgba(255,255,255,0.06); border-radius:6px;"></div>
+                    <div style="height:1rem; background: rgba(255,255,255,0.06); border-radius:6px;"></div>
+                    <div style="height:1rem; background: rgba(255,255,255,0.06); border-radius:6px;"></div>
+                    <div style="height:1rem; background: rgba(255,255,255,0.06); border-radius:6px;"></div>
+                    <div style="height:1rem; background: rgba(255,255,255,0.06); border-radius:6px;"></div>
+                </div>
+            `).join('');
+        }
         const { data: leaderboard } = await supabase
             .from('leaderboard_stats')
             .select('*')
@@ -299,7 +320,7 @@ function renderLeaderboard(data) {
             <div class="podium-place">
                 <div class="podium-user">
                     <div class="podium-rank">${medals[actualRank - 1]}</div>
-                    <div class="podium-name">${user.full_name || 'Trader'}${badge}</div>
+                    <div class="podium-name"><button class="lb-name" data-user-id="${user.user_id}" style="all:unset; cursor:pointer; font-weight:700;">${user.full_name || 'Trader'}</button>${badge}</div>
                     <div class="podium-stats">
                         ${user.completions} completions<br>
                         ${user.discipline_score}% discipline
@@ -327,7 +348,7 @@ function renderLeaderboard(data) {
             return `
                 <div class="leaderboard-row">
                     <div style="font-weight: 700; color: var(--primary);">#${idx + 1}</div>
-                    <div style="font-weight: 600;">${user.full_name || 'Trader'}${badge}</div>
+                    <div style="font-weight: 600;"><button class="lb-name" data-user-id="${user.user_id}" style="all:unset; cursor:pointer; font-weight:600;">${user.full_name || 'Trader'}</button>${badge}</div>
                     <div>${user.completions}</div>
                     <div>${user.discipline_score}%</div>
                     <div>Lv ${user.level}</div>
@@ -338,6 +359,53 @@ function renderLeaderboard(data) {
 
     document.getElementById('leaderboardTable').innerHTML = tableHTML;
 }
+
+// Simple user profile modal for leaderboard entries
+async function openUserProfileModal(userId) {
+    try {
+        const { data: row } = await supabase
+            .from('leaderboard_stats')
+            .select('*')
+            .eq('user_id', userId)
+            .single();
+        if (!row) return;
+        const badge = row.is_premium ? '<span title="PREMIUM" style="color:#FFD54F; margin-left:0.25rem;">💎</span>' : '';
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.style.display = 'flex';
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width:520px;">
+                <span class="close-button" onclick="this.closest('.modal').remove()">&times;</span>
+                <h2 style="margin-bottom:1rem;">${row.full_name || 'Trader'} ${badge}</h2>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                    <div style="background: rgba(255,255,255,0.05); padding:1rem; border-radius:12px; text-align:center;">
+                        <div style="font-size:1.75rem; font-weight:800; color:var(--primary);">${row.level}</div>
+                        <div style="font-size:0.8rem; color:var(--text-secondary);">Level</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.05); padding:1rem; border-radius:12px; text-align:center;">
+                        <div style="font-size:1.75rem; font-weight:800;">${row.completions}</div>
+                        <div style="font-size:0.8rem; color:var(--text-secondary);">Completions</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.05); padding:1rem; border-radius:12px; text-align:center; grid-column: span 2;">
+                        <div style="font-size:1.25rem; font-weight:700;">${row.discipline_score}%</div>
+                        <div style="font-size:0.8rem; color:var(--text-secondary);">Discipline</div>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    } catch (e) {
+        console.warn('openUserProfileModal failed', e);
+    }
+}
+
+// Event delegation for leaderboard name clicks
+document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.lb-name');
+    if (btn && btn.dataset.userId) {
+        openUserProfileModal(btn.dataset.userId);
+    }
+});
 
 // Export functions
 window.switchTab = switchTab;
