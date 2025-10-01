@@ -327,6 +327,23 @@ async function openSettingsModal() {
             </div>
             
             <div style="margin-bottom: 2rem;">
+                <h3 style="font-size: 1.125rem; margin-bottom: 1rem;">Premium</h3>
+                <div id="premiumStatusLine" style="background: var(--card-bg); border: 1px solid var(--glass-border); border-radius: 12px; padding: 0.75rem; margin-bottom: 0.75rem;">
+                    Status: <strong id="premiumStatusValue">Checking...</strong>
+                </div>
+                <ul style="margin:0 0 0.75rem 1rem; color: var(--text-secondary); font-size:0.9rem;">
+                    <li>Access Premium Achievements & special rewards</li>
+                    <li>Unlock default rule templates pack</li>
+                    <li>Priority analytics refresh and upcoming pro insights</li>
+                </ul>
+                <div style="display:flex; gap:0.5rem; align-items:center;">
+                    <input id="premiumInviteCode" type="text" placeholder="Enter invite code" style="flex:1; background: var(--card-bg); color: var(--text-primary); border:1px solid var(--glass-border); border-radius:8px; padding:0.6rem;"/>
+                    <button class="cta-primary" onclick="applyPremiumCode()">Apply Code</button>
+                </div>
+                <div style="font-size:0.8rem; color:var(--text-secondary); margin-top:0.5rem;">No code? Ask an admin to grant premium to your email.</div>
+            </div>
+            
+            <div style="margin-bottom: 2rem;">
                 <h3 style="font-size: 1.125rem; margin-bottom: 1rem;">Notifications</h3>
                 <div style="background: var(--card-bg); border: 1px solid var(--glass-border); border-radius: 12px; padding: 1rem;">
                     <label style="display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
@@ -338,6 +355,10 @@ async function openSettingsModal() {
             
             <div style="margin-bottom: 2rem;">
                 <h3 style="font-size: 1.125rem; margin-bottom: 1rem;">Danger Zone</h3>
+                <button class="cta-secondary" onclick="resetAccountOneTime()" style="width: 100%; background: rgba(255, 235, 59, 0.12); border-color: #FFC107; color: #FFC107; margin-bottom:0.5rem;">
+                    ♻️ Reset Account (one-time)
+                </button>
+                <div id="resetNote" style="font-size:0.8rem; color: var(--text-secondary); margin-bottom:0.75rem;">You can reset once. This clears trades, rules, achievements, stars, and progress. Friends and login remain.</div>
                 <button class="cta-secondary" onclick="if(confirm('Are you sure?')) alert('Account deletion coming soon!')" style="width: 100%; background: rgba(244, 67, 54, 0.2); border-color: #F44336; color: #F44336;">
                     🗑️ Delete Account
                 </button>
@@ -347,6 +368,26 @@ async function openSettingsModal() {
         </div>
     `;
     document.body.appendChild(modal);
+
+    // Populate premium/reset status
+    try {
+        const { data: prof } = await supabase
+            .from('user_profiles')
+            .select('is_premium, reset_used')
+            .eq('user_id', user.id)
+            .single();
+        const isPremium = !!prof?.is_premium;
+        const resetUsed = !!prof?.reset_used || localStorage.getItem('lockin_reset_used') === '1';
+        const statusEl = document.getElementById('premiumStatusValue');
+        if (statusEl) statusEl.textContent = isPremium ? 'Premium' : 'Free';
+        const codeInput = document.getElementById('premiumInviteCode');
+        if (codeInput && isPremium) {
+            codeInput.disabled = true;
+            codeInput.placeholder = 'Already Premium';
+        }
+        const resetNote = document.getElementById('resetNote');
+        if (resetNote && resetUsed) resetNote.textContent = 'Reset already used.';
+    } catch (_) { /* ignore */ }
 }
 
 function toggleNotificationSettings(enabled) {
@@ -357,8 +398,81 @@ function toggleNotificationSettings(enabled) {
     }
 }
 
+// Apply Premium via invite code (dev/beta flow)
+async function applyPremiumCode() {
+    try {
+        const code = document.getElementById('premiumInviteCode')?.value?.trim();
+        if (!code) return alert('Enter an invite code');
+        const validCodes = ['LOCKIN-BETA', 'PREMIUM-2025', 'NATHAN-PREMIUM'];
+        if (!validCodes.includes(code)) return alert('Invalid code');
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const { error } = await supabase
+            .from('user_profiles')
+            .update({ is_premium: true })
+            .eq('user_id', user.id);
+        if (error) {
+            console.warn('applyPremiumCode failed on user_profiles, falling back to local flag', error);
+            // Fallback marker
+            localStorage.setItem('lockin_premium_local', '1');
+        }
+        alert('✅ Premium activated!');
+        document.querySelector('#premiumStatusValue').textContent = 'Premium';
+        const input = document.getElementById('premiumInviteCode');
+        if (input) { input.disabled = true; input.placeholder = 'Already Premium'; }
+    } catch (e) {
+        alert('Failed to apply code');
+    }
+}
+
+// One-time Reset Account
+async function resetAccountOneTime() {
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        // Check allowance
+        let resetUsed = false;
+        try {
+            const { data: prof } = await supabase
+                .from('user_profiles')
+                .select('reset_used')
+                .eq('user_id', user.id)
+                .single();
+            resetUsed = !!prof?.reset_used;
+        } catch (_) { /* ignore */ }
+        if (resetUsed || localStorage.getItem('lockin_reset_used') === '1') {
+            return alert('You have already used your one-time reset.');
+        }
+        if (!confirm('This will permanently clear your trades, rules, achievements, stars, and progress. Continue?')) return;
+
+        // Clear data
+        const ops = [];
+        ops.push(supabase.from('trades').delete().eq('user_id', user.id));
+        ops.push(supabase.from('rule_violations').delete().eq('user_id', user.id));
+        ops.push(supabase.from('trading_rules').delete().eq('user_id', user.id));
+        ops.push(supabase.from('user_achievements').delete().eq('user_id', user.id));
+        ops.push(supabase.from('user_stars').delete().eq('user_id', user.id));
+        ops.push(supabase.from('user_progress').delete().eq('user_id', user.id));
+        await Promise.allSettled(ops);
+
+        // Mark used (best-effort)
+        try {
+            await supabase.from('user_profiles').update({ reset_used: true }).eq('user_id', user.id);
+        } catch (_) { /* ignore */ }
+        localStorage.setItem('lockin_reset_used', '1');
+
+        alert('✅ Account reset complete. The page will reload.');
+        window.location.reload();
+    } catch (e) {
+        console.error('resetAccountOneTime failed', e);
+        alert('Failed to reset account.');
+    }
+}
+
 // Export functions
 window.loadRecentActivity = loadRecentActivity;
 window.openProfileModal = openProfileModal;
 window.openLeaderboardModal = openLeaderboardModal;
 window.openSettingsModal = openSettingsModal;
+window.applyPremiumCode = applyPremiumCode;
+window.resetAccountOneTime = resetAccountOneTime;
