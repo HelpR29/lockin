@@ -29,9 +29,11 @@ function handleStatusChange() {
     const statusSel = document.getElementById('status');
     const exitGroup = document.getElementById('exitGroup');
     const exitHint = document.getElementById('exitHint');
+    const exitInput = document.getElementById('exitPrice');
     const isClosed = statusSel && statusSel.value === 'closed';
     if (exitGroup) exitGroup.style.display = isClosed ? 'block' : 'none';
     if (exitHint) exitHint.style.display = isClosed ? 'none' : 'block';
+    if (exitInput) exitInput.required = isClosed;
 }
 
 async function checkPremiumStatus() {
@@ -147,6 +149,23 @@ async function loadTrades() {
         container.innerHTML = '<p class="no-trades">No trades logged yet. Click "Log New Trade" to get started.</p>';
         return;
     }
+
+    // Fetch violations for these trades (single roundtrip)
+    const tradeIds = trades.map(t => t.id);
+    let violationsByTrade = new Map();
+    try {
+        if (tradeIds.length) {
+            const { data: viols } = await supabase
+                .from('rule_violations')
+                .select('id, trade_id, notes, violation_date')
+                .in('trade_id', tradeIds);
+            (viols || []).forEach(v => {
+                const arr = violationsByTrade.get(v.trade_id) || [];
+                arr.push(v);
+                violationsByTrade.set(v.trade_id, arr);
+            });
+        }
+    } catch (_) { /* non-fatal */ }
 
     for (const trade of trades) {
         // Calculate P&L - for options, multiply by 100 (contract multiplier)
