@@ -26,7 +26,7 @@
                         <div class="progress-fill" id="progressFill"></div>
                     </div>
                     <div class="progress-text">
-                        <span id="currentStep">1</span> of <span id="totalSteps">5</span>
+                        <span id="currentStep">1</span> of <span id="totalSteps">6</span>
                     </div>
                 </div>
 
@@ -289,7 +289,56 @@
                         
                         <div class="step-actions">
                             <button class="cta-secondary" onclick="prevStep()">Back</button>
-                            <button class="cta-primary-large" onclick="completeOnboarding()" id="finishButton" disabled>
+                            <button class="cta-primary-large" onclick="nextStep()" id="tokenContinueButton" disabled>
+                                <span>Continue to Rules</span>
+                                <div class="button-glow"></div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 6: Select Trading Rules -->
+                <div class="onboarding-step" id="step6">
+                    <div class="step-content">
+                        <div class="step-icon">📋</div>
+                        <h2 class="step-title">Select Your Trading Rules</h2>
+                        <p class="step-description">Choose rules to keep you disciplined. You can add custom rules too!</p>
+                        <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1.5rem;">
+                            ⚠️ <strong>Important:</strong> After onboarding, editing/adding/removing rules requires Premium. Choose wisely!
+                        </p>
+                        
+                        <!-- Rule Categories -->
+                        <div id="ruleSelectionContainer" style="max-height: 60vh; overflow-y: auto; margin-bottom: 1.5rem;">
+                            <!-- Rules will be loaded here -->
+                        </div>
+                        
+                        <!-- Add Custom Rule -->
+                        <div style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(255, 149, 0, 0.1); border-radius: 12px; border: 1px solid var(--primary-orange);">
+                            <h4 style="margin: 0 0 0.5rem 0; color: var(--primary-orange);">Add Your Own Rule</h4>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <select id="customRuleCategory" style="flex: 0 0 200px; padding: 0.5rem; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 8px; color: var(--text-primary);">
+                                    <option value="Risk Management">⚠️ Risk Management</option>
+                                    <option value="Entry Rules">📥 Entry Rules</option>
+                                    <option value="Exit Rules">📤 Exit Rules</option>
+                                    <option value="Psychology">🧠 Psychology</option>
+                                    <option value="General">📋 General</option>
+                                </select>
+                                <input type="text" id="customRuleText" placeholder="Enter your custom rule..." style="flex: 1; padding: 0.5rem; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 8px; color: var(--text-primary);">
+                                <button class="cta-primary" onclick="addCustomRuleOnboarding()" style="padding: 0.5rem 1.5rem; white-space: nowrap;">+ Add</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Selected Rules Summary -->
+                        <div style="padding: 1rem; background: var(--card-bg); border-radius: 12px; margin-bottom: 1.5rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="color: var(--text-secondary);">Selected Rules:</span>
+                                <span style="font-size: 1.5rem; font-weight: 700; color: var(--primary-orange);" id="selectedRulesCount">0</span>
+                            </div>
+                        </div>
+                        
+                        <div class="step-actions">
+                            <button class="cta-secondary" onclick="prevStep()">Back</button>
+                            <button class="cta-primary-large" onclick="completeOnboarding()" id="finishButton">
                                 <span>Complete Setup</span>
                                 <div class="button-glow"></div>
                             </button>

@@ -1,14 +1,16 @@
 // Onboarding State Management
 let currentStep = 1;
-const totalSteps = 5;
+const totalSteps = 6;
 let selectedToken = null;
+let selectedRules = [];
 
 // Onboarding data
 const onboardingData = {
     profile: {},
     goals: {},
     rules: {},
-    token: null
+    token: null,
+    tradingRules: []
 };
 
 // Check auth on load
@@ -56,6 +58,11 @@ function nextStep() {
         currentStep++;
         if (nextStepEl) nextStepEl.classList.add('active');
         updateProgress();
+        
+        // Load rules when entering step 6
+        if (currentStep === 6) {
+            loadRulesForSelection();
+        }
     }
 }
 
@@ -209,15 +216,195 @@ function selectToken(token) {
     selectedToken = token;
     onboardingData.token = token;
     
-    // Enable finish button
-    const finishButton = document.getElementById('finishButton');
-    if (finishButton) finishButton.disabled = false;
+    // Enable continue button
+    const continueButton = document.getElementById('tokenContinueButton');
+    if (continueButton) continueButton.disabled = false;
+}
+
+// Step 6: Load Trading Rules for Selection
+async function loadRulesForSelection() {
+    const defaultRules = [
+        // Risk Management (12 rules)
+        { category: "Risk Management", rule: "Never risk more than 2% of account per trade" },
+        { category: "Risk Management", rule: "Always use stop loss orders on every trade" },
+        { category: "Risk Management", rule: "Don't add to losing positions (no averaging down)" },
+        { category: "Risk Management", rule: "Maximum 3 open positions at once" },
+        { category: "Risk Management", rule: "Risk no more than 6% of account in total at any time" },
+        { category: "Risk Management", rule: "Use proper position sizing based on stop loss distance" },
+        { category: "Risk Management", rule: "Never use more than 2:1 leverage" },
+        { category: "Risk Management", rule: "Set maximum daily loss limit at 5% of account" },
+        { category: "Risk Management", rule: "Take profits at predetermined targets" },
+        { category: "Risk Management", rule: "Adjust position size based on volatility (ATR)" },
+        { category: "Risk Management", rule: "Never risk more on one trade than you can afford to lose" },
+        { category: "Risk Management", rule: "Review and adjust stop losses as trade moves in your favor" },
+        
+        // Entry Rules (15 rules)
+        { category: "Entry Rules", rule: "Wait for confirmation before entering any trade" },
+        { category: "Entry Rules", rule: "Only trade during market hours (9:30 AM - 4:00 PM ET)" },
+        { category: "Entry Rules", rule: "No trading in first 15 minutes of market open" },
+        { category: "Entry Rules", rule: "No trading in last 15 minutes before market close" },
+        { category: "Entry Rules", rule: "Must have 3:1 minimum reward-to-risk ratio" },
+        { category: "Entry Rules", rule: "Only enter trades that align with the trend" },
+        { category: "Entry Rules", rule: "Confirm entry with volume analysis" },
+        { category: "Entry Rules", rule: "Check multiple timeframes before entry" },
+        { category: "Entry Rules", rule: "Wait for pullback to support/resistance in trending markets" },
+        { category: "Entry Rules", rule: "Avoid trading during major news events unless planned" },
+        { category: "Entry Rules", rule: "Enter only when you have a clear plan" },
+        { category: "Entry Rules", rule: "Look for confluence of at least 2 technical indicators" },
+        { category: "Entry Rules", rule: "Avoid chasing breakouts - wait for retest" },
+        { category: "Entry Rules", rule: "Check correlation with market indices before entry" },
+        { category: "Entry Rules", rule: "Only trade setups you have backtested" },
+        
+        // Exit Rules (12 rules)
+        { category: "Exit Rules", rule: "Always take profits at predetermined targets" },
+        { category: "Exit Rules", rule: "Move stop to breakeven after 50% of profit target hit" },
+        { category: "Exit Rules", rule: "Exit immediately if trade thesis is invalidated" },
+        { category: "Exit Rules", rule: "Don't hold overnight unless specifically planned" },
+        { category: "Exit Rules", rule: "Trail stops on winning trades" },
+        { category: "Exit Rules", rule: "Exit before major economic announcements" },
+        { category: "Exit Rules", rule: "Scale out at multiple profit targets" },
+        { category: "Exit Rules", rule: "Never move stop loss further away from entry" },
+        { category: "Exit Rules", rule: "Exit when price action becomes choppy/unclear" },
+        { category: "Exit Rules", rule: "Take partial profits at first target, let rest run" },
+        { category: "Exit Rules", rule: "Exit all positions before long weekends/holidays" },
+        { category: "Exit Rules", rule: "Don't let winners turn into losers - lock in profits" },
+        
+        // Psychology (15 rules)
+        { category: "Psychology", rule: "No revenge trading after a loss" },
+        { category: "Psychology", rule: "Take a break after 2 consecutive losses" },
+        { category: "Psychology", rule: "Don't trade when emotional, stressed, or tired" },
+        { category: "Psychology", rule: "Journal every trade with emotions and reasoning" },
+        { category: "Psychology", rule: "Accept that losses are part of trading" },
+        { category: "Psychology", rule: "Don't overtrade - quality over quantity" },
+        { category: "Psychology", rule: "Avoid trading when angry or frustrated" },
+        { category: "Psychology", rule: "Don't check positions obsessively - trust your plan" },
+        { category: "Psychology", rule: "Never trade to 'make back' losses quickly" },
+        { category: "Psychology", rule: "Stay humble - market can change anytime" },
+        { category: "Psychology", rule: "Don't compare yourself to other traders" },
+        { category: "Psychology", rule: "Celebrate small wins, learn from all trades" },
+        { category: "Psychology", rule: "Take breaks during losing streaks" },
+        { category: "Psychology", rule: "Focus on process, not just profits" },
+        { category: "Psychology", rule: "Meditate or exercise before trading session" },
+        
+        // General (16 rules)
+        { category: "General", rule: "Follow your trading plan always" },
+        { category: "General", rule: "Review all trades weekly" },
+        { category: "General", rule: "No FOMO (Fear of Missing Out) trading" },
+        { category: "General", rule: "Keep risk-reward ratio consistent" },
+        { category: "General", rule: "Maintain detailed trading journal" },
+        { category: "General", rule: "Backtest new strategies before live trading" },
+        { category: "General", rule: "Review and update trading plan monthly" },
+        { category: "General", rule: "Track all metrics and statistics" },
+        { category: "General", rule: "Never trade based on tips or rumors" },
+        { category: "General", rule: "Do your own analysis before every trade" },
+        { category: "General", rule: "Stick to your watchlist - don't chase random stocks" },
+        { category: "General", rule: "Set realistic goals and expectations" },
+        { category: "General", rule: "Continuously educate yourself about markets" },
+        { category: "General", rule: "Paper trade new strategies first" },
+        { category: "General", rule: "Never trade with money you can't afford to lose" },
+        { category: "General", rule: "Stay disciplined even during winning streaks" }
+    ];
+    
+    const container = document.getElementById('ruleSelectionContainer');
+    container.innerHTML = '';
+    
+    const categories = ['Risk Management', 'Entry Rules', 'Exit Rules', 'Psychology', 'General'];
+    const categoryIcons = {
+        'Risk Management': '⚠️',
+        'Entry Rules': '📥',
+        'Exit Rules': '📤',
+        'Psychology': '🧠',
+        'General': '📋'
+    };
+    
+    categories.forEach(category => {
+        const categoryRules = defaultRules.filter(r => r.category === category);
+        
+        const categoryEl = document.createElement('div');
+        categoryEl.style.cssText = 'margin-bottom: 1.5rem; padding: 1rem; background: var(--card-bg); border-radius: 12px;';
+        
+        categoryEl.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--glass-border);">
+                <span style="font-size: 1.5rem;">${categoryIcons[category]}</span>
+                <h4 style="margin: 0; color: var(--primary-orange);">${category}</h4>
+            </div>
+            <div class="rules-list"></div>
+        `;
+        
+        const rulesList = categoryEl.querySelector('.rules-list');
+        
+        categoryRules.forEach((ruleData, index) => {
+            const ruleId = `rule-${category.replace(/\s/g, '-')}-${index}`;
+            const ruleEl = document.createElement('div');
+            ruleEl.style.cssText = 'display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; margin-bottom: 0.5rem; background: rgba(255, 255, 255, 0.03); border-radius: 8px; cursor: pointer; transition: all 0.2s;';
+            ruleEl.onmouseover = () => ruleEl.style.background = 'rgba(255, 149, 0, 0.1)';
+            ruleEl.onmouseout = () => ruleEl.style.background = 'rgba(255, 255, 255, 0.03)';
+            
+            ruleEl.innerHTML = `
+                <input type="checkbox" id="${ruleId}" data-category="${category}" data-rule="${ruleData.rule.replace(/"/g, '&quot;')}" onchange="toggleRuleSelection(this)" style="width: 20px; height: 20px; cursor: pointer;">
+                <label for="${ruleId}" style="flex: 1; cursor: pointer; user-select: none;">${ruleData.rule}</label>
+            `;
+            
+            rulesList.appendChild(ruleEl);
+        });
+        
+        container.appendChild(categoryEl);
+    });
+    
+    updateSelectedCount();
+}
+
+function toggleRuleSelection(checkbox) {
+    const rule = {
+        category: checkbox.getAttribute('data-category'),
+        rule: checkbox.getAttribute('data-rule')
+    };
+    
+    if (checkbox.checked) {
+        selectedRules.push(rule);
+    } else {
+        selectedRules = selectedRules.filter(r => r.rule !== rule.rule);
+    }
+    
+    updateSelectedCount();
+}
+
+function addCustomRuleOnboarding() {
+    const category = document.getElementById('customRuleCategory').value;
+    const ruleText = document.getElementById('customRuleText').value.trim();
+    
+    if (!ruleText) {
+        alert('Please enter a rule!');
+        return;
+    }
+    
+    selectedRules.push({ category, rule: ruleText, isCustom: true });
+    document.getElementById('customRuleText').value = '';
+    
+    // Add visual feedback
+    const successMsg = document.createElement('div');
+    successMsg.style.cssText = 'position: fixed; top: 2rem; right: 2rem; background: #4CAF50; color: white; padding: 1rem 2rem; border-radius: 8px; z-index: 999999;';
+    successMsg.textContent = '✅ Custom rule added!';
+    document.body.appendChild(successMsg);
+    setTimeout(() => successMsg.remove(), 2000);
+    
+    updateSelectedCount();
+}
+
+function updateSelectedCount() {
+    const countEl = document.getElementById('selectedRulesCount');
+    if (countEl) countEl.textContent = selectedRules.length;
 }
 
 // Complete Onboarding
 async function completeOnboarding() {
     if (!selectedToken) {
         alert('Please select a progress token');
+        return;
+    }
+    
+    if (selectedRules.length === 0) {
+        alert('Please select at least one trading rule to track your discipline!');
         return;
     }
     
@@ -235,6 +422,7 @@ async function completeOnboarding() {
         }
         
         console.log('Saving onboarding data:', onboardingData);
+        console.log('Selected trading rules:', selectedRules.length);
         
         // Clean up any existing incomplete records first
         try {
@@ -373,8 +561,19 @@ async function completeOnboarding() {
         
         if (progressError) console.warn('Progress init warning:', progressError);
         
-        // Step 4: Initialize default trading rules
-        await initializeDefaultTradingRules(user.id);
+        // Save selected trading rules
+        console.log('💾 Saving', selectedRules.length, 'selected trading rules...');
+        for (const ruleData of selectedRules) {
+            await supabase.from('trading_rules').insert({
+                user_id: user.id,
+                rule: ruleData.rule,
+                category: ruleData.category,
+                is_active: true,
+                times_followed: 0,
+                times_violated: 0
+            });
+        }
+        console.log('✅ Trading rules saved successfully!');
         
         console.log('✅ Onboarding complete! Redirecting to dashboard...');
         
@@ -534,5 +733,7 @@ window.saveGoals = saveGoals;
 window.saveRules = saveRules;
 window.selectToken = selectToken;
 window.completeOnboarding = completeOnboarding;
-window.nextStep = nextStep;
-window.prevStep = prevStep;
+window.loadRulesForSelection = loadRulesForSelection;
+window.toggleRuleSelection = toggleRuleSelection;
+window.addCustomRuleOnboarding = addCustomRuleOnboarding;
+window.updateSelectedCount = updateSelectedCount;
