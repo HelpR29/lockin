@@ -12,7 +12,7 @@ window.openViolationsModal = async function openViolationsModal(tradeId) {
     try {
         const { data: viols } = await supabase
             .from('rule_violations')
-            .select('id, rule_id, notes, violation_date')
+            .select('id, rule_id, notes, violation_date, violated_at')
             .eq('trade_id', tradeId)
             .order('violation_date', { ascending: false });
 
@@ -31,7 +31,7 @@ window.openViolationsModal = async function openViolationsModal(tradeId) {
                     ruleText = ur?.rule_text || '';
                 } catch (_) {}
             }
-            items.push({ when: v.violation_date, rule: ruleText, notes: v.notes });
+            items.push({ when: v.violation_date || v.violated_at, rule: ruleText, notes: v.notes });
         }
 
         const modal = document.createElement('div');
