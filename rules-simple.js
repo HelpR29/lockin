@@ -91,13 +91,23 @@ async function checkPremiumStatus() {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        const { data: profile } = await supabase
+        const { data: profile, error } = await supabase
             .from('user_profiles')
             .select('is_premium')
             .eq('user_id', user.id)
             .single();
 
-        isPremiumUser = profile?.is_premium || false;
+        // If column doesn't exist, default to free but don't block
+        if (error && error.message.includes('column')) {
+            console.warn('⚠️ is_premium column not found - defaulting to FREE (add column with SQL migration)');
+            isPremiumUser = false;
+        } else if (error) {
+            console.error('Error checking premium status:', error);
+            isPremiumUser = false;
+        } else {
+            isPremiumUser = profile?.is_premium || false;
+        }
+        
         console.log('💎 Premium status:', isPremiumUser ? 'PREMIUM' : 'FREE');
         
         // Update UI based on premium status
