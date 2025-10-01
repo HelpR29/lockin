@@ -68,26 +68,14 @@ function gatePremiumAnalytics() {
                 el.style.opacity = '0.65';
 
                 const mask = document.createElement('div');
-                mask.className = 'premium-mask';
                 mask.style.position = 'absolute';
                 mask.style.inset = '0';
                 mask.style.display = 'flex';
                 mask.style.alignItems = 'center';
                 mask.style.justifyContent = 'center';
-                mask.style.background = 'rgba(0,0,0,0.3)';
-                mask.style.borderRadius = '12px';
-                mask.style.fontSize = '0.75rem';
-                mask.style.letterSpacing = '0.02em';
                 mask.style.color = 'var(--text-secondary)';
-                mask.style.cursor = 'pointer';
-                mask.textContent = '🔒 Premium Feature';
-                mask.addEventListener('click', () => {
-                    if (typeof showPremiumModal === 'function') {
-                        showPremiumModal();
-                    } else {
-                        alert('Unlock this feature with LockIn Premium.');
-                    }
-                });
+                mask.style.fontWeight = '600';
+                mask.innerHTML = 'Premium Feature';
                 el.appendChild(mask);
             }
         }

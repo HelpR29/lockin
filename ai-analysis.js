@@ -58,6 +58,16 @@ async function generateAIAnalysis() {
         // Generate AI analysis with rules
         const analysis = await analyzeWithAI(trades, stats, userRules);
         displayAIAnalysis(analysis);
+
+        // Summarize trade notes with LLM if available, fallback to local
+        try {
+            const notesSummary = await summarizeNotesWithLLM(trades);
+            displayNotesSummary(notesSummary);
+        } catch (e) {
+            console.warn('LLM notes summary failed, using local.', e);
+            const localSummary = generateLocalNotesSummary(trades);
+            displayNotesSummary(localSummary);
+        }
         
     } catch (error) {
         console.error('Error generating analysis:', error);
