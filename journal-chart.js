@@ -191,10 +191,22 @@ async function loadTradeChart(trade) {
         }
 
         const resetButton = document.getElementById('resetZoomBtn');
-        if (resetButton && journalChart) {
+        if (resetButton) {
             resetButton.style.display = 'none';
-            resetButton.addEventListener('click', () => {
-                if (journalChart) {
+            resetButton.onclick = () => {
+                if (journalChart && typeof journalChart.resetZoom === 'function') {
+                    journalChart.resetZoom();
+                }
+                resetButton.style.display = 'none';
+            };
+        }
+
+    } catch (error) {
+        console.error('Error loading trade chart:', error);
+        alert('Could not load chart data. AlphaVantage API limit may be reached or symbol not found.');
+    }
+}
+
 function updateChartInfo(trade) {
     const chartInfo = document.getElementById('chartInfo');
     const chartSymbol = document.getElementById('chartSymbol');
@@ -238,7 +250,7 @@ function updateChartInfo(trade) {
         chartInfo.style.display = 'block';
     }
     if (header) {
-        header.innerHTML = `Price Chart`;
+        header.innerHTML = `📈 Price Chart`;
     }
 
     // Log trade details for debugging
@@ -252,6 +264,7 @@ function updateChartInfo(trade) {
         actualRR: actualRR ? `${actualRR}:1` : 'N/A'
     });
 }
+
 async function fetchCryptoDataForTrade(symbol) {
     try {
         const response = await fetch(
