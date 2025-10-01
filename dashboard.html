@@ -440,11 +440,48 @@
             'trophy': { singular: 'Trophy', plural: 'Trophies', container: 'Trophies' }
         };
         
-        // Load and display user progress
+        // Show error state when progress data fails to load
+        function showProgressError() {
+            console.log('Showing progress error state...');
+            
+            // Hide main dashboard content
+            const mainContent = document.querySelector('.dashboard-main');
+            if (mainContent) {
+                mainContent.style.display = 'none';
+            }
+            
+            // Show error message
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'progress-error';
+            errorDiv.innerHTML = `
+                <div style="text-align: center; padding: 2rem; color: var(--text-primary);">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">⚠️</div>
+                    <h2 style="color: var(--error); margin-bottom: 1rem;">Dashboard Unavailable</h2>
+                    <p style="margin-bottom: 1.5rem;">Your progress data couldn't be loaded. This usually means you need to complete the onboarding process.</p>
+                    <button class="cta-primary" onclick="window.location.href='onboarding.html'" style="margin-right: 1rem;">
+                        Complete Onboarding
+                    </button>
+                    <button class="cta-secondary" onclick="window.location.reload()">
+                        Retry Loading
+                    </button>
+                </div>
+            `;
+            
+            // Insert error message before the main dashboard content
+            const dashboardContainer = document.querySelector('.dashboard-container');
+            if (dashboardContainer) {
+                dashboardContainer.insertBefore(errorDiv, mainContent);
+            }
+        }
         async function loadUserProgress(userId) {
             const progressSummary = await getUserProgressSummary(userId);
             
-            if (!progressSummary) return;
+            if (!progressSummary) {
+                console.error('❌ Failed to load progress data - user may need to complete onboarding');
+                // Show error state instead of crashing
+                showProgressError();
+                return;
+            }
             
             currentProgressData = progressSummary;
             
@@ -695,7 +732,6 @@
     <style>
         .share-modal {
             display: flex;
-            position: fixed;
             z-index: 10000;
             left: 0;
             top: 0;
