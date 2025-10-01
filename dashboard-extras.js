@@ -399,7 +399,20 @@ async function openSettingsModal() {
             .select('is_premium, reset_used, avatar_url')
             .eq('user_id', user.id)
             .single();
-        const isPremium = !!prof?.is_premium;
+        let isPremium = !!prof?.is_premium;
+        if (!isPremium) {
+            try {
+                const { data: lb } = await supabase
+                    .from('leaderboard_stats')
+                    .select('is_premium')
+                    .eq('user_id', user.id)
+                    .single();
+                isPremium = !!lb?.is_premium;
+            } catch(_) {}
+        }
+        if (!isPremium && localStorage.getItem('lockin_premium_local') === '1') {
+            isPremium = true;
+        }
         const resetUsed = !!prof?.reset_used || localStorage.getItem('lockin_reset_used') === '1';
         const statusEl = document.getElementById('premiumStatusValue');
         if (statusEl) statusEl.textContent = isPremium ? 'Premium' : 'Free';
@@ -427,6 +440,7 @@ async function openSettingsModal() {
             if (note) note.textContent = 'Uploading a profile photo is a Premium feature.';
         } else if (note) {
             note.textContent = '';
+            if (uploadBtn) uploadBtn.disabled = false;
         }
     } catch (_) { /* ignore */ }
 }
@@ -563,33 +577,52 @@ window.openUserProfileById = openUserProfileById;
 // Avatar upload/remove (Premium)
 async function selectAndUploadAvatar() {
     try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-        // Verify premium
-        const { data: prof } = await supabase.from('user_profiles').select('is_premium').eq('user_id', user.id).single();
-        if (!prof?.is_premium) return alert('Profile photos are a Premium feature.');
-        // Create file picker
+        // Create picker immediately to maintain user gesture
         const input = document.createElement('input');
         input.type = 'file';
         input.accept = 'image/jpeg,image/png,image/webp';
         input.onchange = async (e) => {
-            const file = e.target.files && e.target.files[0];
-            if (!file) return;
-            if (file.size > 2 * 1024 * 1024) return alert('Max size is 2MB.');
-            const path = `${user.id}/${Date.now()}_${file.name}`;
-            const { error: upErr } = await supabase.storage.from('avatars').upload(path, file, { upsert: true, contentType: file.type });
-            if (upErr) { alert('Upload failed. Ensure the "avatars" bucket exists and is public.'); return; }
-            const { data: pub } = supabase.storage.from('avatars').getPublicUrl(path);
-            const publicUrl = pub?.publicUrl;
-            if (!publicUrl) return alert('Could not get public URL.');
-            await supabase.from('user_profiles').update({ avatar_url: publicUrl }).eq('user_id', user.id);
-            // Update UI
-            const preview = document.getElementById('settingsAvatarPreview');
-            if (preview) preview.innerHTML = `<img src="${publicUrl}" alt="avatar" style="width:100%; height:100%; object-fit:cover;">`;
-            const dashAvatar = document.getElementById('dashboardAvatar');
-            if (dashAvatar) dashAvatar.innerHTML = `<img src="${publicUrl}" alt="avatar" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
-            alert('✅ Profile photo updated');
+            try {
+                const file = e.target.files && e.target.files[0];
+                if (!file) return;
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) { alert('Please log in'); return; }
+                // Verify premium with multiple sources
+                let isPremium = false;
+                try {
+                    const { data: prof } = await supabase.from('user_profiles').select('is_premium').eq('user_id', user.id).single();
+                    isPremium = !!prof?.is_premium;
+                } catch(_) {}
+                if (!isPremium) {
+                    try {
+                        const { data: lb } = await supabase.from('leaderboard_stats').select('is_premium').eq('user_id', user.id).single();
+                        isPremium = !!lb?.is_premium;
+                    } catch(_) {}
+                }
+                if (!isPremium && localStorage.getItem('lockin_premium_local') === '1') isPremium = true;
+                if (!isPremium) { alert('Profile photos are a Premium feature.'); return; }
+
+                if (file.size > 2 * 1024 * 1024) { alert('Max size is 2MB.'); return; }
+                const { name, type } = file;
+                const path = `${user.id}/${Date.now()}_${name}`;
+                const { error: upErr } = await supabase.storage.from('avatars').upload(path, file, { upsert: true, contentType: type });
+                if (upErr) { alert('Upload failed. Ensure the "avatars" bucket exists and is public.'); return; }
+                const { data: pub } = supabase.storage.from('avatars').getPublicUrl(path);
+                const publicUrl = pub?.publicUrl;
+                if (!publicUrl) { alert('Could not get public URL.'); return; }
+                await supabase.from('user_profiles').update({ avatar_url: publicUrl }).eq('user_id', user.id);
+                // Update UI
+                const preview = document.getElementById('settingsAvatarPreview');
+                if (preview) preview.innerHTML = `<img src="${publicUrl}" alt="avatar" style="width:100%; height:100%; object-fit:cover;">`;
+                const dashAvatar = document.getElementById('dashboardAvatar');
+                if (dashAvatar) dashAvatar.innerHTML = `<img src="${publicUrl}" alt="avatar" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+                alert('✅ Profile photo updated');
+            } catch(err) {
+                console.error('avatar onchange failed', err);
+                alert('Upload failed.');
+            }
         };
+        // Fire picker synchronously
         input.click();
     } catch (e) {
         console.error('selectAndUploadAvatar failed', e);
