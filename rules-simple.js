@@ -82,6 +82,56 @@ window.openModal = openModal;
 window.closeModal = closeModal;
 window.loadRules = loadRules;
 
+// Global variable to track premium status
+let isPremiumUser = false;
+
+// Check if user has premium access
+async function checkPremiumStatus() {
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data: profile } = await supabase
+            .from('user_profiles')
+            .select('is_premium')
+            .eq('user_id', user.id)
+            .single();
+
+        isPremiumUser = profile?.is_premium || false;
+        console.log('💎 Premium status:', isPremiumUser ? 'PREMIUM' : 'FREE');
+        
+        // Update UI based on premium status
+        updateUIForPremiumStatus();
+    } catch (error) {
+        console.error('Error checking premium status:', error);
+        isPremiumUser = false;
+    }
+}
+
+function updateUIForPremiumStatus() {
+    const addButtons = document.querySelectorAll('#addCustomRuleBtn, button[onclick*="openAddRuleModal"]');
+    const loadDefaultBtn = document.getElementById('addTemplateBtn');
+    
+    if (!isPremiumUser) {
+        // Add premium badges to buttons
+        addButtons.forEach(btn => {
+            if (!btn.querySelector('.premium-lock-icon')) {
+                const lockIcon = document.createElement('span');
+                lockIcon.className = 'premium-lock-icon';
+                lockIcon.textContent = ' 🔒';
+                btn.appendChild(lockIcon);
+            }
+        });
+        
+        if (loadDefaultBtn && !loadDefaultBtn.querySelector('.premium-lock-icon')) {
+            const lockIcon = document.createElement('span');
+            lockIcon.className = 'premium-lock-icon';
+            lockIcon.textContent = ' 🔒';
+            loadDefaultBtn.appendChild(lockIcon);
+        }
+    }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     const user = await checkAuth();
     if (!user) {
@@ -89,6 +139,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
+    // Check premium status
+    await checkPremiumStatus();
+    
     await loadRules();
 });
 
