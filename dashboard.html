@@ -381,6 +381,14 @@
             if (typeof loadRecentActivity === 'function') {
                 await loadRecentActivity();
             }
+            
+            // Set up periodic progress refresh (every 30 seconds)
+            setInterval(async () => {
+                if (user && !document.hidden) { // Only refresh if page is visible
+                    console.log('🔄 Refreshing dashboard progress...');
+                    await loadUserProgress(user.id);
+                }
+            }, 30000);
         }
         
         // Global variables
