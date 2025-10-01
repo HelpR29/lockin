@@ -31,9 +31,8 @@ async function loadUserProfile() {
             if (userNameEl) {
                 userNameEl.textContent = profile.username;
                 console.log('✅ Updated username to:', profile.username);
-            } else {
-                console.error('❌ userName element not found in DOM');
             }
+            // Element might not exist on all pages (e.g., journal page)
         } else {
             console.warn('⚠️ No username in profile:', profile);
         }
