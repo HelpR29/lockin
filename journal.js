@@ -376,3 +376,10 @@ window.viewTradeOnChart = viewTradeOnChart;
 window.closeTrade = closeTrade;
 window.recalculateUserLevel = recalculateUserLevel;
 window.calculateLevelFromXP = calculateLevelFromXP;
+
+console.log('✅ Journal functions exported to window:', {
+    openLogTradeModal: typeof window.openLogTradeModal,
+    closeTrade: typeof window.closeTrade,
+    openModal: typeof window.openModal,
+    closeModal: typeof window.closeModal
+});
