@@ -91,23 +91,35 @@ async function openProfileModal() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
     
-    // Pick the row with the highest XP in case of duplicates/nulls
-    const { data: allProgressRows } = await supabase
-        .from('user_progress')
-        .select('*')
-        .eq('user_id', user.id);
-
+    // Prefer global summary for consistency across app
+    let progressSummary = null;
+    try {
+        if (typeof getUserProgressSummary === 'function') {
+            progressSummary = await getUserProgressSummary(user.id);
+        }
+    } catch (e) {
+        console.warn('getUserProgressSummary failed, falling back to raw query', e);
+    }
+    
     let progress = null;
-    if (Array.isArray(allProgressRows) && allProgressRows.length > 0) {
-        progress = allProgressRows.reduce((best, row) => {
-            const currXP = Number(row?.experience ?? 0);
-            const bestXP = Number(best?.experience ?? 0);
-            return currXP > bestXP ? row : best;
-        }, allProgressRows[0]);
+    if (!progressSummary) {
+        // Pick the row with the highest XP in case of duplicates/nulls
+        const { data: allProgressRows } = await supabase
+            .from('user_progress')
+            .select('*')
+            .eq('user_id', user.id);
+        if (Array.isArray(allProgressRows) && allProgressRows.length > 0) {
+            progress = allProgressRows.reduce((best, row) => {
+                const currXP = Number(row?.experience ?? row?.xp ?? row?.total_xp ?? 0);
+                const bestXP = Number(best?.experience ?? best?.xp ?? best?.total_xp ?? 0);
+                return currXP > bestXP ? row : best;
+            }, allProgressRows[0]);
+        }
     }
 
     // Derive level from XP to avoid stale DB level mismatch
-    let xp = Number(progress?.experience ?? 0);
+    // Prefer summary values
+    let xp = Number(progressSummary?.experience ?? progress?.experience ?? progress?.xp ?? progress?.total_xp ?? 0);
     let derived = null;
     // Inline fallback identical to progress.js
     function _calcLevelFromXP_local(val) {
@@ -130,9 +142,9 @@ async function openProfileModal() {
     } catch (_) {
         derived = _calcLevelFromXP_local(xp);
     }
-    let displayLevel = (derived?.level ?? progress?.level ?? 1);
+    let displayLevel = (derived?.level ?? progressSummary?.level ?? progress?.level ?? 1);
     let currentLevelXP = (derived?.currentLevelXP ?? null);
-    let nextLevelXP = (derived?.nextLevelXP ?? null);
+    let nextLevelXP = (derived?.nextLevelXP ?? progressSummary?.next_level_xp ?? null);
 
     // Fallback: if XP is 0 but header widget shows values, parse them
     try {
@@ -145,6 +157,14 @@ async function openProfileModal() {
                 // If level element exists, use it
                 const hdrLvl = document.getElementById('headerCurrentLevel');
                 if (hdrLvl) displayLevel = Number(hdrLvl.textContent) || displayLevel;
+                // Reconstruct total XP = sum of previous levels caps + currentLevelXP
+                try {
+                    let totalNeeded = 0; let lv = 1; let nxt = 100;
+                    while (lv < displayLevel) {
+                        totalNeeded += nxt; lv++; nxt = Math.floor(100 * Math.pow(1.5, lv - 1));
+                    }
+                    xp = totalNeeded + (currentLevelXP || 0);
+                } catch(_) { /* ignore */ }
             }
         }
     } catch (_) { /* ignore */ }

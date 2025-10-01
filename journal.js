@@ -558,6 +558,8 @@ async function closeTrade(tradeId) {
                     next_level_xp: levelInfo.nextLevelXP
                 })
                 .eq('user_id', user.id);
+            // Immediately refresh header XP widgets cross-page if available
+            try { if (typeof updateXPBar === 'function') { await updateXPBar(); } } catch (_) {}
         }
         
         // Reload trades
