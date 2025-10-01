@@ -217,6 +217,57 @@ function generateLocalInsights(trades, stats, emotionCounts, userRules) {
         insights.recommendations.push(`📊 Consider scaling up position sizes gradually`);
     }
     
+    // Analyze user's trading rules adherence
+    if (userRules && userRules.length > 0) {
+        const rulesByCategory = {};
+        userRules.forEach(r => {
+            if (!rulesByCategory[r.category]) rulesByCategory[r.category] = [];
+            rulesByCategory[r.category].push(r);
+        });
+        
+        // Show active rules count
+        insights.patterns.push(`📋 You're tracking ${userRules.length} active trading rules`);
+        
+        // Highlight most violated rules
+        const mostViolatedRules = userRules
+            .filter(r => r.times_violated > 0)
+            .sort((a, b) => b.times_violated - a.times_violated)
+            .slice(0, 2);
+        
+        if (mostViolatedRules.length > 0) {
+            mostViolatedRules.forEach(rule => {
+                insights.recommendations.push(`⚠️ Most violated: "${rule.rule}" (${rule.times_violated} violations)`);
+            });
+        }
+        
+        // Show best followed rules
+        const bestFollowedRules = userRules
+            .filter(r => r.times_followed > 0 && r.times_violated === 0)
+            .sort((a, b) => b.times_followed - a.times_followed)
+            .slice(0, 1);
+        
+        if (bestFollowedRules.length > 0) {
+            insights.recommendations.push(`✅ Perfect adherence: "${bestFollowedRules[0].rule}" (${bestFollowedRules[0].times_followed} times)`);
+        }
+        
+        // Calculate overall rule adherence rate
+        const totalFollowed = userRules.reduce((sum, r) => sum + (r.times_followed || 0), 0);
+        const totalViolated = userRules.reduce((sum, r) => sum + (r.times_violated || 0), 0);
+        const totalRuleEvents = totalFollowed + totalViolated;
+        
+        if (totalRuleEvents > 0) {
+            const adherenceRate = (totalFollowed / totalRuleEvents * 100).toFixed(1);
+            const adherenceColor = adherenceRate >= 80 ? '🟢' : adherenceRate >= 60 ? '🟡' : '🔴';
+            insights.keyInsights.push(`${adherenceColor} Rule Adherence: ${adherenceRate}% (${totalFollowed} followed, ${totalViolated} violated)`);
+            
+            if (adherenceRate < 70) {
+                insights.recommendations.push(`🎯 Focus on improving rule adherence - currently at ${adherenceRate}%`);
+            }
+        }
+    } else {
+        insights.recommendations.push(`📋 Set up trading rules in the RuleGuard to track discipline`);
+    }
+    
     insights.recommendations.push(`📝 Always log your trades immediately to maintain accurate records`);
     insights.recommendations.push(`🔄 Review this analysis weekly to track improvement`);
     
