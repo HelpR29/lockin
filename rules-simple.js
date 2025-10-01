@@ -228,6 +228,14 @@ async function loadRules() {
                     align-items: center;
                 `;
                 
+                const editButton = isPremiumUser 
+                    ? `<button class="rule-edit-btn" onclick="editRule('${rule.id}', '${rule.rule.replace(/'/g, "\\'")}', '${rule.category}')">✏️</button>`
+                    : `<button class="rule-edit-btn" onclick="showPremiumModal()" style="opacity: 0.6;">✏️ 🔒</button>`;
+                
+                const deleteButton = isPremiumUser
+                    ? `<button class="rule-delete-btn" onclick="deleteRule('${rule.id}')">🗑️</button>`
+                    : `<button class="rule-delete-btn" onclick="showPremiumModal()" style="opacity: 0.6;">🗑️ 🔒</button>`;
+                
                 ruleEl.innerHTML = `
                     <div style="flex: 1;">
                         <p style="font-weight: 500; margin: 0 0 0.5rem 0; color: var(--text-primary);">${rule.rule}</p>
@@ -242,8 +250,8 @@ async function loadRules() {
                             <input type="checkbox" ${rule.is_active ? 'checked' : ''} onchange="toggleRuleActive('${rule.id}', this.checked)" style="width: 20px; height: 20px; cursor: pointer;">
                             <span style="margin-left: 0.5rem; font-size: 0.875rem;">Active</span>
                         </label>
-                        <button class="rule-edit-btn" onclick="editRule('${rule.id}', '${rule.rule.replace(/'/g, "\\'")}', '${rule.category}')">✏️</button>
-                        <button class="rule-delete-btn" onclick="deleteRule('${rule.id}')">🗑️</button>
+                        ${editButton}
+                        ${deleteButton}
                     </div>
                 `;
                 
@@ -444,4 +452,143 @@ async function deleteRule(id) {
 
 window.editRule = editRule;
 window.deleteRule = deleteRule;
+
+// Show premium upgrade modal
+function showPremiumModal() {
+    // Remove existing modal if any
+    const existing = document.getElementById('premiumModal');
+    if (existing) existing.remove();
+    
+    const modal = document.createElement('div');
+    modal.id = 'premiumModal';
+    modal.style.cssText = `
+        display: flex;
+        position: fixed;
+        z-index: 999999;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.9);
+        justify-content: center;
+        align-items: center;
+        animation: fadeIn 0.3s ease;
+    `;
+    
+    modal.innerHTML = `
+        <div style="
+            background: linear-gradient(135deg, #2C2C2E 0%, #1C1C1E 100%);
+            border: 3px solid #FFD700;
+            border-radius: 24px;
+            padding: 3rem;
+            max-width: 600px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(255, 215, 0, 0.3);
+            animation: slideUp 0.3s ease;
+        ">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">🔒💎</div>
+            <h2 style="color: #FFD700; margin-bottom: 1rem; font-size: 2rem;">Premium Feature</h2>
+            <p style="color: var(--text-primary); font-size: 1.1rem; margin-bottom: 2rem; line-height: 1.6;">
+                Editing, adding, and deleting rules is a <strong>Premium</strong> feature.
+                <br><br>
+                During onboarding, you carefully selected your trading rules to build discipline.
+                Premium members can modify rules anytime.
+            </p>
+            
+            <div style="background: rgba(255, 215, 0, 0.1); border-radius: 16px; padding: 1.5rem; margin-bottom: 2rem; text-align: left;">
+                <h3 style="color: #FFD700; margin: 0 0 1rem 0; font-size: 1.2rem;">✨ Unlock Premium:</h3>
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="color: #4CAF50; font-size: 1.2rem;">✓</span>
+                        <span style="color: var(--text-primary);">Edit any rule anytime</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="color: #4CAF50; font-size: 1.2rem;">✓</span>
+                        <span style="color: var(--text-primary);">Add unlimited new rules</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="color: #4CAF50; font-size: 1.2rem;">✓</span>
+                        <span style="color: var(--text-primary);">Delete unwanted rules</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="color: #4CAF50; font-size: 1.2rem;">✓</span>
+                        <span style="color: var(--text-primary);">Access rule templates library</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="color: #4CAF50; font-size: 1.2rem;">✓</span>
+                        <span style="color: var(--text-primary);">AI-powered rule suggestions</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="color: #4CAF50; font-size: 1.2rem;">✓</span>
+                        <span style="color: var(--text-primary);">Advanced rule analytics</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 1rem; justify-content: center;">
+                <button onclick="closePremiumModal()" style="
+                    background: transparent;
+                    border: 2px solid var(--text-secondary);
+                    color: var(--text-secondary);
+                    padding: 1rem 2rem;
+                    border-radius: 12px;
+                    font-size: 1rem;
+                    cursor: pointer;
+                    transition: all 0.3s;
+                " onmouseover="this.style.borderColor='var(--primary-orange)'; this.style.color='var(--primary-orange)'" onmouseout="this.style.borderColor='var(--text-secondary)'; this.style.color='var(--text-secondary)'">
+                    Maybe Later
+                </button>
+                <button onclick="upgradeToPremium()" style="
+                    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+                    border: none;
+                    color: #000;
+                    padding: 1rem 2.5rem;
+                    border-radius: 12px;
+                    font-size: 1.1rem;
+                    font-weight: 700;
+                    cursor: pointer;
+                    box-shadow: 0 4px 20px rgba(255, 215, 0, 0.4);
+                    transition: all 0.3s;
+                " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 30px rgba(255, 215, 0, 0.6)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 20px rgba(255, 215, 0, 0.4)'">
+                    🚀 Upgrade to Premium - $9.99/mo
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Add CSS animations if not present
+    if (!document.querySelector('#premium-modal-animations')) {
+        const style = document.createElement('style');
+        style.id = 'premium-modal-animations';
+        style.textContent = `
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+            @keyframes slideUp {
+                from { transform: translateY(50px); opacity: 0; }
+                to { transform: translateY(0); opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+}
+
+function closePremiumModal() {
+    const modal = document.getElementById('premiumModal');
+    if (modal) modal.remove();
+}
+
+function upgradeToPremium() {
+    // TODO: Implement Stripe checkout
+    alert('🚀 Premium upgrade coming soon! This will integrate with Stripe for payment processing.');
+    closePremiumModal();
+}
+
+window.showPremiumModal = showPremiumModal;
+window.closePremiumModal = closePremiumModal;
+window.upgradeToPremium = upgradeToPremium;
 
