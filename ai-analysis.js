@@ -32,9 +32,19 @@ async function generateAIAnalysis() {
             return;
         }
         
-        // Calculate stats
+        // Calculate basic stats
         const stats = calculateTradeStats(trades);
-        updateQuickStats(stats);
+        
+        // Calculate advanced stats
+        const advancedStats = calculateAdvancedStats(trades);
+        
+        // Update display
+        updateQuickStats(stats, advancedStats);
+        
+        // Create cumulative P&L chart
+        if (advancedStats.cumulativePnL.length > 0) {
+            createCumulativePnLChart(advancedStats.cumulativePnL);
+        }
         
         // Get user's trading rules
         const { data: userRules } = await supabase
@@ -101,7 +111,7 @@ function calculateTradeStats(trades) {
     };
 }
 
-function updateQuickStats(stats) {
+function updateQuickStats(stats, advancedStats) {
     const winRateEl = document.getElementById('winRate');
     const avgPnlEl = document.getElementById('avgPnl');
     
@@ -113,6 +123,31 @@ function updateQuickStats(stats) {
     if (avgPnlEl) {
         avgPnlEl.textContent = `$${stats.avgPnL.toFixed(2)}`;
         avgPnlEl.style.color = stats.avgPnL >= 0 ? '#4CAF50' : '#F44336';
+    }
+    
+    // Update advanced stats
+    const dayWinRateEl = document.getElementById('dayWinRate');
+    if (dayWinRateEl && advancedStats) {
+        dayWinRateEl.textContent = `${advancedStats.dayWinRate.toFixed(1)}%`;
+        dayWinRateEl.style.color = advancedStats.dayWinRate >= 50 ? '#4CAF50' : '#F44336';
+    }
+    
+    const maxDDEl = document.getElementById('maxDrawdown');
+    if (maxDDEl && advancedStats) {
+        maxDDEl.textContent = `$${advancedStats.maxDrawdown.toFixed(0)}`;
+        maxDDEl.style.color = '#F44336';
+    }
+    
+    const avgWinEl = document.getElementById('avgWin');
+    if (avgWinEl && advancedStats) {
+        avgWinEl.textContent = `$${advancedStats.avgWin.toFixed(0)}`;
+        avgWinEl.style.color = '#4CAF50';
+    }
+    
+    const avgLossEl = document.getElementById('avgLoss');
+    if (avgLossEl && advancedStats) {
+        avgLossEl.textContent = `$${advancedStats.avgLoss.toFixed(0)}`;
+        avgLossEl.style.color = '#F44336';
     }
 }
 
@@ -293,10 +328,4 @@ function displayAIAnalysis(analysis) {
     
     // Display recommendations
     const recsEl = document.getElementById('aiRecommendations');
-    recsEl.innerHTML = analysis.recommendations.map(rec => 
-        `<div style="margin-bottom: 0.75rem; padding-left: 1rem; border-left: 2px solid #4CAF50;">${rec}</div>`
-    ).join('');
-}
-
-// Export to global
 window.generateAIAnalysis = generateAIAnalysis;
