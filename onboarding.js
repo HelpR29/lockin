@@ -384,6 +384,9 @@ async function completeOnboarding() {
         if (buttonText) buttonText.textContent = '✅ Complete!';
         
         // Show onboarding success message
+}
+    }
+    }
 function showOnboardingSuccess() {
     // Create success overlay
     const successOverlay = document.createElement('div');
