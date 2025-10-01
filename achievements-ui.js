@@ -1,6 +1,7 @@
 // Achievements UI - Rendering and interactions
 
 let currentTab = 'achievements';
+let SELF_USER = { id: null, isPremium: false };
 
 // Initialize page
 document.addEventListener('DOMContentLoaded', async () => {
@@ -14,18 +15,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 // Tab Switching
 function switchTab(tab) {
     currentTab = tab;
-    
-    // Update buttons
-    document.querySelectorAll('.toggle-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    event.target.classList.add('active');
-    
+    // Update buttons without relying on event
+    document.querySelectorAll('.toggle-btn').forEach(btn => btn.classList.remove('active'));
+    const btnForTab = document.querySelector(`button[onclick="switchTab('${tab}')"]`);
+    if (btnForTab) btnForTab.classList.add('active');
+
     // Update content
-    document.querySelectorAll('.tab-content').forEach(content => {
-        content.classList.remove('active');
-    });
-    document.getElementById(`tab-${tab}`).classList.add('active');
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    const tabEl = document.getElementById(`tab-${tab}`);
+    if (tabEl) tabEl.classList.add('active');
+
+    if (tab === 'leaderboard') {
+        // refresh leaderboard when switching in
+        loadLeaderboard();
+    }
 }
 
 // Load Star Balance
@@ -247,17 +250,17 @@ async function loadLeaderboard() {
         try {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
+                SELF_USER.id = user.id;
+                const { data: me } = await supabase
+                    .from('user_profiles')
+                    .select('is_premium')
+                    .eq('user_id', user.id)
+                    .single();
+                SELF_USER.isPremium = !!me?.is_premium;
                 const self = rows.find(r => r.user_id === user.id);
-                if (self && self.is_premium !== true) {
-                    const { data: me } = await supabase
-                        .from('user_profiles')
-                        .select('is_premium')
-                        .eq('user_id', user.id)
-                        .single();
-                    if (me?.is_premium) {
-                        self.is_premium = true;
-                        console.log('✅ Enforced premium for current user on leaderboard rendering');
-                    }
+                if (self && SELF_USER.isPremium) {
+                    self.is_premium = true;
+                    console.log('✅ Enforced premium for current user on leaderboard rendering');
                 }
             }
         } catch (enrichErr) {
@@ -288,7 +291,8 @@ function renderLeaderboard(data) {
         const actualRank = top3.indexOf(user) + 1;
         const medals = ['🥇', '🥈', '🥉'];
         const titles = ['Bartender', 'Brewmaster', 'Tap Master'];
-        const badge = user.is_premium ? '<span title="PREMIUM" style="color: #FFD54F; margin-left: 0.25rem;">💎</span>' : '';
+        const showBadgePodium = user.is_premium === true || (SELF_USER.id && user.user_id === SELF_USER.id && SELF_USER.isPremium);
+        const badge = showBadgePodium ? '<span title="PREMIUM" style="color: #FFD54F; margin-left: 0.25rem;">💎</span>' : '';
         console.log('Podium user:', user.full_name, 'is_premium:', user.is_premium, 'badge:', badge);
         
         return `
@@ -318,7 +322,8 @@ function renderLeaderboard(data) {
             <div>Level</div>
         </div>
         ${data.map((user, idx) => {
-            const badge = user.is_premium ? '<span title="PREMIUM" style="color: #FFD54F; margin-left: 0.25rem;">💎</span>' : '';
+            const showBadge = user.is_premium === true || (SELF_USER.id && user.user_id === SELF_USER.id && SELF_USER.isPremium);
+            const badge = showBadge ? '<span title="PREMIUM" style="color: #FFD54F; margin-left: 0.25rem;">💎</span>' : '';
             return `
                 <div class="leaderboard-row">
                     <div style="font-weight: 700; color: var(--primary);">#${idx + 1}</div>
