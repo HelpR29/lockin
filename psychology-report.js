@@ -23,6 +23,7 @@ async function generatePsychologyReport() {
         renderEmotionalAnalysis(trades);
         renderDisciplineScore(trades, violations);
         renderPsychologyInsights(trades, violations);
+        renderRulesPerformance(trades, rules, violations);
     } catch (error) {
         console.error('Error generating psychology report:', error);
     }
@@ -360,5 +361,108 @@ function renderPsychologyInsights(trades, violations) {
     `;
 }
 
-// Export to global
+// Export to global scope
 window.generatePsychologyReport = generatePsychologyReport;
+
+// 5. Rules Performance Breakdown (new detailed section)
+function renderRulesPerformance(trades, rules, violations) {
+    const container = document.getElementById('rulesPerformanceSection');
+    if (!container) return;
+
+    // Calculate detailed stats per rule
+    const ruleStats = rules.filter(r => r.is_active).map(rule => {
+        const ruleViolations = violations.filter(v => v.rule_id === rule.id);
+        const followed = rule.times_followed || 0;
+        const violated = ruleViolations.length;
+        const total = followed + violated;
+        const adherenceRate = total > 0 ? ((followed / total) * 100) : 100;
+        
+        return {
+            id: rule.id,
+            category: rule.category || 'General',
+            rule: rule.rule,
+            followed,
+            violated,
+            total,
+            adherenceRate
+        };
+    });
+
+    // Sort by adherence rate (worst first for attention)
+    const worstRules = [...ruleStats].sort((a, b) => a.adherenceRate - b.adherenceRate).slice(0, 5);
+    const bestRules = [...ruleStats].filter(r => r.total > 0).sort((a, b) => b.adherenceRate - a.adherenceRate).slice(0, 5);
+
+    // Group by category
+    const byCategory = {};
+    ruleStats.forEach(r => {
+        if (!byCategory[r.category]) byCategory[r.category] = { followed: 0, violated: 0, total: 0 };
+        byCategory[r.category].followed += r.followed;
+        byCategory[r.category].violated += r.violated;
+        byCategory[r.category].total += r.total;
+    });
+
+    container.innerHTML = `
+        <div class="psychology-card">
+            <h3>📊 Rules Performance Breakdown</h3>
+            
+            <!-- Category Summary -->
+            <div style="margin-bottom: 2rem;">
+                <h4 style="margin-bottom: 1rem; color: var(--text-secondary); font-size: 0.9rem;">Performance by Category:</h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem;">
+                    ${Object.entries(byCategory).map(([cat, stats]) => {
+                        const rate = stats.total > 0 ? ((stats.followed / stats.total) * 100).toFixed(0) : 100;
+                        const color = rate >= 90 ? '#34C759' : rate >= 70 ? '#FFC107' : '#FF453A';
+                        return `
+                            <div style="padding: 0.75rem; background: rgba(255,255,255,0.03); border-radius: 10px; text-align: center;">
+                                <div style="font-weight: 600; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.25rem;">${cat}</div>
+                                <div style="font-size: 1.5rem; font-weight: 700; color: ${color};">${rate}%</div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+
+            <!-- Top Issues -->
+            ${worstRules.length > 0 && worstRules[0].total > 0 ? `
+                <div style="margin-bottom: 2rem;">
+                    <h4 style="margin-bottom: 1rem; color: #FF453A; font-size: 0.9rem;">🚨 Rules Needing Attention:</h4>
+                    ${worstRules.map(r => {
+                        const color = r.adherenceRate >= 70 ? '#FFC107' : '#FF453A';
+                        return `
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: rgba(255,69,58,0.08); border-left: 3px solid ${color}; border-radius: 8px; margin-bottom: 0.5rem;">
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 600; margin-bottom: 0.25rem;">${r.rule}</div>
+                                    <div style="font-size: 0.75rem; color: var(--text-secondary);">${r.category}</div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 1.25rem; font-weight: 700; color: ${color};">${r.adherenceRate.toFixed(0)}%</div>
+                                    <div style="font-size: 0.75rem; color: var(--text-secondary);">${r.followed}/${r.total}</div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            ` : ''}
+
+            <!-- Top Performers -->
+            ${bestRules.length > 0 ? `
+                <div>
+                    <h4 style="margin-bottom: 1rem; color: #34C759; font-size: 0.9rem;">✅ Rules You Follow Best:</h4>
+                    ${bestRules.map(r => {
+                        return `
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: rgba(52,199,89,0.08); border-left: 3px solid #34C759; border-radius: 8px; margin-bottom: 0.5rem;">
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 600; margin-bottom: 0.25rem;">${r.rule}</div>
+                                    <div style="font-size: 0.75rem; color: var(--text-secondary);">${r.category}</div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 1.25rem; font-weight: 700; color: #34C759;">${r.adherenceRate.toFixed(0)}%</div>
+                                    <div style="font-size: 0.75rem; color: var(--text-secondary);">${r.followed}/${r.total}</div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            ` : ''}
+        </div>
+    `;
