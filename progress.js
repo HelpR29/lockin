@@ -1,5 +1,36 @@
 // Beer System - Progress Management
 
+// Load user profile and display username
+async function loadUserProfile() {
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        // Get username from user_profiles table
+        const { data: profile } = await supabase
+            .from('user_profiles')
+            .select('username, avatar')
+            .eq('user_id', user.id)
+            .single();
+
+        if (profile && profile.username) {
+            const userNameEl = document.getElementById('userName');
+            if (userNameEl) {
+                userNameEl.textContent = profile.username;
+            }
+            console.log('✅ Loaded username:', profile.username);
+        }
+    } catch (error) {
+        console.error('Error loading user profile:', error);
+    }
+}
+
+// Initialize dashboard when page loads
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('🚀 Dashboard initializing...');
+    loadUserProfile();
+});
+
 // Progress Token Options
 const PROGRESS_TOKENS = {
     beer: { name: 'Beer', emoji: '🍺' },
