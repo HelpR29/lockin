@@ -195,51 +195,63 @@ async function loadTradeChart(trade) {
             resetButton.style.display = 'none';
             resetButton.addEventListener('click', () => {
                 if (journalChart) {
-                    journalChart.resetZoom();
-                    resetButton.style.display = 'none';
-                }
-            });
-        }
-
-    } catch (error) {
-        console.error('Error loading trade chart:', error);
-        alert('Could not load chart data. AlphaVantage API limit may be reached or symbol not found.');
-    }
-}
-{{ ... }}
-
 function updateChartInfo(trade) {
     const chartInfo = document.getElementById('chartInfo');
     const chartSymbol = document.getElementById('chartSymbol');
     const chartDirection = document.getElementById('chartDirection');
-    const header = document.querySelector('#chartContainer h3 span');
+    const header = document.getElementById('chartTitle');
 
     // Calculate Risk:Reward ratios
     let plannedRR = null;
     let actualRR = null;
     let rrDisplay = '';
     
-{{ ... }}
+    const entry = Number(trade.entry_price);
+    const stop = trade.stop_loss != null ? Number(trade.stop_loss) : null;
+    const target = trade.target_price != null ? Number(trade.target_price) : null;
+    const exit = trade.exit_price != null ? Number(trade.exit_price) : null;
+    const isLong = (trade.direction || '').toLowerCase() === 'long';
+    
+    if (stop != null && !Number.isNaN(entry) && !Number.isNaN(stop)) {
+        const risk = Math.abs(entry - stop);
+        if (target != null && !Number.isNaN(target) && risk > 0) {
+            const plannedReward = isLong ? (target - entry) : (entry - target);
+            plannedRR = (plannedReward / risk).toFixed(2);
+        }
+        if (exit != null && !Number.isNaN(exit) && risk > 0) {
+            const actualReward = isLong ? (exit - entry) : (entry - exit);
+            actualRR = (actualReward / risk).toFixed(2);
+        }
+    }
+    if (plannedRR) {
+        rrDisplay += ` | Planned R:R: ${plannedRR}:1`;
+    }
+    if (actualRR) {
+        const rrColor = parseFloat(actualRR) >= 0 ? '#4CAF50' : '#F44336';
+        rrDisplay += ` | Actual R:R: <span style="color:${rrColor}">${actualRR}:1</span>`;
+    }
+
+    if (chartInfo && chartSymbol && chartDirection) {
         chartSymbol.textContent = trade.symbol;
-        chartDirection.innerHTML = trade.direction.toUpperCase() + rrDisplay;
-        chartDirection.style.color = trade.direction === 'long' ? '#4CAF50' : '#ef5350';
+        chartDirection.innerHTML = (trade.direction || '').toUpperCase() + rrDisplay;
+        chartDirection.style.color = isLong ? '#4CAF50' : '#ef5350';
         chartInfo.style.display = 'block';
     }
     if (header) {
-        header.textContent = `${trade.symbol} - ${trade.direction.toUpperCase()} ${rrDisplay.replace(/\s\|\s/g, ' • ')}`;
+        header.innerHTML = `Price Chart`;
     }
 
     // Log trade details for debugging
-    console.log('📊 Trade details:', {
+    console.log('Trade details:', {
         symbol: trade.symbol,
         entry: trade.entry_price,
         exit: trade.exit_price,
+        stop: trade.stop_loss,
         target: trade.target_price,
         plannedRR: plannedRR ? `${plannedRR}:1` : 'N/A',
         actualRR: actualRR ? `${actualRR}:1` : 'N/A'
     });
 }
-
 async function fetchCryptoDataForTrade(symbol) {
     try {
         const response = await fetch(
