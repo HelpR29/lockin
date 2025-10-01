@@ -27,20 +27,32 @@ async function summarizeNotesWithLLM(trades) {
     // 1) Gemini
     if (gemKey) {
         try {
-            const endpoint = `${(customBase && customBase.includes('generativelanguage.googleapis.com')) ? customBase.replace(/\/$/, '') : 'https://generativelanguage.googleapis.com/v1beta'}/models/${encodeURIComponent(gemModel)}:generateContent?key=${encodeURIComponent(gemKey)}`;
-            const combined = `System Instruction:\n${sys}\n\nUser:\n${user}`;
+            const base = (customBase && customBase.includes('generativelanguage.googleapis.com'))
+                ? customBase.replace(/\/$/, '')
+                : 'https://generativelanguage.googleapis.com/v1beta';
+            const endpoint = `${base}/models/${encodeURIComponent(gemModel)}:generateContent`;
             const resp = await fetch(endpoint, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-goog-api-key': gemKey
+                },
                 body: JSON.stringify({
-                    contents: [{ role: 'user', parts: [{ text: combined }] }],
+                    systemInstruction: { role: 'system', parts: [{ text: sys }] },
+                    contents: [{ role: 'user', parts: [{ text: user }] }],
                     generationConfig: { temperature: 0.4, maxOutputTokens: 700 }
                 })
             });
             if (resp.ok) {
                 const data = await resp.json();
                 const text = data?.candidates?.[0]?.content?.parts?.map(p => p?.text || '').join('')?.trim();
-                if (text) return text;
+                if (text) {
+                    console.info('🔌 Notes Summary provider: Gemini');
+                    return text;
+                }
+            } else {
+                const errText = await resp.text().catch(()=>'');
+                console.warn('Gemini HTTP error', resp.status, errText);
             }
         } catch (e) {
             console.warn('Gemini call failed, trying other providers.', e);
@@ -123,7 +135,12 @@ function generateLocalNotesSummary(trades) {
 
     return `
       <div>
-        <div style="margin-bottom: 0.5rem;">Local summary (no API key). Add your OpenAI key to localStorage as <code>lockin_openai_key</code> for deeper insights.</div>
+        <div style="margin-bottom: 0.5rem;">
+          Using local (heuristic) summary. For deeper AI insights, set one of:
+          <code>lockin_gemini_key</code> (Gemini),
+          <code>lockin_openai_key</code> (OpenAI), or
+          <code>lockin_llm_base_url</code> + <code>lockin_llm_model</code> (self-hosted OpenAI-compatible).
+        </div>
         <ul style="margin: 0; padding-left: 1.25rem;">
           ${takeaways.map(t=> `<li>${t}</li>`).join('') || '<li>Write more detailed notes to unlock stronger insights.</li>'}
         </ul>
