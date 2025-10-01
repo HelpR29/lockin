@@ -246,19 +246,25 @@ async function completeOnboarding() {
         // Save all onboarding data to Supabase
         const { error: profileError } = await supabase
             .from('user_profiles')
-            .upsert({
-                user_id: user.id,
-                username: onboardingData.profile.username,
-                avatar: onboardingData.profile.avatar || '👤',
-                gender: onboardingData.profile.gender || 'prefer-not-to-say',
-                experience: onboardingData.profile.experience,
-                trading_style: onboardingData.profile.trading_style,
-                markets: onboardingData.profile.markets,
-                progress_token: onboardingData.token,
-                onboarding_completed: true,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-            });
+            .upsert(
+                {
+                    user_id: user.id,
+                    username: onboardingData.profile.username,
+                    avatar: onboardingData.profile.avatar || '👤',
+                    gender: onboardingData.profile.gender || 'prefer-not-to-say',
+                    experience: onboardingData.profile.experience,
+                    trading_style: onboardingData.profile.trading_style,
+                    markets: onboardingData.profile.markets,
+                    progress_token: onboardingData.token,
+                    onboarding_completed: true,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                },
+                {
+                    onConflict: 'user_id',
+                    ignoreDuplicates: false
+                }
+            );
         
         if (profileError) throw profileError;
         
