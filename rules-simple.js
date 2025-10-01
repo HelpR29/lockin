@@ -96,7 +96,12 @@ async function loadRules() {
     try {
         console.log('🔄 Loading rules...');
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
+        if (!user) {
+            console.error('❌ No user found!');
+            return;
+        }
+        
+        console.log('👤 User ID:', user.id);
 
         const { data: rules, error } = await supabase
             .from('trading_rules')
@@ -105,11 +110,13 @@ async function loadRules() {
             .order('category, created_at');
 
         if (error) {
-            console.error('Error fetching rules:', error);
+            console.error('❌ Error fetching rules:', error);
+            alert('Failed to load rules: ' + error.message);
             return;
         }
         
         console.log('✅ Loaded', rules.length, 'rules');
+        console.log('📊 Rules data:', rules);
 
         const container = document.getElementById('ruleCategoriesContainer');
         container.innerHTML = '';
@@ -126,6 +133,8 @@ async function loadRules() {
 
         for (const category of categories) {
             const categoryRules = rules.filter(r => r.category === category);
+            
+            console.log(`📂 ${category}: ${categoryRules.length} rules`);
             
             if (categoryRules.length === 0) continue; // Skip empty categories
             
@@ -310,8 +319,9 @@ async function initializeDefaultRules() {
         }
         
         console.log('✅ Default rules initialized successfully!');
-        alert('🎉 70 comprehensive trading rules added! Reload the page to see them.');
-        await loadRules();
+        alert('🎉 70 comprehensive trading rules added!');
+        // Force page reload to show new rules
+        window.location.reload();
     } catch (error) {
         console.error('Error initializing default rules:', error);
         alert('Failed to load default rules: ' + error.message);
@@ -338,17 +348,16 @@ async function editRule(id, currentRule, category) {
                 console.log('✅ Rule updated successfully');
                 await loadRules();
                 // Show success message
-                const successMsg = document.createElement('div');
-                successMsg.style.cssText = 'position: fixed; top: 2rem; right: 2rem; background: #4CAF50; color: white; padding: 1rem 2rem; border-radius: 8px; z-index: 999999; animation: slideIn 0.3s ease;';
-                successMsg.textContent = '✅ Rule updated successfully!';
-                document.body.appendChild(successMsg);
-                setTimeout(() => successMsg.remove(), 3000);
+                console.log('🔄 Refreshing rules list...');
+                // Force a page reload to ensure fresh data
+                setTimeout(() => {
+                    window.location.reload();
+                }, 500);
             }
         } catch (error) {
             console.error('Error updating rule:', error);
             alert('An error occurred: ' + error.message);
         }
-    }
 }
 
 // Delete Rule Function

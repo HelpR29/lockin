@@ -298,18 +298,9 @@
                     alert('Failed to add rule: ' + error.message);
                 } else {
                     console.log('✅ Rule added successfully');
-                    // Close modal by removing it
-                    const modal = document.getElementById('addRuleModal');
-                    if (modal) {
-                        modal.remove();
-                    }
-                    await loadRules();
-                    // Show success message
-                    const successMsg = document.createElement('div');
-                    successMsg.style.cssText = 'position: fixed; top: 2rem; right: 2rem; background: #4CAF50; color: white; padding: 1rem 2rem; border-radius: 8px; z-index: 999999; animation: slideIn 0.3s ease;';
-                    successMsg.textContent = '✅ Custom rule added successfully!';
-                    document.body.appendChild(successMsg);
-                    setTimeout(() => successMsg.remove(), 3000);
+                    alert('✅ Custom rule added successfully!');
+                    // Reload page to show new rule
+                    window.location.reload();
                 }
             } catch (error) {
                 console.error('❌ Error saving rule:', error);
