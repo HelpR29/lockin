@@ -91,15 +91,20 @@ async function openProfileModal() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
     
-    // Pick the row with the highest XP in case of duplicates
-    const { data: progressRows } = await supabase
+    // Pick the row with the highest XP in case of duplicates/nulls
+    const { data: allProgressRows } = await supabase
         .from('user_progress')
         .select('*')
-        .eq('user_id', user.id)
-        .order('experience', { ascending: false })
-        .limit(1);
+        .eq('user_id', user.id);
 
-    const progress = Array.isArray(progressRows) ? progressRows[0] : progressRows;
+    let progress = null;
+    if (Array.isArray(allProgressRows) && allProgressRows.length > 0) {
+        progress = allProgressRows.reduce((best, row) => {
+            const currXP = Number(row?.experience ?? 0);
+            const bestXP = Number(best?.experience ?? 0);
+            return currXP > bestXP ? row : best;
+        }, allProgressRows[0]);
+    }
 
     // Derive level from XP to avoid stale DB level mismatch
     const xp = (progress?.experience ?? 0);
