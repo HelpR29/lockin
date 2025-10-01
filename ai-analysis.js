@@ -36,8 +36,15 @@ async function generateAIAnalysis() {
         const stats = calculateTradeStats(trades);
         updateQuickStats(stats);
         
-        // Generate AI analysis
-        const analysis = await analyzeWithAI(trades, stats);
+        // Get user's trading rules
+        const { data: userRules } = await supabase
+            .from('trading_rules')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('is_active', true);
+        
+        // Generate AI analysis with rules
+        const analysis = await analyzeWithAI(trades, stats, userRules);
         displayAIAnalysis(analysis);
         
     } catch (error) {
@@ -53,6 +60,8 @@ function calculateTradeStats(trades) {
     let wins = 0;
     let losses = 0;
     let totalPnL = 0;
+    let totalWins = 0;
+    let totalLosses = 0;
     const closedTrades = trades.filter(t => t.status === 'closed' && t.exit_price);
     
     closedTrades.forEach(trade => {
@@ -61,13 +70,22 @@ function calculateTradeStats(trades) {
         const multiplier = isOption ? 100 : 1;
         const pnl = (trade.exit_price - trade.entry_price) * trade.position_size * multiplier * (trade.direction === 'short' ? -1 : 1);
         totalPnL += pnl;
-        if (pnl > 0) wins++;
-        else if (pnl < 0) losses++;
+        
+        if (pnl > 0) {
+            wins++;
+            totalWins += pnl;
+        } else if (pnl < 0) {
+            losses++;
+            totalLosses += Math.abs(pnl);
+        }
     });
     
     const totalTrades = wins + losses;
     const winRate = totalTrades > 0 ? (wins / totalTrades * 100) : 0;
     const avgPnL = totalTrades > 0 ? (totalPnL / totalTrades) : 0;
+    
+    // Calculate Profit Factor = Gross Profit / Gross Loss
+    const profitFactor = totalLosses > 0 ? (totalWins / totalLosses) : (totalWins > 0 ? 999 : 0);
     
     return {
         totalTrades,
@@ -76,6 +94,9 @@ function calculateTradeStats(trades) {
         winRate,
         avgPnL,
         totalPnL,
+        profitFactor,
+        totalWins,
+        totalLosses,
         closedTrades
     };
 }
@@ -95,7 +116,7 @@ function updateQuickStats(stats) {
     }
 }
 
-async function analyzeWithAI(trades, stats) {
+async function analyzeWithAI(trades, stats, userRules) {
     // Prepare data for AI
     const tradesummary = trades.slice(0, 10).map(t => ({
         symbol: t.symbol,
@@ -118,12 +139,12 @@ async function analyzeWithAI(trades, stats) {
     });
     
     // Generate local AI insights (no API needed for basic analysis)
-    const insights = generateLocalInsights(trades, stats, emotionCounts);
+    const insights = generateLocalInsights(trades, stats, emotionCounts, userRules);
     
     return insights;
 }
 
-function generateLocalInsights(trades, stats, emotionCounts) {
+function generateLocalInsights(trades, stats, emotionCounts, userRules) {
     const insights = {
         keyInsights: [],
         patterns: [],
@@ -138,6 +159,11 @@ function generateLocalInsights(trades, stats, emotionCounts) {
     } else {
         insights.keyInsights.push(`⚠️ Low win rate of ${stats.winRate.toFixed(1)}% - review your strategy`);
     }
+    
+    // Profit Factor insight
+    const pfColor = stats.profitFactor >= 2 ? '🟢' : stats.profitFactor >= 1 ? '🟡' : '🔴';
+    const pfRating = stats.profitFactor >= 2 ? 'Excellent' : stats.profitFactor >= 1.5 ? 'Good' : stats.profitFactor >= 1 ? 'Break-even' : 'Poor';
+    insights.keyInsights.push(`${pfColor} Profit Factor: ${stats.profitFactor.toFixed(2)} (${pfRating})`);
     
     if (stats.avgPnL > 0) {
         insights.keyInsights.push(`💰 Average profit of $${stats.avgPnL.toFixed(2)} per trade`);
