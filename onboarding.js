@@ -389,14 +389,13 @@ async function completeOnboarding() {
             // Redirect to dashboard after showing success
             setTimeout(() => {
                 window.location.href = 'dashboard.html';
-            }, 2500);
+            }, 4000); // Increased to 4 seconds to see success message clearly
         } catch (error) {
             console.error('Error saving onboarding data:', error);
             console.error('Error details:', error.message);
             console.error('Current data:', onboardingData);
             
             let errorMsg = 'Error saving your settings. ';
-            if (error.message) {
                 errorMsg += error.message;
             } else {
                 errorMsg += 'Please try again.';
