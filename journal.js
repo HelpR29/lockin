@@ -588,6 +588,10 @@ async function closeTrade(tradeId) {
         // Reset status on open modal
         const statusEl = document.getElementById('status');
         if (statusEl) statusEl.value = 'open';
+    } catch (error) {
+        console.error('Error closing trade:', error);
+        alert('An error occurred. Please try again.');
+    }
 }
 
 // -------- Local, free AI-like summarization of notes --------
@@ -635,12 +639,6 @@ function summarizeTradeNotes(text, trade) {
     const firstSentence = text.split(/[.!?]/).find(s=> s.trim().length>0) || '';
     const tldr = firstSentence.trim().slice(0, 140) + (firstSentence.length>140 ? '…' : '');
     return `<div style="color: var(--text-primary);">${found.join('')}<div>• TL;DR: ${tldr}</div></div>`;
-}
-
-    } catch (error) {
-        console.error('Error closing trade:', error);
-        alert('An error occurred. Please try again.');
-    }
 }
 
 // Recalculate user level based on current XP (for fixing existing users)
