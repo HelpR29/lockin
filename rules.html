@@ -337,12 +337,14 @@
             console.log('🔍 Debug Info:');
             console.log('Modal element exists:', !!document.getElementById('addRuleModal'));
             console.log('Button exists:', !!document.getElementById('addCustomRuleBtn'));
+            console.log('Premium status:', typeof isPremiumUser !== 'undefined' ? isPremiumUser : 'not loaded yet');
             console.log('Functions exist:', {
                 openAddRuleModal: typeof window.openAddRuleModal,
                 openTemplateModal: typeof window.openTemplateModal,
                 openModal: typeof window.openModal,
                 closeModal: typeof window.closeModal,
-                saveCustomRule: typeof window.saveCustomRule
+                saveCustomRule: typeof window.saveCustomRule,
+                showPremiumModal: typeof window.showPremiumModal
             });
             
             const modal = document.getElementById('addRuleModal');
@@ -353,12 +355,36 @@
                 });
                 console.log('Modal rect:', modal.getBoundingClientRect());
             }
-            
-            // Test if button click works
-            console.log('🔍 Testing button click...');
-            const btn = document.getElementById('addCustomRuleBtn');
-            if (btn) {
-                btn.click();
+        };
+        
+        // Debug function to test adding a rule directly
+        window.testAddRule = async function() {
+            console.log('🧪 Testing direct rule addition...');
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                console.log('User:', user.id);
+                
+                const { data, error } = await supabase
+                    .from('trading_rules')
+                    .insert({
+                        user_id: user.id,
+                        rule: 'TEST RULE - ' + new Date().toLocaleTimeString(),
+                        category: 'General',
+                        is_active: true,
+                        times_followed: 0,
+                        times_violated: 0
+                    })
+                    .select();
+                
+                if (error) {
+                    console.error('❌ Error:', error);
+                } else {
+                    console.log('✅ Rule added:', data);
+                    console.log('Reloading page in 2 seconds...');
+                    setTimeout(() => window.location.reload(), 2000);
+                }
+            } catch (err) {
+                console.error('❌ Error:', err);
             }
         };
         
