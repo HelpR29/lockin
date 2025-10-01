@@ -570,3 +570,45 @@ async function getUserProgressSummary(userId) {
 
 // Export function globally
 window.recalculateUserLevel = recalculateUserLevel;
+
+
+// Recalculate user level based on current XP
+async function recalculateUserLevel() {
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        
+        // Get current XP
+        const { data: progress } = await supabase
+            .from('user_progress')
+            .select('xp, level')
+            .eq('user_id', user.id)
+            .single();
+            
+        if (!progress) return;
+        
+        // Calculate level based on XP
+        let newLevel = 1;
+        if (progress.xp >= 1000) newLevel = 5;
+        else if (progress.xp >= 500) newLevel = 4;
+        else if (progress.xp >= 250) newLevel = 3;
+        else if (progress.xp >= 100) newLevel = 2;
+        
+        // Update level if changed
+        if (newLevel !== progress.level) {
+            await supabase
+            .from('user_progress')
+            .update({ level: newLevel })
+            .eq('user_id', user.id);
+            console.log();
+        }
+        
+        return newLevel;
+    } catch (error) {
+        console.error('Error recalculating level:', error);
+        return null;
+    }
+}
+
+// Make it globally available
+window.recalculateUserLevel = recalculateUserLevel;
