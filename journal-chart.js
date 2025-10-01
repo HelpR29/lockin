@@ -293,15 +293,13 @@ async function fetchStockDataForTrade(symbol) {
     }
 }
 
-// Handle window resize
+// Handle window resize (Chart.js handles this automatically with responsive: true)
 window.addEventListener('resize', () => {
     if (journalChart) {
-        const container = document.getElementById('chartContainerJournal');
-        if (container) {
-            journalChart.resize(container.offsetWidth, container.offsetHeight);
-        }
+        journalChart.resize();
     }
 });
 
 // Export to global scope
 window.loadTradeChart = loadTradeChart;
+window.initializeJournalChart = initializeJournalChart;
