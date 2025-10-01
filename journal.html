@@ -177,7 +177,7 @@
                         <!-- Price Chart for Selected Trade -->
                         <div id="chartContainer" style="margin-bottom: 2rem; display: none;">
                             <h3 style="margin: 0 0 1rem 0; display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;">
-                                <span>📈 Price Chart</span>
+                                <span id="chartTitle">📈 Price Chart</span>
                                 <div style="display: flex; align-items: center; gap: 0.75rem;">
                                     <span id="chartInfo" style="font-size: 0.875rem; color: var(--text-secondary); display: none;">
                                         <span id="chartSymbol"></span> - <span id="chartDirection"></span>
@@ -195,7 +195,7 @@
                         
                         <h3 style="margin: 0 0 1rem 0;">🤖 AI Trading Analysis</h3>
                         
-                        <button class="cta-primary" onclick="generateAIAnalysis()" style="width: 100%; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem;" id="analyzeBtn">
+                        <button class="cta-primary" style="width: 100%; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem;" id="analyzeBtn">
                             <span>🧠</span>
                             <span id="analyzeBtnText">Analyze My Trades</span>
                         </button>
