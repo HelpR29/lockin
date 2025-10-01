@@ -7,8 +7,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-// Show violations linked to a trade
-async function openViolationsModal(tradeId) {
+// Show violations linked to a trade (exported on window)
+window.openViolationsModal = async function openViolationsModal(tradeId) {
     try {
         const { data: viols } = await supabase
             .from('rule_violations')
@@ -237,6 +237,7 @@ async function loadTrades() {
         const tradeEl = document.createElement('div');
         tradeEl.className = 'trade-item';
         tradeEl.style.cursor = 'pointer';
+        const vCount = (violationsByTrade.get(trade.id) || []).length;
         tradeEl.innerHTML = `
             <div class="trade-header">
                 <span class="trade-symbol">${trade.symbol}</span>
@@ -255,11 +256,16 @@ async function loadTrades() {
                     <div class="trade-timestamp" style="font-size: 0.75rem; color: var(--text-muted);">
                         ${new Date(trade.created_at).toLocaleString()}
                     </div>
-                    ${trade.status === 'open' ? `
-                        <button class="cta-secondary" onclick="event.stopPropagation(); closeTrade('${trade.id}')" style="padding: 0.5rem 1rem; font-size: 0.875rem;">
-                            ✅ Close Trade
-                        </button>
-                    ` : ''}
+                    <div style="display:flex; gap:0.4rem;">
+                        ${vCount > 0 ? `
+                            <button class="cta-secondary" onclick="event.stopPropagation(); openViolationsModal('${trade.id}')" title="View Violations" style="padding: 0.4rem 0.75rem; font-size: 0.85rem;">🚨 ${vCount}</button>
+                        ` : ''}
+                        ${trade.status === 'open' ? `
+                            <button class="cta-secondary" onclick="event.stopPropagation(); closeTrade('${trade.id}')" style="padding: 0.5rem 1rem; font-size: 0.875rem;">
+                                ✅ Close Trade
+                            </button>
+                        ` : ''}
+                    </div>
                 </div>
             </div>
         `;
