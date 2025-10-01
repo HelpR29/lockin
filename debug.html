@@ -1,0 +1,59 @@
+
+<html>
+<head>
+    <title>Server Debug</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .error { color: red; }
+        .success { color: green; }
+        button { padding: 10px 20px; margin: 10px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Server Debug Tool</h1>
+    <div id="status"></div>
+    <button onclick="testConnection()">Test Supabase Connection</button>
+    <button onclick="checkDatabase()">Check Database Tables</button>
+    <button onclick="window.location.href='index.html'">Go to App</button>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // Initialize Supabase (you'll need to add your actual keys)
+        const supabaseUrl = 'YOUR_SUPABASE_URL';
+        const supabaseAnonKey = 'YOUR_SUPABASE_ANON_KEY';
+        
+        // For now, let's just check if server responds
+        async function testConnection() {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = '<p>Testing connection...</p>';
+            
+            try {
+                // Simple fetch test
+                const response = await fetch('http://localhost:8080/');
+                if (response.ok) {
+                    statusDiv.innerHTML = '<p class="success">✅ Local server is responding</p>';
+                } else {
+                    statusDiv.innerHTML = '<p class="error">❌ Server responded with status: ' + response.status + '</p>';
+                }
+            } catch (error) {
+                statusDiv.innerHTML = '<p class="error">❌ Connection failed: ' + error.message + '</p>';
+            }
+        }
+        
+        async function checkDatabase() {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = '<p>Checking database status...</p>';
+            
+            // This would need actual Supabase credentials to work
+            statusDiv.innerHTML = '<p>Database check requires Supabase credentials. Check browser console for details.</p>';
+        }
+        
+        // Auto-test on load
+        window.onload = function() {
+            console.log('Debug page loaded');
+            console.log('Current URL:', window.location.href);
+            console.log('Supabase available:', typeof supabase !== 'undefined');
+        };
+    </script>
+</body>
+</html>
