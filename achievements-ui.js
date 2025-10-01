@@ -223,6 +223,7 @@ async function loadLeaderboard() {
             .order('discipline_score', { ascending: false})
             .limit(50);
 
+        console.log('🏆 Leaderboard data with premium status:', leaderboard);
         renderLeaderboard(leaderboard || []);
     } catch (error) {
         console.error('Error loading leaderboard:', error);
@@ -230,6 +231,9 @@ async function loadLeaderboard() {
 }
 
 function renderLeaderboard(data) {
+    console.log('📊 renderLeaderboard called with', data.length, 'users');
+    console.log('First user premium status:', data[0]?.is_premium, 'User:', data[0]?.full_name);
+    
     if (data.length === 0) {
         document.getElementById('podium').innerHTML = '<p style="text-align: center; color: var(--text-secondary);">No data yet.</p>';
         document.getElementById('leaderboardTable').innerHTML = '';
@@ -245,6 +249,7 @@ function renderLeaderboard(data) {
         const medals = ['🥇', '🥈', '🥉'];
         const titles = ['Bartender', 'Brewmaster', 'Tap Master'];
         const badge = user.is_premium ? '<span title="PREMIUM" style="color: #FFD54F; margin-left: 0.25rem;">💎</span>' : '';
+        console.log('Podium user:', user.full_name, 'is_premium:', user.is_premium, 'badge:', badge);
         
         return `
             <div class="podium-place">
