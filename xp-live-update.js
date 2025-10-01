@@ -50,6 +50,14 @@ async function updateXPBar() {
       xpBarFill.style.width = `${Math.min(xpPercentage, 100)}%`;
     }
         
+        // Also update header mini widget if present
+        const hdrLevelEl = document.getElementById('headerCurrentLevel');
+        const hdrXpBar = document.getElementById('headerXpBarFill');
+        const hdrXpText = document.getElementById('headerXpProgress');
+        if (hdrLevelEl) hdrLevelEl.textContent = currentLevel;
+        if (hdrXpBar) hdrXpBar.style.width = `${Math.min(xpPercentage, 100)}%`;
+        if (hdrXpText) hdrXpText.textContent = `${currentLevelXP} / ${xpForNextLevel} XP`;
+
         // Also try alternative selectors for other pages
         const xpText = document.querySelector('.xp-text, #xpText');
         const levelText = document.querySelector('.level-text, #levelText');
