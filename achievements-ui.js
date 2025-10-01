@@ -244,12 +244,13 @@ function renderLeaderboard(data) {
         const actualRank = top3.indexOf(user) + 1;
         const medals = ['🥇', '🥈', '🥉'];
         const titles = ['Bartender', 'Brewmaster', 'Tap Master'];
+        const badge = user.is_premium ? '<span title="PREMIUM" style="color: #FFD54F; margin-left: 0.25rem;">💎</span>' : '';
         
         return `
             <div class="podium-place">
                 <div class="podium-user">
                     <div class="podium-rank">${medals[actualRank - 1]}</div>
-                    <div class="podium-name">${user.full_name || 'Trader'}</div>
+                    <div class="podium-name">${user.full_name || 'Trader'}${badge}</div>
                     <div class="podium-stats">
                         ${user.completions} completions<br>
                         ${user.discipline_score}% discipline
@@ -271,15 +272,18 @@ function renderLeaderboard(data) {
             <div>Discipline</div>
             <div>Level</div>
         </div>
-        ${data.map((user, idx) => `
-            <div class="leaderboard-row">
-                <div style="font-weight: 700; color: var(--primary);">#${idx + 1}</div>
-                <div style="font-weight: 600;">${user.full_name || 'Trader'}</div>
-                <div>${user.completions}</div>
-                <div>${user.discipline_score}%</div>
-                <div>Lv ${user.level}</div>
-            </div>
-        `).join('')}
+        ${data.map((user, idx) => {
+            const badge = user.is_premium ? '<span title="PREMIUM" style="color: #FFD54F; margin-left: 0.25rem;">💎</span>' : '';
+            return `
+                <div class="leaderboard-row">
+                    <div style="font-weight: 700; color: var(--primary);">#${idx + 1}</div>
+                    <div style="font-weight: 600;">${user.full_name || 'Trader'}${badge}</div>
+                    <div>${user.completions}</div>
+                    <div>${user.discipline_score}%</div>
+                    <div>Lv ${user.level}</div>
+                </div>
+            `;
+        }).join('')}
     `;
 
     document.getElementById('leaderboardTable').innerHTML = tableHTML;

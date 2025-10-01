@@ -66,6 +66,7 @@ SELECT
     u.id as user_id,
     u.email,
     u.raw_user_meta_data->>'full_name' as full_name,
+    COALESCE(uprof.is_premium, false) as is_premium,
     COALESCE(up.beers_cracked, 0) as completions,
     COALESCE(up.level, 1) as level,
     COALESCE(up.total_check_ins, 0) as total_xp,
@@ -85,11 +86,12 @@ SELECT
     MAX(up.updated_at) as last_activity
 FROM auth.users u
 LEFT JOIN user_progress up ON u.id = up.user_id
+LEFT JOIN user_profiles uprof ON u.id = uprof.user_id
 LEFT JOIN user_stars us ON u.id = us.user_id
 LEFT JOIN user_achievements ua ON u.id = ua.user_id
 LEFT JOIN trades t ON u.id = t.user_id AND t.status = 'closed'
 LEFT JOIN rule_violations rv ON u.id = rv.user_id
-GROUP BY u.id, u.email, u.raw_user_meta_data, up.beers_cracked, up.level, up.total_check_ins, us.total_stars, up.updated_at
+GROUP BY u.id, u.email, u.raw_user_meta_data, uprof.is_premium, up.beers_cracked, up.level, up.total_check_ins, us.total_stars, up.updated_at
 ORDER BY completions DESC, discipline_score DESC, total_xp DESC;
 
 -- Enable RLS
