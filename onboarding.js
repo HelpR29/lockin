@@ -370,49 +370,48 @@ async function completeOnboarding() {
                     ignoreDuplicates: false
                 }
             );
-            
-            if (progressError) console.warn('Progress init warning:', progressError);
-            
-            // Step 4: Initialize default trading rules
-            await initializeDefaultTradingRules(user.id);
-            
-            console.log('✅ Onboarding complete! Redirecting to dashboard...');
-            
-            // Show success message
-            const button = document.getElementById('finishButton');
-            const buttonText = button?.querySelector('span');
-            if (buttonText) buttonText.textContent = '✅ Complete!';
-            
-            // Show success overlay
-            showOnboardingSuccess();
-            
-            // Redirect to dashboard after showing success
-            setTimeout(() => {
-                window.location.href = 'dashboard.html';
-            }, 4000); // Increased to 4 seconds to see success message clearly
-        } catch (error) {
-            console.error('Error saving onboarding data:', error);
-            console.error('Error details:', error.message);
-            console.error('Current data:', onboardingData);
-            
-            let errorMsg = 'Error saving your settings. ';
-            if (error.message) {
-                errorMsg += error.message;
-            } else {
-                errorMsg += 'Please try again.';
-            }
-            
-            alert(errorMsg);
-            if (buttonText) buttonText.textContent = 'Complete Setup';
-            if (button) button.disabled = false;
+        
+        if (progressError) console.warn('Progress init warning:', progressError);
+        
+        // Step 4: Initialize default trading rules
+        await initializeDefaultTradingRules(user.id);
+        
+        console.log('✅ Onboarding complete! Redirecting to dashboard...');
+        
+        // Show success message
+        const finishButton = document.getElementById('finishButton');
+        const finishButtonText = finishButton?.querySelector('span');
+        if (finishButtonText) finishButtonText.textContent = '✅ Complete!';
+        
+        // Show success overlay
+        showOnboardingSuccess();
+        
+        // Redirect to dashboard after showing success
+        setTimeout(() => {
+            window.location.href = 'dashboard.html';
+        }, 4000); // Increased to 4 seconds to see success message clearly
+    } catch (error) {
+        console.error('Error saving onboarding data:', error);
+        console.error('Error details:', error.message);
+        console.error('Current data:', onboardingData);
+        
+        let errorMsg = 'Error saving your settings. ';
+        if (error.message) {
+            errorMsg += error.message;
+        } else {
+            errorMsg += 'Please try again.';
         }
+        
+        alert(errorMsg);
+        if (buttonText) buttonText.textContent = 'Complete Setup';
+        if (button) button.disabled = false;
     }
 }
 
 // Show onboarding success message
 function showOnboardingSuccess() {
     // Create success overlay
-    const successOverlay = document.createElement('div');');
+    const successOverlay = document.createElement('div');
     successOverlay.id = 'onboardingSuccess';
     successOverlay.innerHTML = `
         <div style="
