@@ -412,7 +412,7 @@ async function completeOnboarding() {
 // Show onboarding success message
 function showOnboardingSuccess() {
     // Create success overlay
-    const successOverlay = document.createElement('div');
+    const successOverlay = document.createElement('div');');
     successOverlay.id = 'onboardingSuccess';
     successOverlay.innerHTML = `
         <div style="
