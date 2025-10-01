@@ -619,37 +619,31 @@ async function getUserProgressSummary(userId) {
 window.recalculateUserLevel = recalculateUserLevel;
 
 
-// Recalculate user level based on current XP
+// Recalculate user level based on current XP (uses experience field)
 async function recalculateUserLevel() {
     try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-        
-        // Get current XP
+        if (!user) return null;
+
         const { data: progress } = await supabase
             .from('user_progress')
-            .select('xp, level')
+            .select('experience, level, next_level_xp')
             .eq('user_id', user.id)
             .single();
-            
-        if (!progress) return;
-        
-        // Calculate level based on XP
-        let newLevel = 1;
-        if (progress.xp >= 1000) newLevel = 5;
-        else if (progress.xp >= 500) newLevel = 4;
-        else if (progress.xp >= 250) newLevel = 3;
-        else if (progress.xp >= 100) newLevel = 2;
-        
-        // Update level if changed
-        if (newLevel !== progress.level) {
+
+        if (!progress) return null;
+
+        const xp = progress.experience || 0;
+        const info = calculateLevelFromXP(xp);
+        const newLevel = info.level;
+
+        if (newLevel !== progress.level || info.nextLevelXP !== progress.next_level_xp) {
             await supabase
-            .from('user_progress')
-            .update({ level: newLevel })
-            .eq('user_id', user.id);
-            console.log();
+                .from('user_progress')
+                .update({ level: newLevel, next_level_xp: info.nextLevelXP })
+                .eq('user_id', user.id);
         }
-        
+
         return newLevel;
     } catch (error) {
         console.error('Error recalculating level:', error);
