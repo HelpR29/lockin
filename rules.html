@@ -163,9 +163,9 @@
                         cursor: pointer !important;
                         line-height: 1 !important;
                     " onclick="document.getElementById('addRuleModal').remove()">&times;</span>
-                    <h2 style="color: #000000 !important; margin-bottom: 2rem !important; font-size: 2rem !important;">🚨 MODAL TEST - CAN YOU SEE THIS?</h2>
-                    <p style="color: #000000 !important; font-size: 1.5rem !important; margin-bottom: 2rem !important;">If you can see this bright red-bordered box, the modal is working!</p>
-                    <form id="customRuleForm">
+                    <h2 style="color: #000000 !important; margin-bottom: 2rem !important; font-size: 2rem !important;">Add Custom Rule</h2>
+                    <p style="color: #000000 !important; font-size: 1.2rem !important; margin-bottom: 2rem !important;">Create your own trading rule to add to your collection.</p>
+                    <form id="customRuleForm" onsubmit="window.saveCustomRule(event)">
                         <div style="margin-bottom: 2rem !important;">
                             <label style="display: block !important; color: #000000 !important; font-weight: bold !important; margin-bottom: 0.5rem !important;">Category:</label>
                             <select id="ruleCategory" required style="
@@ -265,11 +265,50 @@
             }
         }
         
-        // Make available globally
-        window.openAddRuleModal = openAddRuleModal;
-        window.openTemplateModal = openTemplateModal;
-        window.openModal = openModal;
-        window.closeModal = closeModal;
+        async function saveCustomRule(event) {
+            event.preventDefault();
+
+            try {
+                console.log('🔥 Saving custom rule...');
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) {
+                    alert('Please log in to add rules.');
+                    return;
+                }
+
+                console.log('✅ User authenticated:', user.id);
+                const category = document.getElementById('ruleCategory').value;
+                const ruleText = document.getElementById('ruleText').value;
+
+                console.log('📝 Rule data:', { category, ruleText });
+
+                const { error } = await supabase
+                    .from('trading_rules')
+                    .insert({
+                        user_id: user.id,
+                        rule: ruleText,
+                        category: category,
+                        is_active: true
+                    });
+
+                if (error) {
+                    console.error('❌ Error adding rule:', error);
+                    alert('Failed to add rule: ' + error.message);
+                } else {
+                    console.log('✅ Rule added successfully');
+                    // Close modal by removing it
+                    const modal = document.getElementById('addRuleModal');
+                    if (modal) {
+                        modal.remove();
+                    }
+                    await loadRules();
+                    alert('Custom rule added successfully!');
+                }
+            } catch (error) {
+                console.error('❌ Error saving rule:', error);
+                alert('An error occurred: ' + error.message);
+            }
+        }
         
         // Debug function for troubleshooting
         window.debugModal = function() {
@@ -278,14 +317,16 @@
             console.log('Button exists:', !!document.getElementById('addCustomRuleBtn'));
             console.log('Functions exist:', {
                 openAddRuleModal: typeof window.openAddRuleModal,
-                openTemplateModal: typeof window.openTemplateModal
+                openTemplateModal: typeof window.openTemplateModal,
+                openModal: typeof window.openModal,
+                closeModal: typeof window.closeModal,
+                saveCustomRule: typeof window.saveCustomRule
             });
             
             const modal = document.getElementById('addRuleModal');
             if (modal) {
                 console.log('Modal computed styles:', {
                     display: window.getComputedStyle(modal).display,
-                    zIndex: window.getComputedStyle(modal).zIndex,
                     visibility: window.getComputedStyle(modal).visibility
                 });
                 console.log('Modal rect:', modal.getBoundingClientRect());

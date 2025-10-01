@@ -80,6 +80,7 @@ window.openAddRuleModal = openAddRuleModal;
 window.openTemplateModal = openTemplateModal;
 window.openModal = openModal;
 window.closeModal = closeModal;
+window.loadRules = loadRules;
 
 document.addEventListener('DOMContentLoaded', async () => {
     const user = await checkAuth();
