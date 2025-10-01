@@ -91,11 +91,15 @@ async function openProfileModal() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
     
-    const { data: progress } = await supabase
+    // Pick the row with the highest XP in case of duplicates
+    const { data: progressRows } = await supabase
         .from('user_progress')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .order('experience', { ascending: false })
+        .limit(1);
+
+    const progress = Array.isArray(progressRows) ? progressRows[0] : progressRows;
     
     // Fetch avatar from onboarding (with error handling)
     let avatarEmoji = '👤'; // default
