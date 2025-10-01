@@ -372,25 +372,85 @@ async function completeOnboarding() {
         
         console.log('✅ Onboarding complete! Redirecting to dashboard...');
         
-        // Redirect to dashboard
-        setTimeout(() => {
-            window.location.href = 'dashboard.html';
-        }, 1500);
-    } catch (error) {
-        console.error('Error saving onboarding data:', error);
-        console.error('Error details:', error.message);
-        console.error('Current data:', onboardingData);
+        // Show success message
+        const button = document.getElementById('finishButton');
+        const buttonText = button?.querySelector('span');
+        if (buttonText) buttonText.textContent = '✅ Complete!';
         
-        let errorMsg = 'Error saving your settings. ';
-        if (error.message) {
-            errorMsg += error.message;
-        } else {
-            errorMsg += 'Please try again.';
-        }
-        
-        alert(errorMsg);
-        if (buttonText) buttonText.textContent = 'Complete Setup';
-        if (button) button.disabled = false;
+        // Show onboarding success message
+function showOnboardingSuccess() {
+    // Create success overlay
+    const successOverlay = document.createElement('div');
+    successOverlay.id = 'onboardingSuccess';
+    successOverlay.innerHTML = `
+        <div style="
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            animation: fadeIn 0.5s ease-out;
+        ">
+            <div style="
+                background: var(--card-bg);
+                border: 2px solid var(--success, #4CAF50);
+                border-radius: 20px;
+                padding: 3rem;
+                text-align: center;
+                max-width: 500px;
+                animation: slideUp 0.5s ease-out;
+            ">
+                <div style="font-size: 4rem; margin-bottom: 1rem;">🎉</div>
+                <h2 style="color: var(--success, #4CAF50); margin-bottom: 1rem;">Setup Complete!</h2>
+                <p style="margin-bottom: 1rem;">Welcome to LockIn! Your trading discipline journey begins now.</p>
+                <p style="color: var(--text-secondary); font-size: 0.9rem;">
+                    Redirecting to your dashboard in 2 seconds...
+                </p>
+                <div style="
+                    margin-top: 1.5rem;
+                    width: 100%;
+                    height: 4px;
+                    background: var(--surface);
+                    border-radius: 2px;
+                    overflow: hidden;
+                ">
+                    <div style="
+                        width: 100%;
+                        height: 100%;
+                        background: var(--primary);
+                        animation: progressBar 2.5s linear;
+                    "></div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(successOverlay);
+    
+    // Add CSS animations if not already present
+    if (!document.querySelector('#onboarding-success-styles')) {
+        const style = document.createElement('style');
+        style.id = 'onboarding-success-styles';
+        style.textContent = `
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+            @keyframes slideUp {
+                from { transform: translateY(50px); opacity: 0; }
+                to { transform: translateY(0); opacity: 1; }
+            }
+            @keyframes progressBar {
+                from { width: 100%; }
+                to { width: 0%; }
+            }
+        `;
+        document.head.appendChild(style);
     }
 }
 
