@@ -308,9 +308,31 @@
                 localStorage.clear();
                 sessionStorage.clear();
                 
-                // Force redirect
-                console.log('Redirecting now...');
-                window.location.href = '/index.html';
+                // Clear any cached user data
+                if (typeof window.clearUserCache === 'function') {
+                    window.clearUserCache();
+                }
+                
+                // Clear any global user-related variables
+                if (typeof window.currentUser !== 'undefined') {
+                    window.currentUser = null;
+                }
+                if (typeof window.userProgress !== 'undefined') {
+                    window.userProgress = null;
+                }
+                if (typeof window.currentProgressData !== 'undefined') {
+                    window.currentProgressData = null;
+                }
+                
+                // Force complete page reload
+                console.log('Forcing page reload...');
+                window.location.reload();
+                
+                // Fallback redirect
+                setTimeout(() => {
+                    console.log('Fallback redirect...');
+                    window.location.href = '/index.html';
+                }, 200);
             }, 100);
         }
         
