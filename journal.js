@@ -342,29 +342,8 @@ async function recalculateUserLevel() {
         alert('Error recalculating level.');
     }
 }
-
-
-// Level calculation function (from progress.js)
-function calculateLevelFromXP(xp) {
-    // XP needed for next level increases exponentially
-    // Level 1: 0 XP, Level 2: 100 XP, Level 3: 250 XP, Level 4: 500 XP, etc.
-    let level = 1;
-    let totalXPNeeded = 0;
-    let nextLevelXP = 100;
-    
-    while (xp >= totalXPNeeded + nextLevelXP) {
-        totalXPNeeded += nextLevelXP;
-        level++;
-        nextLevelXP = Math.floor(100 * Math.pow(1.5, level - 1));
-    }
-    
-    return {
-        level,
-        currentLevelXP: xp - totalXPNeeded,
-        nextLevelXP,
-        progress: ((xp - totalXPNeeded) / nextLevelXP) * 100
-    };
-}
+// calculateLevelFromXP is now imported from progress.js (loaded before journal.js)
+// No need to redefine it here
 
 // Export functions to global scope for HTML onclick handlers
 window.openLogTradeModal = openLogTradeModal;
