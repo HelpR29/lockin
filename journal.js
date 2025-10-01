@@ -337,3 +337,5 @@ window.closeModal = closeModal;
 window.viewTradeOnChart = viewTradeOnChart;
 window.closeTrade = closeTrade;
 window.recalculateUserLevel = recalculateUserLevel;
+
+}
