@@ -549,6 +549,10 @@ async function openUserProfileById(userId) {
                         <div style="font-size:0.8rem; color:var(--text-secondary);">Discipline</div>
                     </div>
                 </div>
+                <div style="display:flex; gap:0.5rem; justify-content:flex-end; margin-top:1rem;">
+                    <button class="cta-secondary" onclick="this.closest('.modal').remove()">Close</button>
+                    <button class="cta-primary" onclick="sendFriendRequest('${row.user_id}')">Add Friend</button>
+                </div>
             </div>
         `;
         document.body.appendChild(modal);
@@ -609,3 +613,25 @@ async function removeAvatar() {
 }
 window.selectAndUploadAvatar = selectAndUploadAvatar;
 window.removeAvatar = removeAvatar;
+
+// Send friend request helper (global)
+async function sendFriendRequest(otherUserId) {
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return alert('Please log in');
+        if (user.id === otherUserId) return alert("That's you!");
+        const { error } = await supabase
+            .from('friends')
+            .insert({ user_id_1: user.id, user_id_2: otherUserId, status: 'requested' });
+        if (error) {
+            console.warn('sendFriendRequest error', error);
+            alert('Could not send request (maybe already requested).');
+        } else {
+            alert('Friend request sent!');
+        }
+    } catch (e) {
+        console.error('sendFriendRequest failed', e);
+        alert('Error sending request');
+    }
+}
+window.sendFriendRequest = sendFriendRequest;

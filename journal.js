@@ -7,6 +7,60 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
+// Show violations linked to a trade
+async function openViolationsModal(tradeId) {
+    try {
+        const { data: viols } = await supabase
+            .from('rule_violations')
+            .select('id, rule_id, notes, violation_date')
+            .eq('trade_id', tradeId)
+            .order('violation_date', { ascending: false });
+
+        const list = viols || [];
+        // Attempt to fetch rule texts from both possible tables
+        const items = [];
+        for (const v of list) {
+            let ruleText = '';
+            try {
+                const { data: tr } = await supabase.from('trading_rules').select('rule').eq('id', v.rule_id).single();
+                ruleText = tr?.rule || '';
+            } catch (_) {}
+            if (!ruleText) {
+                try {
+                    const { data: ur } = await supabase.from('user_defined_rules').select('rule_text').eq('id', v.rule_id).single();
+                    ruleText = ur?.rule_text || '';
+                } catch (_) {}
+            }
+            items.push({ when: v.violation_date, rule: ruleText, notes: v.notes });
+        }
+
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.style.display = 'flex';
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width: 560px;">
+                <span class="close-button" onclick="this.closest('.modal').remove()">&times;</span>
+                <h2 style="margin-bottom:1rem;">🚨 Rule Violations</h2>
+                ${items.length === 0 ? '<p style="color:var(--text-secondary)">No violations for this trade.</p>' : ''}
+                <div style="display:flex; flex-direction:column; gap:0.75rem; max-height: 420px; overflow:auto;">
+                    ${items.map(i => `
+                        <div style="background: var(--card-bg); border:1px solid var(--glass-border); border-radius:12px; padding:0.75rem;">
+                            ${i.rule ? `<div style="font-weight:700; margin-bottom:0.25rem;">${i.rule}</div>` : ''}
+                            ${i.notes ? `<div style="color:var(--text-secondary);">${i.notes}</div>` : ''}
+                            ${i.when ? `<div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.25rem;">${new Date(i.when).toLocaleString()}</div>` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+                <div style="text-align:right; margin-top:1rem;"><button class="cta-primary" onclick="this.closest('.modal').remove()">Close</button></div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    } catch (e) {
+        console.error('openViolationsModal failed', e);
+        alert('Unable to load violations.');
+    }
+}
+
     await checkPremiumStatus();
     gatePremiumAnalytics();
 
@@ -242,7 +296,14 @@ async function saveTrade(e) {
 
         const tradeType = document.getElementById('tradeType').value;
         const statusVal = document.getElementById('status').value;
-        const exitVal = statusVal === 'closed' ? (parseFloat(document.getElementById('exitPrice').value) || null) : null;
+        const exitRaw = document.getElementById('exitPrice').value;
+        const exitVal = statusVal === 'closed' ? (exitRaw !== '' ? parseFloat(exitRaw) : null) : null;
+
+        // Prevent saving a closed trade without exit price
+        if (statusVal === 'closed' && (exitVal === null || Number.isNaN(exitVal))) {
+            alert('Please enter an Exit Price before saving a Closed trade. Or set status to Open and close it later.');
+            return;
+        }
         
         const tradeData = {
             user_id: user.id,

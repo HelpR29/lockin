@@ -92,20 +92,36 @@ async function searchUsers() {
         const searchTerm = searchInput.value.trim();
         if (searchTerm.length < 3) return;
 
-    const { data, error } = await supabase
-        .from('user_profiles')
-        .select('user_id, username, is_premium')
-        .ilike('username', `%${searchTerm}%`)
-        .limit(10);
+    // Search by username in user_profiles
+    const [profilesRes, emailRes] = await Promise.all([
+        supabase
+            .from('user_profiles')
+            .select('user_id, username, is_premium')
+            .ilike('username', `%${searchTerm}%`)
+            .limit(10),
+        // Search by email in leaderboard_stats view (if term looks like email or contains @)
+        (searchTerm.includes('@')
+            ? supabase
+                .from('leaderboard_stats')
+                .select('user_id, email, full_name, is_premium')
+                .ilike('email', `%${searchTerm}%`)
+                .limit(10)
+            : Promise.resolve({ data: [], error: null }))
+    ]);
 
-    if (error) {
-        console.error('Error searching users:', error);
-        return;
-    }
+    const profiles = profilesRes.data || [];
+    const emailRows = emailRes.data || [];
+    const map = new Map();
+    profiles.forEach(p => map.set(p.user_id, { user_id: p.user_id, username: p.username, is_premium: !!p.is_premium }));
+    emailRows.forEach(r => {
+        if (!map.has(r.user_id)) {
+            map.set(r.user_id, { user_id: r.user_id, username: r.full_name || r.email, is_premium: !!r.is_premium });
+        }
+    });
 
     const resultsList = document.getElementById('searchResultsList');
     resultsList.innerHTML = '';
-    data.forEach(profile => {
+    Array.from(map.values()).forEach(profile => {
         const resultEl = document.createElement('div');
         resultEl.className = 'user-item';
         const badge = profile.is_premium ? '<span title="PREMIUM" style="color: #FFD54F; margin-left: 0.25rem;">💎</span>' : '';
