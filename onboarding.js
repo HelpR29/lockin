@@ -308,24 +308,30 @@ async function completeOnboarding() {
         // Initialize user progress system (Beer System)
         const { error: progressError } = await supabase
             .from('user_progress')
-            .insert({
-                user_id: user.id,
-                beers_cracked: 0,
-                beers_spilled: 0,
-                streak: 0,
-                longest_streak: 0,
-                discipline_score: 0,
-                level: 1,
-                experience: 0,
-                next_level_xp: 100,
-                progress_token: onboardingData.token,
-                streak_multiplier: 1.0,
-                level_bonus: 1.0,
-                achievement_bonus: 1.0,
-                total_growth_multiplier: 1.0,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-            });
+            .upsert(
+                {
+                    user_id: user.id,
+                    beers_cracked: 0,
+                    beers_spilled: 0,
+                    streak: 0,
+                    longest_streak: 0,
+                    discipline_score: 0,
+                    level: 1,
+                    experience: 0,
+                    next_level_xp: 100,
+                    progress_token: onboardingData.token,
+                    streak_multiplier: 1.0,
+                    level_bonus: 1.0,
+                    achievement_bonus: 1.0,
+                    total_growth_multiplier: 1.0,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                },
+                {
+                    onConflict: 'user_id',
+                    ignoreDuplicates: false
+                }
+            );
         
         if (progressError) console.warn('Progress init warning:', progressError);
         
