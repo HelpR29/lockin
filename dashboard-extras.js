@@ -185,6 +185,19 @@ async function openProfileModal() {
         console.log('No onboarding data, using default avatar');
     }
     
+    // Fetch premium status for inline badge
+    let isPremium = false;
+    try {
+        const { data: profileRow } = await supabase
+            .from('user_profiles')
+            .select('is_premium')
+            .eq('user_id', user.id)
+            .single();
+        isPremium = !!profileRow?.is_premium;
+    } catch (e) {
+        // non-fatal
+    }
+    
     const modal = document.createElement('div');
     modal.className = 'modal';
     modal.style.display = 'flex';
@@ -197,7 +210,9 @@ async function openProfileModal() {
                 <div style="width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), #FFB84D); margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; font-size: 4rem;">
                     ${avatarEmoji}
                 </div>
-                <h3 style="margin: 0.5rem 0;">${user.user_metadata?.full_name || 'Trader'}</h3>
+                <h3 style="margin: 0.5rem 0; display: inline-flex; align-items: center; gap: 0.35rem;">${user.user_metadata?.full_name || 'Trader'}
+                    ${isPremium ? `<span title="PREMIUM" style="padding: 0.1rem 0.35rem; border-radius: 9999px; border: 1px solid #FFD54F; background: linear-gradient(90deg, rgba(255,213,79,0.12), rgba(255,149,0,0.12)); color: #FFD54F; font-weight: 700; font-size: 0.7rem; line-height: 1;">💎</span>` : ''}
+                </h3>
                 <p style="color: var(--text-secondary); font-size: 0.875rem;">${user.email}</p>
             </div>
             
