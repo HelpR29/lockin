@@ -396,6 +396,7 @@ async function completeOnboarding() {
             console.error('Current data:', onboardingData);
             
             let errorMsg = 'Error saving your settings. ';
+            if (error.message) {
                 errorMsg += error.message;
             } else {
                 errorMsg += 'Please try again.';
