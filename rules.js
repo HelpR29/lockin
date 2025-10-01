@@ -130,10 +130,10 @@ async function saveRule(e) {
     let error;
     if (ruleId) {
         // Update existing rule
-        ({ error } = await supabase.from('user_defined_rules').update(ruleData).eq('id', ruleId));
+        ({ error } = await supabase.from('trading_rules').update(ruleData).eq('id', ruleId));
     } else {
         // Insert new rule
-        ({ error } = await supabase.from('user_defined_rules').insert(ruleData));
+        ({ error } = await supabase.from('trading_rules').insert(ruleData));
     }
 
         if (error) {
@@ -173,7 +173,7 @@ function editRule(id, text, categoryId) {
 async function deleteRule(id) {
     if (!confirm('Are you sure you want to delete this rule?')) return;
 
-    const { error } = await supabase.from('user_defined_rules').delete().eq('id', id);
+    const { error } = await supabase.from('trading_rules').delete().eq('id', id);
 
     if (error) {
         console.error('Error deleting rule:', error);
@@ -184,7 +184,7 @@ async function deleteRule(id) {
 }
 
 async function toggleRuleActive(id, isActive) {
-    const { error } = await supabase.from('user_defined_rules').update({ is_active: isActive }).eq('id', id);
+    const { error } = await supabase.from('trading_rules').update({ is_active: isActive }).eq('id', id);
     if (error) {
         console.error('Error updating rule status:', error);
     }
@@ -270,7 +270,7 @@ async function addRuleFromTemplate(templateId) {
             numeric_unit: template.numeric_unit
         };
 
-        const { error } = await supabase.from('user_defined_rules').insert(ruleData);
+        const { error } = await supabase.from('trading_rules').insert(ruleData);
 
         if (error) {
             console.error('Error adding rule from template:', error);
