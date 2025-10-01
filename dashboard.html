@@ -81,6 +81,9 @@
                     </div>
                     <span id="headerXpProgress" style="font-size: 0.75rem; color: var(--text-secondary); min-width: 70px; text-align: right;">0 / 100 XP</span>
                 </div>
+                <div id="premiumBadge" style="display:none; margin-left: 0.5rem; padding: 0.25rem 0.6rem; border-radius: 9999px; border: 1px solid #FFD54F; background: linear-gradient(90deg, rgba(255,213,79,0.12), rgba(255,149,0,0.12)); color: #FFD54F; font-weight: 700; font-size: 0.8rem;">
+                    💎 Premium
+                </div>
                 
                 <button class="cta-secondary" id="signOutBtn" onclick="handleSignOut();" style="padding: 0.6rem 1.5rem; margin-left: 1rem; cursor: pointer; pointer-events: auto; position: relative; z-index: 9999;">
                     <span>Sign Out</span>
@@ -743,6 +746,7 @@
     </script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js" defer></script>
     <script src="xp-live-update.js"></script>
+    <script src="premium-badge.js"></script>
     <script src="script.js"></script>
     
     <style>
