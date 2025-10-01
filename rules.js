@@ -41,20 +41,25 @@ async function loadRules() {
 
         for (const category of categories) {
             const categoryRules = rules.filter(rule => rule.category === category);
-                <span style="font-size: 2rem;">${category.icon || '📋'}</span>
+            const categoryEl = document.createElement('div');
+            categoryEl.className = 'rule-category';
+            categoryEl.style.cssText = 'display: flex; gap: 1rem; align-items: flex-start; padding: 1rem; background: rgba(255, 149, 0, 0.05); border-radius: 12px; margin-bottom: 1rem; border: 1px solid rgba(255, 149, 0, 0.2);';
+            categoryEl.innerHTML = `
+                <span style="font-size: 2rem;">${categoryIcons[category] || '📋'}</span>
                 <div>
-                    <h3 class="category-title" style="margin: 0;">${category.name}</h3>
-                    <p style="color: var(--text-secondary); font-size: 0.875rem; margin: 0;">${category.description || ''}</p>
+                    <h3 class="category-title" style="margin: 0;">${category}</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.875rem; margin: 0;">Add rules to organize your trading strategy</p>
                 </div>
-            </div>
-            <div class="rule-list" id="category-${category.id}">
-                ${categoryRules.length === 0 ? '<p class="no-rules">No rules in this category yet. Add from templates below!</p>' : ''}
-            </div>
-        `;
-        container.appendChild(categoryEl);
+            `;
+            container.appendChild(categoryEl);
 
-        const ruleListEl = document.getElementById(`category-${category.id}`);
-        for (const rule of categoryRules) {
+            const ruleListEl = document.createElement('div');
+            ruleListEl.className = 'rule-list';
+            ruleListEl.id = `category-${category.replace(/\s+/g, '-').toLowerCase()}`;
+            ruleListEl.innerHTML = categoryRules.length === 0 ? '<p class="no-rules">No rules in this category yet. Add from templates below!</p>' : '';
+            container.appendChild(ruleListEl);
+
+            for (const rule of categoryRules) {
             const adherencePercent = rule.times_followed + rule.times_violated > 0 
                 ? Math.round((rule.times_followed / (rule.times_followed + rule.times_violated)) * 100)
                 : 100;
@@ -233,7 +238,7 @@ async function populateTemplateModal() {
         });
         templateList.appendChild(categoryEl);
     }
-    templateList.innerHTML += '</div>';
+    templateList.innerHTML = templateList.innerHTML + '</div>';
 }
 
 async function addRuleFromTemplate(templateId) {
