@@ -341,6 +341,10 @@ async function openSettingsModal() {
                     <button class="cta-primary" onclick="applyPremiumCode()">Apply Code</button>
                 </div>
                 <div style="font-size:0.8rem; color:var(--text-secondary); margin-top:0.5rem;">No code? Ask an admin to grant premium to your email.</div>
+                <div style="display:flex; gap:0.5rem; margin-top:0.75rem;">
+                    <button class="cta-primary" onclick="startPremiumCheckout()">Upgrade to Premium</button>
+                    <button class="cta-secondary" onclick="openBillingPortal()">Manage Billing</button>
+                </div>
             </div>
             
             <div style="margin-bottom: 2rem;">
@@ -476,3 +480,41 @@ window.openLeaderboardModal = openLeaderboardModal;
 window.openSettingsModal = openSettingsModal;
 window.applyPremiumCode = applyPremiumCode;
 window.resetAccountOneTime = resetAccountOneTime;
+
+// Open any user's profile by id (shared for Achievements/Friends)
+async function openUserProfileById(userId) {
+    try {
+        const { data: row } = await supabase
+            .from('leaderboard_stats')
+            .select('*')
+            .eq('user_id', userId)
+            .single();
+        if (!row) return;
+        const badge = row.is_premium ? '<span title="PREMIUM" style="color:#FFD54F; margin-left:0.25rem;">💎</span>' : '';
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.style.display = 'flex';
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width:520px;">
+                <span class="close-button" onclick="this.closest('.modal').remove()">&times;</span>
+                <h2 style="margin-bottom:1rem;">${row.full_name || 'Trader'} ${badge}</h2>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                    <div style="background: rgba(255,255,255,0.05); padding:1rem; border-radius:12px; text-align:center;">
+                        <div style="font-size:1.75rem; font-weight:800; color:var(--primary);">${row.level}</div>
+                        <div style="font-size:0.8rem; color:var(--text-secondary);">Level</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.05); padding:1rem; border-radius:12px; text-align:center;">
+                        <div style="font-size:1.75rem; font-weight:800;">${row.completions}</div>
+                        <div style="font-size:0.8rem; color:var(--text-secondary);">Completions</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.05); padding:1rem; border-radius:12px; text-align:center; grid-column: span 2;">
+                        <div style="font-size:1.25rem; font-weight:700;">${row.discipline_score}%</div>
+                        <div style="font-size:0.8rem; color:var(--text-secondary);">Discipline</div>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    } catch (e) { console.warn('openUserProfileById failed', e); }
+}
+window.openUserProfileById = openUserProfileById;

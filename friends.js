@@ -296,7 +296,7 @@ async function loadLeaderboard() {
                 <div style="display: flex; align-items: center; gap: 0.75rem; flex: 1;">
                     <div style="font-weight: 700; min-width: 2.5rem; text-align: center; font-size: 1.125rem;">${rankEmoji}</div>
                     <div style="flex: 1;">
-                        <div style="font-weight: 600;">${profile.username}${badge}${isCurrentUser ? ' <span style="font-size: 0.75rem; color: var(--primary);">(You)</span>' : ''}</div>
+                        <div style="font-weight: 600;"><button class="lb-name" data-user-id="${entry.user_id}" style="all:unset; cursor:pointer; font-weight:600;">${profile.username}</button>${badge}${isCurrentUser ? ' <span style="font-size: 0.75rem; color: var(--primary);">(You)</span>' : ''}</div>
                         <div style="font-size: 0.75rem; color: var(--text-secondary);">Level ${entry.level} • ${entry.experience} XP</div>
                     </div>
                 </div>
@@ -308,10 +308,19 @@ async function loadLeaderboard() {
     }
 }
 
+// Event delegation for profile modal from ranking names
+document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.lb-name');
+    if (btn && btn.dataset.userId) {
+        if (typeof openUserProfileById === 'function') {
+            openUserProfileById(btn.dataset.userId);
+        }
+    }
+});
+
 // Export functions to global scope for HTML onclick handlers
 window.searchUsers = searchUsers;
 window.sendRequest = sendRequest;
 window.acceptRequest = acceptRequest;
 window.declineRequest = declineRequest;
-window.removeFriend = removeFriend;
 window.loadLeaderboard = loadLeaderboard;
