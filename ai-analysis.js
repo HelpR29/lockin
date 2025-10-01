@@ -1,5 +1,13 @@
 // AI Trading Analysis using OpenAI
 
+async function displayNotesSummary(html) {
+    const container = document.getElementById('aiNotesSummaryContainer');
+    const box = document.getElementById('aiNotesSummary');
+    if (!box || !container) return;
+    container.style.display = 'block';
+    box.innerHTML = html;
+}
+
 async function generateAIAnalysis() {
     const btn = document.getElementById('analyzeBtn');
     const btnText = document.getElementById('analyzeBtnText');
