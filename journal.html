@@ -438,6 +438,7 @@
     <script src="progress.js"></script>
     <script src="notifications.js"></script>
     <script src="pnl-chart.js"></script>
+    <script src="dashboard-extras.js"></script>
     <script src="rule-tracker.js"></script>
     <script src="journal-chart.js"></script>
     <script src="journal.js"></script>
@@ -446,6 +447,24 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js" defer></script>
     <script src="xp-live-update.js"></script>
     <script src="script.js"></script>
+    <script>
+        // Simple sign out handler (mirrors dashboard)
+        async function handleSignOut() {
+            try {
+                await supabase.auth.signOut();
+            } catch (err) {
+                console.error('Sign out error:', err);
+            }
+            localStorage.clear();
+            sessionStorage.clear();
+            if (typeof window.clearUserCache === 'function') {
+                try { window.clearUserCache(); } catch(_) {}
+            }
+            // Reload to landing/login
+            window.location.replace('/index.html');
+        }
+        window.handleSignOut = handleSignOut;
+    </script>
     
     <script>
         // Handle trade type change to show/hide options fields
