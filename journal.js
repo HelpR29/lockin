@@ -13,6 +13,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 });
 
+// Stub functions for future implementation
+async function editTrade(tradeId) {
+    console.log('Edit trade functionality coming soon:', tradeId);
+    alert('Edit trade feature coming soon!');
+}
+
+async function deleteTrade(tradeId) {
+    if (!confirm('Are you sure you want to delete this trade? This action cannot be undone.')) {
+        return;
+    }
+    console.log('Delete trade functionality coming soon:', tradeId);
+    alert('Delete trade feature coming soon!');
+}
+
 async function loadTrades() {
     try {
         const { data: { user } } = await supabase.auth.getUser();
