@@ -227,7 +227,7 @@ async function updateProgressTracker(cumulativePnL) {
         // Get current progress to check if we leveled up
         const { data: currentProgress } = await supabase
             .from('user_progress')
-            .select('beers_cracked, level, total_check_ins')
+            .select('beers_cracked, level, experience')
             .eq('user_id', user.id)
             .single();
         
@@ -239,19 +239,19 @@ async function updateProgressTracker(cumulativePnL) {
         const xpToAdd = newGlassesCracked * xpPerGlass;
         
         // Update user_progress with XP
-        const newTotalXP = (currentProgress?.total_check_ins || 0) + xpToAdd;
+        const newTotalXP = (currentProgress?.experience || 0) + xpToAdd;
         const { error: progressError } = await supabase
             .from('user_progress')
             .update({
                 beers_cracked: Math.min(beersCracked, goals.total_bottles),
-                total_check_ins: newTotalXP
+                experience: newTotalXP
             })
             .eq('user_id', user.id);
         
         if (progressError) {
             console.error('Error updating XP:', progressError);
         } else {
-            console.log(`✅ XP Updated: ${currentProgress?.total_check_ins || 0} → ${newTotalXP} (+${xpToAdd})`);
+            console.log(`✅ XP Updated: ${currentProgress?.experience || 0} → ${newTotalXP} (+${xpToAdd})`);
         }
         
         // Send notifications for each new glass cracked
@@ -288,7 +288,7 @@ async function penalizeForRuleViolation(ruleName) {
         // Get current progress
         const { data: progress } = await supabase
             .from('user_progress')
-            .select('total_check_ins, beers_spilled')
+            .select('experience, beers_spilled')
             .eq('user_id', user.id)
             .single();
         
@@ -296,14 +296,14 @@ async function penalizeForRuleViolation(ruleName) {
         
         // Deduct 30 XP for rule violation
         const xpPenalty = 30;
-        const newXP = Math.max(0, (progress.total_check_ins || 0) - xpPenalty);
+        const newXP = Math.max(0, (progress.experience || 0) - xpPenalty);
         const newSpilled = (progress.beers_spilled || 0) + 1;
         
         // Update progress
         await supabase
             .from('user_progress')
             .update({
-                total_check_ins: newXP,
+                experience: newXP,
                 beers_spilled: newSpilled
             })
             .eq('user_id', user.id);

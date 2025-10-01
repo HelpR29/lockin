@@ -131,8 +131,26 @@ async function signOut() {
         localStorage.clear();
         sessionStorage.clear();
         
-        // Force redirect to landing page
-        window.location.replace('/index.html');
+        // Clear any cached user data
+        if (typeof window.clearUserCache === 'function') {
+            window.clearUserCache();
+        }
+        
+        // Clear any global user-related variables
+        if (typeof window.currentUser !== 'undefined') {
+            window.currentUser = null;
+        }
+        if (typeof window.userProgress !== 'undefined') {
+            window.userProgress = null;
+        }
+        
+        // Force complete page reload to prevent any cached data
+        window.location.reload();
+        
+        // Fallback redirect if reload doesn't work
+        setTimeout(() => {
+            window.location.replace('/index.html');
+        }, 100);
     } catch (error) {
         console.error('Error signing out:', error);
         alert('Error signing out. Please try again.');
