@@ -184,7 +184,6 @@ async function loadTrades() {
         const tradeEl = document.createElement('div');
         tradeEl.className = 'trade-item';
         tradeEl.style.cursor = 'pointer';
-        const aiSummary = summarizeTradeNotes(trade.notes || '', trade);
         tradeEl.innerHTML = `
             <div class="trade-header">
                 <span class="trade-symbol">${trade.symbol}</span>
@@ -199,10 +198,6 @@ async function loadTrades() {
             </div>
             <div class="trade-footer">
                 <div class="trade-notes">${trade.notes || ''}</div>
-                ${aiSummary ? `<div class="ai-notes-summary" style="margin-top: 0.5rem; padding: 0.75rem; border: 1px solid var(--glass-border); background: rgba(255,149,0,0.06); border-radius: 10px;">
-                    <div style="font-weight: 600; color: var(--primary); margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.35rem;">🧠 AI Summary</div>
-                    ${aiSummary}
-                </div>` : ''}
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
                     <div class="trade-timestamp" style="font-size: 0.75rem; color: var(--text-muted);">
                         ${new Date(trade.created_at).toLocaleString()}
@@ -594,52 +589,6 @@ async function closeTrade(tradeId) {
     }
 }
 
-// -------- Local, free AI-like summarization of notes --------
-function summarizeTradeNotes(text, trade) {
-    if (!text || text.trim().length < 12) return '';
-    const lower = text.toLowerCase();
-    const found = [];
-    // Direction & context
-    if (trade?.direction) found.push(`<div>• Direction: <strong>${trade.direction.toUpperCase()}</strong></div>`);
-    // Reason cues
-    const cues = [
-        {k:'relative strength', l:'Relative strength present'},
-        {k:'breakout', l:'Breakout setup'},
-        {k:'pullback', l:'Pullback entry'},
-        {k:'trendline', l:'Trendline factor'},
-        {k:'support', l:'Support level involved'},
-        {k:'resistance', l:'Resistance level involved'},
-        {k:'earnings', l:'Earnings-related catalyst'},
-        {k:'news', l:'News/catalyst driven'},
-        {k:'triangle', l:'Triangle pattern context'},
-        {k:'wedge', l:'Wedge pattern context'},
-        {k:'double top', l:'Double top risk'},
-        {k:'double bottom', l:'Double bottom support'}
-    ];
-    cues.forEach(c=>{ if (lower.includes(c.k)) found.push(`<div>• ${c.l}</div>`); });
-    // Risk/target extraction
-    const targetMatch = lower.match(/target\s*(price)?\s*[:=@]?\s*([$]?)(\d+(?:\.\d+)?)/);
-    const stopMatch = lower.match(/(stop|sl|stop\s*loss)\s*[:=@]?\s*([$]?)(\d+(?:\.\d+)?)/);
-    if (targetMatch) found.push(`<div>• Target: <strong>${targetMatch[2]}${parseFloat(targetMatch[3]).toFixed(2)}</strong></div>`);
-    if (stopMatch) found.push(`<div>• Stop: <strong>${stopMatch[2]}${parseFloat(stopMatch[3]).toFixed(2)}</strong></div>`);
-    // Timeframe
-    const tf = ['daily','weekly','1m','3m','5m','15m','30m','1h','4h','intraday'];
-    const tfHit = tf.find(t=> lower.includes(t));
-    if (tfHit) found.push(`<div>• Timeframe: <strong>${tfHit.toUpperCase()}</strong></div>`);
-    // Sentiment heuristic
-    const posWords = ['strong','good','bull','bullish','breakout','uptrend','strength'];
-    const negWords = ['weak','bad','bear','bearish','rejection','downtrend','selloff'];
-    const posScore = posWords.reduce((s,w)=> s + (lower.includes(w)?1:0),0);
-    const negScore = negWords.reduce((s,w)=> s + (lower.includes(w)?1:0),0);
-    let sentiment = 'Neutral';
-    if (posScore > negScore) sentiment = 'Bullish';
-    else if (negScore > posScore) sentiment = 'Bearish';
-    found.push(`<div>• Sentiment: <strong>${sentiment}</strong></div>`);
-    // TL;DR line - shorten first sentence
-    const firstSentence = text.split(/[.!?]/).find(s=> s.trim().length>0) || '';
-    const tldr = firstSentence.trim().slice(0, 140) + (firstSentence.length>140 ? '…' : '');
-    return `<div style="color: var(--text-primary);">${found.join('')}<div>• TL;DR: ${tldr}</div></div>`;
-}
 
 // Recalculate user level based on current XP (for fixing existing users)
 async function recalculateUserLevel() {
