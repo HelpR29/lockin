@@ -81,7 +81,10 @@ async function summarizeNotesWithLLM(trades) {
             if (resp.ok) {
                 const data = await resp.json();
                 const content = data?.choices?.[0]?.message?.content?.trim();
-                if (content) return content;
+                if (content) {
+                    console.info('🔌 Notes Summary provider: Custom OpenAI-compatible');
+                    return content;
+                }
             }
         } catch (e) {
             console.warn('Custom OpenAI-compatible call failed.', e);
@@ -110,7 +113,10 @@ async function summarizeNotesWithLLM(trades) {
             if (resp.ok) {
                 const data = await resp.json();
                 const content = data?.choices?.[0]?.message?.content?.trim();
-                if (content) return content;
+                if (content) {
+                    console.info('🔌 Notes Summary provider: OpenAI');
+                    return content;
+                }
             }
         } catch (e) {
             console.warn('OpenAI call failed.', e);
@@ -631,3 +637,91 @@ function createCumulativePnLChart(cumulativeData) {
 
 // Export to global scope
 window.generateAIAnalysis = generateAIAnalysis;
+
+// ---------------- LLM Settings Modal Handlers ----------------
+function _toggleLLMGroups(provider) {
+    const show = (id, on=true) => { const el = document.getElementById(id); if (el) el.style.display = on ? '' : 'none'; };
+    show('geminiKeyGroup', provider === 'gemini');
+    show('geminiModelGroup', provider === 'gemini');
+    show('openaiKeyGroup', provider === 'openai');
+    show('customBaseGroup', provider === 'custom');
+    show('customModelGroup', provider === 'custom');
+}
+
+function openLLMSettings() {
+    const modal = document.getElementById('llmSettingsModal');
+    if (!modal) return;
+    // Prefill from localStorage
+    const providerEl = document.getElementById('llmProvider');
+    const gemKeyEl = document.getElementById('geminiKey');
+    const gemModelEl = document.getElementById('geminiModel');
+    const openaiKeyEl = document.getElementById('openaiKey');
+    const customBaseEl = document.getElementById('customBase');
+    const customModelEl = document.getElementById('customModel');
+
+    // Decide default provider based on which key/url exists
+    let provider = 'gemini';
+    if (localStorage.getItem('lockin_llm_base_url')) provider = 'custom';
+    if (localStorage.getItem('lockin_openai_key')) provider = 'openai';
+    if (localStorage.getItem('lockin_gemini_key')) provider = 'gemini';
+
+    if (providerEl) providerEl.value = provider;
+    if (gemKeyEl) gemKeyEl.value = localStorage.getItem('lockin_gemini_key') || '';
+    if (gemModelEl) gemModelEl.value = localStorage.getItem('lockin_gemini_model') || 'gemini-1.5-flash';
+    if (openaiKeyEl) openaiKeyEl.value = localStorage.getItem('lockin_openai_key') || '';
+    if (customBaseEl) customBaseEl.value = localStorage.getItem('lockin_llm_base_url') || '';
+    if (customModelEl) customModelEl.value = localStorage.getItem('lockin_llm_model') || '';
+
+    _toggleLLMGroups(provider);
+    // Bind change
+    if (providerEl && !providerEl.__lockinBound) {
+        providerEl.addEventListener('change', (e) => _toggleLLMGroups(e.target.value));
+        providerEl.__lockinBound = true;
+    }
+
+    modal.style.display = 'block';
+}
+
+function saveLLMSettings() {
+    const provider = document.getElementById('llmProvider')?.value || 'gemini';
+    const gemKey = document.getElementById('geminiKey')?.value?.trim();
+    const gemModel = document.getElementById('geminiModel')?.value?.trim() || 'gemini-1.5-flash';
+    const openaiKey = document.getElementById('openaiKey')?.value?.trim();
+    const customBase = document.getElementById('customBase')?.value?.trim();
+    const customModel = document.getElementById('customModel')?.value?.trim();
+
+    // Clear all first to prevent cross-provider confusion
+    localStorage.removeItem('lockin_gemini_key');
+    localStorage.removeItem('lockin_gemini_model');
+    localStorage.removeItem('lockin_openai_key');
+    localStorage.removeItem('lockin_llm_base_url');
+    localStorage.removeItem('lockin_llm_model');
+
+    if (provider === 'gemini') {
+        if (gemKey) localStorage.setItem('lockin_gemini_key', gemKey);
+        localStorage.setItem('lockin_gemini_model', gemModel || 'gemini-1.5-flash');
+    } else if (provider === 'openai') {
+        if (openaiKey) localStorage.setItem('lockin_openai_key', openaiKey);
+    } else if (provider === 'custom') {
+        if (customBase) localStorage.setItem('lockin_llm_base_url', customBase);
+        if (customModel) localStorage.setItem('lockin_llm_model', customModel);
+    }
+
+    alert('LLM settings saved. You can click Analyze again.');
+    closeModal('llmSettingsModal');
+}
+
+function clearLLMSettings() {
+    localStorage.removeItem('lockin_gemini_key');
+    localStorage.removeItem('lockin_gemini_model');
+    localStorage.removeItem('lockin_openai_key');
+    localStorage.removeItem('lockin_llm_base_url');
+    localStorage.removeItem('lockin_llm_model');
+    alert('LLM settings cleared. The app will use the local heuristic summary.');
+    closeModal('llmSettingsModal');
+}
+
+// Export UI helpers
+window.openLLMSettings = openLLMSettings;
+window.saveLLMSettings = saveLLMSettings;
+window.clearLLMSettings = clearLLMSettings;
