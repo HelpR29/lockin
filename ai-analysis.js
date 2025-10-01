@@ -328,4 +328,147 @@ function displayAIAnalysis(analysis) {
     
     // Display recommendations
     const recsEl = document.getElementById('aiRecommendations');
+    recsEl.innerHTML = analysis.recommendations.map(rec => 
+        `<div style="margin-bottom: 0.75rem; padding-left: 1rem; border-left: 2px solid #4CAF50;">${rec}</div>`
+    ).join('');
+}
+
+function calculateAdvancedStats(trades) {
+    const closedTrades = trades.filter(t => t.status === 'closed' && t.exit_price);
+    
+    // Group by day
+    const tradesByDay = {};
+    closedTrades.forEach(trade => {
+        const day = new Date(trade.created_at).toLocaleDateString();
+        if (!tradesByDay[day]) tradesByDay[day] = [];
+        tradesByDay[day].push(trade);
+    });
+    
+    // Calculate daily P&L
+    const dailyPnL = {};
+    Object.keys(tradesByDay).forEach(day => {
+        const dayTrades = tradesByDay[day];
+        let dayTotal = 0;
+        dayTrades.forEach(t => {
+            const isOption = t.trade_type === 'call' || t.trade_type === 'put';
+            const multiplier = isOption ? 100 : 1;
+            const pnl = (t.exit_price - t.entry_price) * t.position_size * multiplier * (t.direction === 'short' ? -1 : 1);
+            dayTotal += pnl;
+        });
+        dailyPnL[day] = dayTotal;
+    });
+    
+    // Day Win %
+    const profitableDays = Object.values(dailyPnL).filter(p => p > 0).length;
+    const totalDays = Object.keys(dailyPnL).length;
+    const dayWinRate = totalDays > 0 ? (profitableDays / totalDays * 100) : 0;
+    
+    // Separate wins and losses
+    const winningTrades = [];
+    const losingTrades = [];
+    closedTrades.forEach(trade => {
+        const isOption = trade.trade_type === 'call' || trade.trade_type === 'put';
+        const multiplier = isOption ? 100 : 1;
+        const pnl = (trade.exit_price - trade.entry_price) * trade.position_size * multiplier * (trade.direction === 'short' ? -1 : 1);
+        if (pnl > 0) winningTrades.push(pnl);
+        else if (pnl < 0) losingTrades.push(Math.abs(pnl));
+    });
+    
+    // Average Win/Loss
+    const avgWin = winningTrades.length > 0 
+        ? winningTrades.reduce((a, b) => a + b, 0) / winningTrades.length 
+        : 0;
+    const avgLoss = losingTrades.length > 0 
+        ? losingTrades.reduce((a, b) => a + b, 0) / losingTrades.length 
+        : 0;
+    
+    // Max Drawdown
+    let peak = 0;
+    let maxDrawdown = 0;
+    let cumulative = 0;
+    const sortedDays = Object.keys(dailyPnL).sort();
+    sortedDays.forEach(day => {
+        cumulative += dailyPnL[day];
+        if (cumulative > peak) peak = cumulative;
+        const drawdown = peak - cumulative;
+        if (drawdown > maxDrawdown) maxDrawdown = drawdown;
+    });
+    
+    // Recovery Factor = Net Profit / Max Drawdown
+    const netProfit = Object.values(dailyPnL).reduce((a, b) => a + b, 0);
+    const recoveryFactor = maxDrawdown > 0 ? (netProfit / maxDrawdown) : 0;
+    
+    // Cumulative P&L data for chart
+    const cumulativePnL = sortedDays.map(day => ({
+        date: day,
+        value: sortedDays.slice(0, sortedDays.indexOf(day) + 1)
+            .reduce((sum, d) => sum + dailyPnL[d], 0)
+    }));
+    
+    return {
+        dayWinRate,
+        avgWin,
+        avgLoss,
+        maxDrawdown,
+        recoveryFactor,
+        dailyPnL,
+        cumulativePnL
+    };
+}
+
+function createCumulativePnLChart(cumulativeData) {
+    const canvas = document.getElementById('cumulativePnLChart');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    
+    // Destroy existing chart if any
+    if (window.cumulativeChart) {
+        window.cumulativeChart.destroy();
+    }
+    
+    window.cumulativeChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: cumulativeData.map(d => d.date),
+            datasets: [{
+                label: 'Cumulative P&L',
+                data: cumulativeData.map(d => d.value),
+                borderColor: '#4CAF50',
+                backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                fill: true,
+                tension: 0.4,
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    ticks: { 
+                        color: '#999',
+                        callback: function(value) {
+                            return '$' + value.toFixed(0);
+                        }
+                    },
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                },
+                x: {
+                    ticks: { 
+                        color: '#999',
+                        maxRotation: 45,
+                        minRotation: 45
+                    },
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                }
+            }
+        }
+    });
+}
+
+// Export to global scope
 window.generateAIAnalysis = generateAIAnalysis;
