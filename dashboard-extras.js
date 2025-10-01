@@ -136,7 +136,7 @@ async function openProfileModal() {
                         <div style="font-size: 0.875rem; color: var(--text-secondary);">Level</div>
                     </div>
                     <div>
-                        <div style="font-size: 2rem; font-weight: 700; color: var(--primary);">${progress?.total_check_ins || 0}</div>
+                        <div style="font-size: 2rem; font-weight: 700; color: var(--primary);">${(progress?.experience ?? 0)}</div>
                         <div style="font-size: 0.875rem; color: var(--text-secondary);">Total XP</div>
                     </div>
                     <div>
