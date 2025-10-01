@@ -176,11 +176,14 @@
                     <div class="chart-section">
                         <!-- Price Chart for Selected Trade -->
                         <div id="chartContainer" style="margin-bottom: 2rem; display: none;">
-                            <h3 style="margin: 0 0 1rem 0; display: flex; align-items: center; justify-content: space-between;">
+                            <h3 style="margin: 0 0 1rem 0; display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;">
                                 <span>📈 Price Chart</span>
-                                <span id="chartInfo" style="font-size: 0.875rem; color: var(--text-secondary); display: none;">
-                                    <span id="chartSymbol"></span> - <span id="chartDirection"></span>
-                                </span>
+                                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                    <span id="chartInfo" style="font-size: 0.875rem; color: var(--text-secondary); display: none;">
+                                        <span id="chartSymbol"></span> - <span id="chartDirection"></span>
+                                    </span>
+                                    <button id="resetZoomBtn" onclick="window.resetChartZoom && window.resetChartZoom()" style="display:none; background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border); color: var(--text-secondary); font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 6px; cursor: pointer;">Reset zoom</button>
+                                </div>
                             </h3>
                             <div style="position: relative; height: 300px; background: rgba(0,0,0,0.3); border-radius: 12px; padding: 1rem;">
                                 <canvas id="tradeChartCanvas"></canvas>
@@ -198,14 +201,38 @@
                         </button>
                         
                         <!-- Quick Stats -->
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1.5rem;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
                             <div style="background: rgba(76, 175, 80, 0.1); padding: 0.75rem; border-radius: 8px; text-align: center;">
-                                <div style="font-size: 0.75rem; color: var(--text-secondary);">Win Rate</div>
+                                <div style="font-size: 0.75rem; color: var(--text-secondary);">Trade Win %</div>
                                 <div style="font-size: 1.25rem; font-weight: 700; color: #4CAF50;" id="winRate">--%</div>
                             </div>
                             <div style="background: rgba(255, 149, 0, 0.1); padding: 0.75rem; border-radius: 8px; text-align: center;">
                                 <div style="font-size: 0.75rem; color: var(--text-secondary);">Avg P&L</div>
                                 <div style="font-size: 1.25rem; font-weight: 700; color: var(--primary);" id="avgPnl">$0</div>
+                            </div>
+                            <div style="background: rgba(255, 149, 0, 0.1); padding: 0.75rem; border-radius: 8px; text-align: center;">
+                                <div style="font-size: 0.75rem; color: var(--text-secondary);">Day Win %</div>
+                                <div style="font-size: 1.25rem; font-weight: 700;" id="dayWinRate">--%</div>
+                            </div>
+                            <div style="background: rgba(244, 67, 54, 0.1); padding: 0.75rem; border-radius: 8px; text-align: center;">
+                                <div style="font-size: 0.75rem; color: var(--text-secondary);">Max Drawdown</div>
+                                <div style="font-size: 1.25rem; font-weight: 700;" id="maxDrawdown">$0</div>
+                            </div>
+                            <div style="background: rgba(76, 175, 80, 0.1); padding: 0.75rem; border-radius: 8px; text-align: center;">
+                                <div style="font-size: 0.75rem; color: var(--text-secondary);">Avg Win</div>
+                                <div style="font-size: 1.25rem; font-weight: 700; color: #4CAF50;" id="avgWin">$0</div>
+                            </div>
+                            <div style="background: rgba(244, 67, 54, 0.1); padding: 0.75rem; border-radius: 8px; text-align: center;">
+                                <div style="font-size: 0.75rem; color: var(--text-secondary);">Avg Loss</div>
+                                <div style="font-size: 1.25rem; font-weight: 700; color: #F44336;" id="avgLoss">$0</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Cumulative P&L Chart (Premium) -->
+                        <div id="cumulativeChartContainer" style="background: var(--card-bg); border: 1px solid var(--glass-border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; display: none;">
+                            <h4 style="margin: 0 0 1rem 0;">📈 Cumulative P&L</h4>
+                            <div style="height: 200px;">
+                                <canvas id="cumulativePnLChart"></canvas>
                             </div>
                         </div>
                         
