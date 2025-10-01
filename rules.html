@@ -277,12 +277,33 @@
                 }
 
                 console.log('✅ User authenticated:', user.id);
-                const category = document.getElementById('ruleCategory').value;
-                const ruleText = document.getElementById('ruleText').value;
+                
+                // Find the elements - they're created dynamically in the modal
+                const categorySelect = document.querySelector('#addRuleModal select#ruleCategory');
+                const ruleTextArea = document.querySelector('#addRuleModal textarea#ruleText');
+                
+                console.log('📝 Found elements:', {
+                    categorySelect: !!categorySelect,
+                    ruleTextArea: !!ruleTextArea
+                });
+                
+                if (!categorySelect || !ruleTextArea) {
+                    console.error('❌ Could not find form elements!');
+                    alert('Error: Form elements not found. Please try again.');
+                    return;
+                }
+                
+                const category = categorySelect.value;
+                const ruleText = ruleTextArea.value.trim();
 
                 console.log('📝 Rule data:', { category, ruleText });
+                
+                if (!ruleText) {
+                    alert('Please enter a rule description!');
+                    return;
+                }
 
-                const { error } = await supabase
+                const { data, error } = await supabase
                     .from('trading_rules')
                     .insert({
                         user_id: user.id,
@@ -291,16 +312,19 @@
                         is_active: true,
                         times_followed: 0,
                         times_violated: 0
-                    });
+                    })
+                    .select();
 
                 if (error) {
                     console.error('❌ Error adding rule:', error);
                     alert('Failed to add rule: ' + error.message);
                 } else {
-                    console.log('✅ Rule added successfully');
-                    alert('✅ Custom rule added successfully!');
-                    // Reload page to show new rule
-                    window.location.reload();
+                    console.log('✅ Rule added successfully:', data);
+                    alert('✅ Custom rule added successfully! Reloading...');
+                    // Small delay to ensure database write completes
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 500);
                 }
             } catch (error) {
                 console.error('❌ Error saving rule:', error);
