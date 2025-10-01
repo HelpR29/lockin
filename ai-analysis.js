@@ -43,6 +43,8 @@ async function generateAIAnalysis() {
         
         // Create cumulative P&L chart
         if (advancedStats.cumulativePnL.length > 0) {
+            const chartContainer = document.getElementById('cumulativeChartContainer');
+            if (chartContainer) chartContainer.style.display = 'block';
             createCumulativePnLChart(advancedStats.cumulativePnL);
         }
         
