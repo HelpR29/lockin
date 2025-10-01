@@ -604,9 +604,16 @@ async function selectAndUploadAvatar() {
 
                 if (file.size > 2 * 1024 * 1024) { alert('Max size is 2MB.'); return; }
                 const { name, type } = file;
-                const path = `${user.id}/${Date.now()}_${name}`;
+                // Sanitize filename: remove spaces and non-ASCII/special chars
+                const safeName = name
+                    .normalize('NFKD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .replace(/[^a-zA-Z0-9._-]/g, '-')
+                    .replace(/-+/g, '-')
+                    .slice(0, 120);
+                const path = `${user.id}/${Date.now()}_${safeName}`;
                 const { error: upErr } = await supabase.storage.from('avatars').upload(path, file, { upsert: true, contentType: type });
-                if (upErr) { alert('Upload failed. Ensure the "avatars" bucket exists and is public.'); return; }
+                if (upErr) { console.error('Supabase storage upload error:', upErr); alert('Upload failed. Ensure the "avatars" bucket exists and is public.'); return; }
                 const { data: pub } = supabase.storage.from('avatars').getPublicUrl(path);
                 const publicUrl = pub?.publicUrl;
                 if (!publicUrl) { alert('Could not get public URL.'); return; }
