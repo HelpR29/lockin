@@ -100,6 +100,16 @@ async function openProfileModal() {
         .limit(1);
 
     const progress = Array.isArray(progressRows) ? progressRows[0] : progressRows;
+
+    // Derive level from XP to avoid stale DB level mismatch
+    const xp = (progress?.experience ?? 0);
+    let derived = null;
+    try {
+        if (typeof calculateLevelFromXP === 'function') {
+            derived = calculateLevelFromXP(xp);
+        }
+    } catch (_) { /* ignore */ }
+    const displayLevel = (derived?.level ?? progress?.level ?? 1);
     
     // Fetch avatar from onboarding (with error handling)
     let avatarEmoji = '👤'; // default
@@ -136,11 +146,11 @@ async function openProfileModal() {
             <div style="background: rgba(255, 149, 0, 0.1); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem;">
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; text-align: center;">
                     <div>
-                        <div style="font-size: 2rem; font-weight: 700; color: var(--primary);">${progress?.level || 1}</div>
+                        <div style="font-size: 2rem; font-weight: 700; color: var(--primary);">${displayLevel}</div>
                         <div style="font-size: 0.875rem; color: var(--text-secondary);">Level</div>
                     </div>
                     <div>
-                        <div style="font-size: 2rem; font-weight: 700; color: var(--primary);">${(progress?.experience ?? 0)}</div>
+                        <div style="font-size: 2rem; font-weight: 700; color: var(--primary);">${xp}</div>
                         <div style="font-size: 0.875rem; color: var(--text-secondary);">Total XP</div>
                     </div>
                     <div>
