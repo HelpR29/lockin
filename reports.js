@@ -4,14 +4,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.location.href = 'login.html';
         return;
     }
-
-// Format a Date as local YYYY-MM-DD (avoids timezone shifts of toISOString)
-function fmtLocalYMD(d) {
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
-}
     try {
         await generateReports();
     } catch (error) {
@@ -27,6 +19,14 @@ let calendarMonth = null; // 0-11
 const calendarCache = new Map(); // key: YYYY-MM -> trades[]
 
 // ===== Performance Calendar (global scope) =====
+// Format a Date as local YYYY-MM-DD (avoids timezone shifts of toISOString)
+function fmtLocalYMD(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+}
+
 function wireCalendarNav() {
     const prevBtn = document.getElementById('calendarPrev');
     const nextBtn = document.getElementById('calendarNext');
