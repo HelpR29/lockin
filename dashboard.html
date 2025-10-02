@@ -819,7 +819,7 @@
                         </div>
                     </div>
                     <div class="share-buttons">
-                        <button class="cta-primary" onclick="shareCard('milestone', { username: '${username.replace(/'/g, "\\'")}', milestone: 'Goal Achieved!', message: '${cracked}/${totalLabel} completed' })">Share 🎯</button>
+                        <button class="cta-primary" onclick="shareCard('milestone', { &quot;username&quot;: &quot;${username}&quot;, &quot;milestone&quot;: &quot;Goal Achieved!&quot;, &quot;message&quot;: &quot;${cracked}/${totalLabel} completed&quot; })">Share 🎯</button>
                         <button class="cta-secondary" onclick="openNextGoalModal()">Start Next Goal ➡️</button>
                         <button class="cta-secondary" onclick="this.closest('.share-modal').remove()">Close</button>
                     </div>
