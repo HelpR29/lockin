@@ -54,7 +54,7 @@
                 </a>
                 <a href="friends.html" style="color: var(--text-primary); text-decoration: none; padding: 0.5rem 1rem; border-radius: 8px; transition: background 0.3s; font-size: 0.9rem; display: flex; align-items: center; gap: 0.35rem;" onmouseover="this.style.background='rgba(255,149,0,0.1)'" onmouseout="this.style.background='transparent'">
                     <span style="font-size: 1.1rem;">👥</span>
-                    <span class="nav-label">Friends</span>
+                    <span class="nav-label">Following</span>
                 </a>
                 
                 <!-- Profile & Settings -->
@@ -374,8 +374,21 @@
             const userName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Trader';
             document.getElementById('userName').textContent = userName;
             
-            // Fetch and display avatar from onboarding (with error handling)
+            // Fetch and display avatar. Prefer uploaded photo (user_profiles.avatar_url); fallback to onboarding emoji
+            const avatarEl = document.getElementById('dashboardAvatar');
             let avatarEmoji = '👤'; // default
+            try {
+                const { data: profRow } = await supabase
+                    .from('user_profiles')
+                    .select('avatar_url')
+                    .eq('user_id', user.id)
+                    .single();
+                if (profRow?.avatar_url && avatarEl) {
+                    avatarEl.innerHTML = `<img src="${profRow.avatar_url}" alt="avatar" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+                }
+            } catch (_) { /* ignore */ }
+            
+            // Fallback to onboarding emoji if no photo set
             try {
                 const { data: onboardingData, error } = await supabase
                     .from('user_onboarding')
@@ -390,8 +403,7 @@
                 console.log('No onboarding data yet, using default avatar');
             }
             
-            const avatarEl = document.getElementById('dashboardAvatar');
-            if (avatarEl) {
+            if (avatarEl && avatarEl.childElementCount === 0) {
                 avatarEl.textContent = avatarEmoji;
                 avatarEl.title = `Click to view ${userName}'s profile`;
             }
