@@ -429,14 +429,14 @@ async function completeOnboarding() {
         alert('Please select a progress token');
         return;
     }
-    // Require acceptance of the full ruleset
+    // Require at least some rules selected
     const ack = document.getElementById('ackAllRules');
-    if (selectedRules.length !== totalRulesAvailable) {
-        alert('Please select ALL rules to proceed. You can press "Select All" to accept the full ruleset.');
+    if (selectedRules.length === 0) {
+        alert('Please select at least one rule to proceed.');
         return;
     }
     if (!ack || !ack.checked) {
-        alert('Please acknowledge and accept the full ruleset to continue.');
+        alert('Please acknowledge and accept your selected rules to continue.');
         return;
     }
     
@@ -465,11 +465,12 @@ async function completeOnboarding() {
                 .eq('user_id', user.id)
                 .eq('onboarding_completed', false);
             
-            // Delete any existing user_goals record (in case of incomplete onboarding)
+            // Set existing active goals to inactive (handles unique constraint one_active_goal_per_user)
             await supabase
                 .from('user_goals')
-                .delete()
-                .eq('user_id', user.id);
+                .update({ is_active: false })
+                .eq('user_id', user.id)
+                .eq('is_active', true);
                 
             // Delete any existing trading_rules record (in case of incomplete onboarding)
             await supabase
