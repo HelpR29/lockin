@@ -734,3 +734,8 @@ ALTER TABLE user_goals
 CREATE UNIQUE INDEX IF NOT EXISTS one_active_goal_per_user
     ON user_goals (user_id)
     WHERE is_active;
+
+-- Optional cycle review fields
+ALTER TABLE user_goals
+    ADD COLUMN IF NOT EXISTS discipline_score_end INTEGER CHECK (discipline_score_end >= 1 AND discipline_score_end <= 10),
+    ADD COLUMN IF NOT EXISTS review_notes TEXT;

@@ -81,8 +81,8 @@ async function generateShareCard(type, data) {
     return canvas.toDataURL('image/png');
 }
 
-// Helper function to draw circular profile picture
-async function drawProfilePicture(ctx, imageUrl) {
+// Helper function to draw circular profile picture (with optional sizing/position)
+async function drawProfilePicture(ctx, imageUrl, x = 980, y = 180, size = 180) {
     return new Promise((resolve) => {
         // Skip if no URL provided
         if (!imageUrl || imageUrl.trim() === '') {
@@ -98,10 +98,6 @@ async function drawProfilePicture(ctx, imageUrl) {
         
         img.onload = () => {
             try {
-                const size = 180;  // Slightly smaller for better fit
-                const x = 980;     // Moved right
-                const y = 180;     // Moved down
-                
                 // Draw circular mask
                 ctx.save();
                 ctx.beginPath();
@@ -132,9 +128,6 @@ async function drawProfilePicture(ctx, imageUrl) {
         img.onerror = (err) => {
             console.warn('Failed to load profile picture:', err);
             // Draw placeholder circle instead
-            const size = 180;  // Match the size
-            const x = 980;
-            const y = 180;
             
             ctx.fillStyle = 'rgba(255, 159, 28, 0.2)';
             ctx.beginPath();
@@ -253,25 +246,46 @@ function renderReportCard(ctx, data, token, nameColor) {
 
 function renderMilestoneCard(ctx, data, token, nameColor) {
     const { username, milestone, message } = data;
+    const pad = 60;
 
-    // Giant token
-    ctx.font = '220px sans-serif';
-    ctx.fillText(token, 450, 340);
+    // Panel background (rounded)
+    const x = pad, y = 150, w = 1200 - pad * 2, h = 360, r = 18;
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(255,149,0,0.25)';
+    ctx.stroke();
+    ctx.restore();
 
-    // User name
+    // Username (top-left of panel)
     ctx.fillStyle = nameColor;
-    ctx.font = 'bold 56px Inter, sans-serif';
-    ctx.fillText(username, 50, 180);
+    ctx.textAlign = 'left';
+    ctx.font = 'bold 44px Inter, sans-serif';
+    ctx.fillText(username, x + 24, y + 64);
 
-    // Milestone text
+    // Center headline
+    ctx.textAlign = 'center';
     ctx.fillStyle = '#FF9F1C';
-    ctx.font = 'bold 72px Inter, sans-serif';
-    ctx.fillText(milestone, 50, 380);
+    ctx.font = 'bold 84px Inter, sans-serif';
+    ctx.fillText(milestone, x + w / 2 - 40, y + h / 2);
 
-    // Message
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-    ctx.font = '36px Inter, sans-serif';
-    ctx.fillText(message, 50, 460);
+    // Subtext
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.font = '42px Inter, sans-serif';
+    ctx.fillText(message, x + w / 2 - 40, y + h / 2 + 56);
+
+    // Token on right side, large but not overlapping text
+    ctx.textAlign = 'right';
+    ctx.font = '180px sans-serif';
+    ctx.fillText(token, x + w - 24, y + h / 2 + 60);
 }
 
 // Share to platforms
