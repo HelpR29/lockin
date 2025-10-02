@@ -4,6 +4,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.location.href = 'login.html';
         return;
     }
+
+// Format a Date as local YYYY-MM-DD (avoids timezone shifts of toISOString)
+function fmtLocalYMD(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+}
     try {
         await generateReports();
     } catch (error) {
@@ -101,7 +109,7 @@ async function buildPerformanceCalendar() {
     for (const t of monthTrades) {
         const d = new Date(t.created_at);
         if (d.getFullYear() !== calendarYear || d.getMonth() !== calendarMonth) continue;
-        const key = d.toISOString().slice(0,10); // YYYY-MM-DD
+        const key = fmtLocalYMD(d); // YYYY-MM-DD (local)
         const isOption = t.trade_type === 'call' || t.trade_type === 'put';
         const multiplier = isOption ? 100 : 1;
         const pnl = (t.exit_price - t.entry_price) * t.position_size * multiplier * (t.direction === 'short' ? -1 : 1);
@@ -118,7 +126,7 @@ async function buildPerformanceCalendar() {
 
     for (let day = 1; day <= daysInMonth; day++) {
         const dateObj = new Date(calendarYear, calendarMonth, day);
-        const key = dateObj.toISOString().slice(0,10);
+        const key = fmtLocalYMD(dateObj);
         const agg = dailyMap.get(key) || { pnl: 0, trades: [] };
 
         const cell = document.createElement('div');
@@ -159,7 +167,7 @@ async function buildPerformanceCalendar() {
                 const startOfWeek = new Date(current);
                 const days = [];
                 for (let i = 0; i < 7; i++) {
-                    const k = current.toISOString().slice(0,10);
+                    const k = fmtLocalYMD(current);
                     const agg = dailyMap.get(k);
                     if (agg) {
                         weekPnL += agg.pnl;
