@@ -1,11 +1,19 @@
 // Share Card Generator - Create beautiful share images using Canvas
 
-async function generateShareCard(type, data) {
+async function generateShareCard(type, data, options = {}) {
+    const format = options.format || 'landscape'; // 'landscape' | 'story'
+    const gridStyle = options.gridStyle || 'subtle'; // 'subtle' | 'none'
+
     const canvas = document.createElement('canvas');
-    canvas.width = 1200;
-    canvas.height = 630;
+    if (format === 'story') {
+        canvas.width = 1080;
+        canvas.height = 1920;
+    } else {
+        canvas.width = 1200;
+        canvas.height = 630;
+    }
     const ctx = canvas.getContext('2d');
-    const PADDING = 60;
+    const PADDING = format === 'story' ? 72 : 60;
 
     // Get user customization
     const { data: { user } } = await supabase.auth.getUser();
@@ -24,38 +32,49 @@ async function generateShareCard(type, data) {
     gradient.addColorStop(0, '#141416');
     gradient.addColorStop(1, '#232428');
     ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, 1200, 630);
-    const radial = ctx.createRadialGradient(900, 120, 50, 900, 120, 400);
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    const radial = ctx.createRadialGradient(
+        Math.floor(canvas.width * 0.78),
+        Math.floor(canvas.height * 0.12),
+        50,
+        Math.floor(canvas.width * 0.78),
+        Math.floor(canvas.height * 0.12),
+        Math.floor(canvas.height * 0.38)
+    );
     radial.addColorStop(0, 'rgba(255,149,0,0.18)');
     radial.addColorStop(1, 'rgba(255,149,0,0)');
     ctx.fillStyle = radial;
-    ctx.fillRect(0, 0, 1200, 630);
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Add subtle grid pattern
-    ctx.strokeStyle = 'rgba(255, 159, 28, 0.06)';
-    ctx.lineWidth = 1;
-    for (let i = 0; i < 1200; i += 60) {
-        ctx.beginPath();
-        ctx.moveTo(i, 0);
-        ctx.lineTo(i, 630);
-        ctx.stroke();
-    }
-    for (let i = 0; i < 630; i += 60) {
-        ctx.beginPath();
-        ctx.moveTo(0, i);
-        ctx.lineTo(1200, i);
-        ctx.stroke();
+    // Add subtle grid pattern (lighter density); allow disabling
+    if (gridStyle !== 'none') {
+        const spacing = format === 'story' ? 80 : 70;
+        ctx.strokeStyle = 'rgba(255, 159, 28, 0.04)';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < canvas.width; i += spacing) {
+            ctx.beginPath();
+            ctx.moveTo(i, 0);
+            ctx.lineTo(i, canvas.height);
+            ctx.stroke();
+        }
+        for (let i = 0; i < canvas.height; i += spacing) {
+            ctx.beginPath();
+            ctx.moveTo(0, i);
+            ctx.lineTo(canvas.width, i);
+            ctx.stroke();
+        }
     }
 
     // Brand small, top-left
     ctx.fillStyle = '#FF9F1C';
-    ctx.font = 'bold 48px Inter, sans-serif';
+    ctx.font = `bold ${format === 'story' ? 60 : 48}px Inter, sans-serif`;
     ctx.textAlign = 'left';
     ctx.fillText('🔒 LockIn', PADDING, PADDING + 40);
 
     // Load and draw profile picture if available (top-right)
     if (avatarUrl) {
-        await drawProfilePicture(ctx, avatarUrl, 1200 - PADDING - 140, PADDING, 140);
+        const size = format === 'story' ? 200 : 140;
+        await drawProfilePicture(ctx, avatarUrl, canvas.width - PADDING - size, PADDING, size);
     }
 
     switch (type) {
@@ -76,7 +95,8 @@ async function generateShareCard(type, data) {
     // Footer
     ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
     ctx.font = '20px Inter, sans-serif';
-    ctx.fillText('Track your discipline journey at lockin.app', PADDING, 590);
+    const footerY = canvas.height - (format === 'story' ? 60 : 40);
+    ctx.fillText('Track your discipline journey at lockin.app', PADDING, footerY);
 
     return canvas.toDataURL('image/png');
 }
@@ -291,8 +311,6 @@ function renderMilestoneCard(ctx, data, token, nameColor) {
 // Share to platforms
 async function shareCard(type, data) {
     try {
-        const imageData = await generateShareCard(type, data);
-        
         // Save to share history
         const { data: { user } } = await supabase.auth.getUser();
         await supabase.from('share_history').insert({
@@ -301,31 +319,41 @@ async function shareCard(type, data) {
             share_data: data
         });
 
-        // Show share modal
-        showShareModal(imageData);
+        // Show share modal with controls
+        showShareModal(type, data);
     } catch (error) {
-        console.error('Error generating share card:', error);
-        alert('Failed to generate share card');
+        console.error('Error preparing share card:', error);
+        alert('Failed to open share dialog');
     }
 }
 
-function showShareModal(imageData) {
+async function showShareModal(type, data) {
     const modal = document.createElement('div');
     modal.className = 'share-modal';
     modal.innerHTML = `
         <div class="share-modal-content">
             <span class="close-button" onclick="this.closest('.share-modal').remove()">&times;</span>
             <h2>Share Your Achievement 🎉</h2>
+            <div style="display:flex; gap:0.75rem; flex-wrap:wrap; justify-content:center; margin-bottom:0.75rem;">
+                <div style="display:flex; gap:0.5rem;">
+                    <button class="cta-secondary" id="formatLandscapeBtn">Landscape 1200×630</button>
+                    <button class="cta-secondary" id="formatStoryBtn">Story 1080×1920</button>
+                </div>
+                <div style="display:flex; gap:0.5rem;">
+                    <button class="cta-secondary" id="gridSubtleBtn">Grid: Subtle</button>
+                    <button class="cta-secondary" id="gridNoneBtn">Grid: None</button>
+                </div>
+            </div>
             
             <div class="share-preview">
-                <img src="${imageData}" alt="Share card" style="max-width: 100%; border-radius: 12px; border: 2px solid var(--primary);">
+                <img id="sharePreviewImg" src="" alt="Share card" style="max-width: 100%; border-radius: 12px; border: 2px solid var(--primary); background: rgba(0,0,0,0.2);">
             </div>
             
             <div class="share-buttons">
-                <button class="cta-primary" onclick="downloadShareCard('${imageData}')">
+                <button class="cta-primary" onclick="downloadShareCard()">
                     📥 Download Image
                 </button>
-                <button class="cta-secondary" onclick="copyShareCard('${imageData}')">
+                <button class="cta-secondary" onclick="copyShareCard()">
                     📋 Copy Image
                 </button>
             </div>
@@ -337,18 +365,44 @@ function showShareModal(imageData) {
     `;
     
     document.body.appendChild(modal);
+
+    // Local state
+    let format = 'landscape';
+    let gridStyle = 'subtle';
+
+    async function refreshPreview() {
+        const imgEl = document.getElementById('sharePreviewImg');
+        const dataUrl = await generateShareCard(type, data, { format, gridStyle });
+        imgEl.src = dataUrl;
+        // Button active styles
+        document.getElementById('formatLandscapeBtn').classList.toggle('cta-primary', format === 'landscape');
+        document.getElementById('formatStoryBtn').classList.toggle('cta-primary', format === 'story');
+        document.getElementById('gridSubtleBtn').classList.toggle('cta-primary', gridStyle === 'subtle');
+        document.getElementById('gridNoneBtn').classList.toggle('cta-primary', gridStyle === 'none');
+    }
+
+    // Wire controls
+    document.getElementById('formatLandscapeBtn').onclick = () => { format = 'landscape'; refreshPreview(); };
+    document.getElementById('formatStoryBtn').onclick = () => { format = 'story'; refreshPreview(); };
+    document.getElementById('gridSubtleBtn').onclick = () => { gridStyle = 'subtle'; refreshPreview(); };
+    document.getElementById('gridNoneBtn').onclick = () => { gridStyle = 'none'; refreshPreview(); };
+
+    // Initial render
+    refreshPreview();
 }
 
-function downloadShareCard(imageData) {
+function downloadShareCard() {
     const link = document.createElement('a');
     link.download = `lockin-share-${Date.now()}.png`;
-    link.href = imageData;
+    const img = document.getElementById('sharePreviewImg');
+    link.href = img?.src || '';
     link.click();
 }
 
-async function copyShareCard(imageData) {
+async function copyShareCard() {
     try {
-        const blob = await (await fetch(imageData)).blob();
+        const img = document.getElementById('sharePreviewImg');
+        const blob = await (await fetch(img?.src || '')).blob();
         await navigator.clipboard.write([
             new ClipboardItem({ 'image/png': blob })
         ]);
