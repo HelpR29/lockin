@@ -565,7 +565,7 @@ async function openUserProfileById(userId) {
                 </div>
                 <div style="display:flex; gap:0.5rem; justify-content:flex-end; margin-top:1rem;">
                     <button class="cta-secondary" onclick="this.closest('.modal').remove()">Close</button>
-                    <button class="cta-primary" onclick="sendFriendRequest('${row.user_id}')">Add Friend</button>
+                    <button class="cta-primary" id="followActionBtn_${row.user_id}" onclick="toggleFollow('${row.user_id}')">Follow</button>
                 </div>
             </div>
         `;
@@ -654,24 +654,51 @@ async function removeAvatar() {
 window.selectAndUploadAvatar = selectAndUploadAvatar;
 window.removeAvatar = removeAvatar;
 
-// Send friend request helper (global)
-async function sendFriendRequest(otherUserId) {
+// Toggle follow/unfollow (global)
+async function toggleFollow(otherUserId) {
     try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return alert('Please log in');
         if (user.id === otherUserId) return alert("That's you!");
-        const { error } = await supabase
-            .from('friends')
-            .insert({ user_id_1: user.id, user_id_2: otherUserId, status: 'requested' });
-        if (error) {
-            console.warn('sendFriendRequest error', error);
-            alert('Could not send request (maybe already requested).');
+        
+        // Check if already following
+        const { data: existing } = await supabase
+            .from('follows')
+            .select('id')
+            .match({ follower_id: user.id, following_id: otherUserId })
+            .single();
+        
+        if (existing) {
+            // Unfollow
+            const { error } = await supabase
+                .from('follows')
+                .delete()
+                .match({ follower_id: user.id, following_id: otherUserId });
+            if (error) {
+                console.warn('toggleFollow unfollow error', error);
+                alert('Could not unfollow.');
+            } else {
+                alert('Unfollowed!');
+                const btn = document.getElementById(`followActionBtn_${otherUserId}`);
+                if (btn) btn.textContent = 'Follow';
+            }
         } else {
-            alert('Friend request sent!');
+            // Follow
+            const { error } = await supabase
+                .from('follows')
+                .insert({ follower_id: user.id, following_id: otherUserId });
+            if (error) {
+                console.warn('toggleFollow follow error', error);
+                alert('Could not follow.');
+            } else {
+                alert('Now following!');
+                const btn = document.getElementById(`followActionBtn_${otherUserId}`);
+                if (btn) btn.textContent = 'Unfollow';
+            }
         }
     } catch (e) {
-        console.error('sendFriendRequest failed', e);
-        alert('Error sending request');
+        console.error('toggleFollow failed', e);
+        alert('Error');
     }
 }
-window.sendFriendRequest = sendFriendRequest;
+window.toggleFollow = toggleFollow;

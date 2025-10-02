@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     try {
-        await loadFriendData();
+        await loadFollowingData();
         await loadLeaderboard();
 
         // Wire ranking controls
@@ -15,71 +15,57 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (sortSel) sortSel.addEventListener('change', () => loadLeaderboard());
         if (filterSel) filterSel.addEventListener('change', () => loadLeaderboard());
     } catch (error) {
-        console.error('Error initializing friends:', error);
-        alert('Failed to load friends. Please refresh the page.');
+        console.error('Error initializing following:', error);
+        alert('Failed to load following. Please refresh the page.');
     }
 });
 
-async function loadFriendData() {
+async function loadFollowingData() {
     try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-    // 1) Fetch all friendships involving the user
-    const { data: friendships, error } = await supabase
-        .from('friends')
-        .select('user_id_1, user_id_2, status')
-        .or(`user_id_1.eq.${user.id},user_id_2.eq.${user.id}`);
+    // Fetch all users current user is following
+    const { data: follows, error } = await supabase
+        .from('follows')
+        .select('following_id')
+        .eq('follower_id', user.id);
 
     if (error) {
-        console.error('Error fetching friend data:', error);
+        console.error('Error fetching following data:', error);
         return;
     }
 
-    const friendsList = document.getElementById('friendsList');
-    const requestsList = document.getElementById('friendRequestsList');
-    friendsList.innerHTML = '';
-    requestsList.innerHTML = '';
+    const followingList = document.getElementById('followingList');
+    followingList.innerHTML = '';
 
-    if (!friendships || friendships.length === 0) return;
+    if (!follows || follows.length === 0) {
+        followingList.innerHTML = '<div style="text-align:center; color:var(--text-secondary); padding:1rem;">Not following anyone yet.</div>';
+        return;
+    }
 
-    // 2) Collect other user IDs and fetch their usernames
-    const otherIds = new Set();
-    friendships.forEach(f => {
-        const other = f.user_id_1 === user.id ? f.user_id_2 : f.user_id_1;
-        otherIds.add(other);
-    });
-
+    // Fetch usernames and premium status
+    const followingIds = follows.map(f => f.following_id);
     const { data: profiles } = await supabase
         .from('user_profiles')
         .select('user_id, username, is_premium')
-        .in('user_id', Array.from(otherIds));
+        .in('user_id', followingIds);
 
     const profileMap = new Map();
     (profiles || []).forEach(p => profileMap.set(p.user_id, { username: p.username || 'User', is_premium: !!p.is_premium }));
 
-    // 3) Render lists
-    friendships.forEach(f => {
-        if (f.status === 'accepted') {
-            const friendId = f.user_id_1 === user.id ? f.user_id_2 : f.user_id_1;
-            const friendEl = document.createElement('div');
-            friendEl.className = 'user-item';
-            const profile = profileMap.get(friendId) || { username: 'User', is_premium: false };
-            const badge = profile.is_premium ? '<span title="PREMIUM" style="color: #FFD54F; margin-left: 0.25rem;">💎</span>' : '';
-            friendEl.innerHTML = `<span>${profile.username}${badge}</span> <button onclick="removeFriend('${friendId}')">Remove</button>`;
-            friendsList.appendChild(friendEl);
-        } else if (f.status === 'requested' && f.user_id_2 === user.id) {
-            const requesterId = f.user_id_1;
-            const requestEl = document.createElement('div');
-            requestEl.className = 'user-item';
-            const profile = profileMap.get(requesterId) || { username: 'User', is_premium: false };
-            const badge = profile.is_premium ? '<span title="PREMIUM" style="color: #FFD54F; margin-left: 0.25rem;">💎</span>' : '';
-            requestEl.innerHTML = `<span>${profile.username}${badge}</span> <div><button onclick="acceptRequest('${requesterId}')">Accept</button><button onclick="declineRequest('${requesterId}')">Decline</button></div>`;
-            requestsList.appendChild(requestEl);
-        }
+    // Render following list
+    follows.forEach(f => {
+        const followingId = f.following_id;
+        const followingEl = document.createElement('div');
+        followingEl.className = 'user-item';
+        const profile = profileMap.get(followingId) || { username: 'User', is_premium: false };
+        const badge = profile.is_premium ? '<span title="PREMIUM" style="color: #FFD54F; margin-left: 0.25rem;">💎</span>' : '';
+        followingEl.innerHTML = `<span><button class="lb-name" data-user-id="${followingId}" style="all:unset; cursor:pointer; font-weight:600;">${profile.username}</button>${badge}</span> <button onclick="unfollowUser('${followingId}')">Unfollow</button>`;
+        followingList.appendChild(followingEl);
     });
     } catch (error) {
-        console.error('Error loading friend data:', error);
+        console.error('Error loading following data:', error);
         throw error;
     }
 }
@@ -121,11 +107,25 @@ async function searchUsers() {
 
     const resultsList = document.getElementById('searchResultsList');
     resultsList.innerHTML = '';
+    
+    // Check which users current user is already following
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    const { data: currentFollows } = await supabase
+        .from('follows')
+        .select('following_id')
+        .eq('follower_id', currentUser.id);
+    const followingSet = new Set((currentFollows || []).map(f => f.following_id));
+    
     Array.from(map.values()).forEach(profile => {
+        if (profile.user_id === currentUser.id) return; // Skip self
         const resultEl = document.createElement('div');
         resultEl.className = 'user-item';
         const badge = profile.is_premium ? '<span title="PREMIUM" style="color: #FFD54F; margin-left: 0.25rem;">💎</span>' : '';
-        resultEl.innerHTML = `<span>${profile.username}${badge}</span> <button onclick="sendRequest('${profile.user_id}')">Add</button>`;
+        const isFollowing = followingSet.has(profile.user_id);
+        const actionBtn = isFollowing 
+            ? `<button onclick="unfollowUser('${profile.user_id}')">Unfollow</button>`
+            : `<button onclick="followUser('${profile.user_id}')">Follow</button>`;
+        resultEl.innerHTML = `<span>${profile.username}${badge}</span> ${actionBtn}`;
         resultsList.appendChild(resultEl);
     });
     } catch (error) {
@@ -134,76 +134,42 @@ async function searchUsers() {
     }
 }
 
-async function sendRequest(friendId) {
+async function followUser(userId) {
     try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
+        if (user.id === userId) return alert("You can't follow yourself!");
         
-        const { error } = await supabase.from('friends').insert({ user_id_1: user.id, user_id_2: friendId, status: 'requested' });
+        const { error } = await supabase.from('follows').insert({ follower_id: user.id, following_id: userId });
         if (error) {
-            console.error('Error sending request:', error);
-            alert('Error sending request.');
+            console.error('Error following user:', error);
+            alert('Error following user (maybe already following).');
         } else {
-            alert('Friend request sent!');
+            alert('Now following!');
+            await loadFollowingData();
         }
     } catch (error) {
-        console.error('Error sending request:', error);
+        console.error('Error following user:', error);
         alert('An error occurred. Please try again.');
     }
 }
 
-async function acceptRequest(requesterId) {
-    try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-        
-        const { error } = await supabase.from('friends').update({ status: 'accepted' }).match({ user_id_1: requesterId, user_id_2: user.id });
-        if (error) {
-            console.error('Error accepting request:', error);
-            alert('Error accepting request.');
-        } else {
-            await loadFriendData();
-        }
-    } catch (error) {
-        console.error('Error accepting request:', error);
-        alert('An error occurred. Please try again.');
-    }
-}
-
-async function declineRequest(requesterId) {
-    try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-        
-        const { error } = await supabase.from('friends').delete().match({ user_id_1: requesterId, user_id_2: user.id });
-        if (error) {
-            console.error('Error declining request:', error);
-            alert('Error declining request.');
-        } else {
-            await loadFriendData();
-        }
-    } catch (error) {
-        console.error('Error declining request:', error);
-        alert('An error occurred. Please try again.');
-    }
-}
-
-async function removeFriend(friendId) {
-    if (!confirm('Are you sure you want to remove this friend?')) return;
+async function unfollowUser(userId) {
+    if (!confirm('Unfollow this user?')) return;
     
     try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
         
-        const { error } = await supabase.from('friends').delete().or(`user_id_1.eq.${user.id},user_id_2.eq.${user.id}`).or(`user_id_1.eq.${friendId},user_id_2.eq.${friendId}`);
+        const { error } = await supabase.from('follows').delete().match({ follower_id: user.id, following_id: userId });
         if (error) {
-            console.error('Error removing friend:', error);
-            alert('Error removing friend.');
+            console.error('Error unfollowing user:', error);
+            alert('Error unfollowing user.');
         } else {
-            await loadFriendData();
+            await loadFollowingData();
         }
     } catch (error) {
-        console.error('Error removing friend:', error);
+        console.error('Error unfollowing user:', error);
         alert('An error occurred. Please try again.');
     }
 }
@@ -270,19 +236,16 @@ async function loadLeaderboard() {
         const profileMap = new Map();
         (profiles || []).forEach(p => profileMap.set(p.user_id, { username: p.username || 'User', is_premium: !!p.is_premium }));
 
-        // Apply filter: friends only
+        // Apply filter: following only
         let rows = leaderboard;
-        if (filterVal === 'friends') {
-            // Use existing friendships to filter
-            const { data: friendships } = await supabase
-                .from('friends')
-                .select('user_id_1, user_id_2, status')
-                .or(`user_id_1.eq.${user.id},user_id_2.eq.${user.id}`);
-            const friendIds = new Set();
-            (friendships || []).forEach(f => {
-                if (f.status === 'accepted') friendIds.add(f.user_id_1 === user.id ? f.user_id_2 : f.user_id_1);
-            });
-            rows = rows.filter(r => friendIds.has(r.user_id));
+        if (filterVal === 'following') {
+            // Use follows to filter
+            const { data: follows } = await supabase
+                .from('follows')
+                .select('following_id')
+                .eq('follower_id', user.id);
+            const followingIds = new Set((follows || []).map(f => f.following_id));
+            rows = rows.filter(r => followingIds.has(r.user_id));
         }
 
         // Client sort by username if selected
@@ -336,7 +299,6 @@ document.addEventListener('click', (e) => {
 
 // Export functions to global scope for HTML onclick handlers
 window.searchUsers = searchUsers;
-window.sendRequest = sendRequest;
-window.acceptRequest = acceptRequest;
-window.declineRequest = declineRequest;
+window.followUser = followUser;
+window.unfollowUser = unfollowUser;
 window.loadLeaderboard = loadLeaderboard;

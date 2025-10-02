@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Friends & Community - LockIn</title>
+    <title>Following & Community - LockIn</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -39,22 +39,14 @@
         <section class="dashboard-section">
             <div class="dashboard-container">
                 <div class="dashboard-header">
-                    <h1 class="dashboard-title">Friends & Community</h1>
-                    <p class="dashboard-subtitle">Connect with other traders and stay accountable.</p>
+                    <h1 class="dashboard-title">Following & Community</h1>
+                    <p class="dashboard-subtitle">Follow other traders and view their progress.</p>
                 </div>
 
                 <div class="social-grid">
-                    <!-- Friend Requests -->
+                    <!-- Find Users -->
                     <div class="social-card">
-                        <h3>Friend Requests</h3>
-                        <div id="friendRequestsList" class="user-list">
-                            <!-- Friend requests will be loaded here -->
-                        </div>
-                    </div>
-
-                    <!-- Find Friends -->
-                    <div class="social-card">
-                        <h3>Find Friends</h3>
+                        <h3>Find Users</h3>
                         <div class="search-box">
                             <input type="text" id="searchUser" placeholder="Search by username or email">
                             <button onclick="searchUsers()">Search</button>
@@ -64,11 +56,11 @@
                         </div>
                     </div>
 
-                    <!-- Friends List -->
+                    <!-- Following List -->
                     <div class="social-card full-width">
-                        <h3>My Friends</h3>
-                        <div id="friendsList" class="user-list">
-                            <!-- Friends will be loaded here -->
+                        <h3>Following</h3>
+                        <div id="followingList" class="user-list">
+                            <!-- Following list will be loaded here -->
                         </div>
                     </div>
 
@@ -85,7 +77,7 @@
                             <label style="font-size:0.875rem; color: var(--text-secondary); margin-left:0.5rem;">Filter</label>
                             <select id="rankingFilterSelect" style="background: var(--card-bg); color: var(--text-primary); border:1px solid var(--glass-border); border-radius:8px; padding:0.4rem 0.6rem;">
                                 <option value="all" selected>All users</option>
-                                <option value="friends">Friends only</option>
+                                <option value="following">Following only</option>
                             </select>
                         </div>
                         <div id="leaderboardList" class="user-list">

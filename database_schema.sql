@@ -739,3 +739,50 @@ CREATE UNIQUE INDEX IF NOT EXISTS one_active_goal_per_user
 ALTER TABLE user_goals
     ADD COLUMN IF NOT EXISTS discipline_score_end INTEGER CHECK (discipline_score_end >= 1 AND discipline_score_end <= 10),
     ADD COLUMN IF NOT EXISTS review_notes TEXT;
+
+-- =======================
+-- Follows System (replaces Friends)
+-- =======================
+
+-- Create follows table
+CREATE TABLE IF NOT EXISTS follows (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    follower_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+    following_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    UNIQUE(follower_id, following_id),
+    CHECK (follower_id != following_id)
+);
+
+ALTER TABLE follows ENABLE ROW LEVEL SECURITY;
+
+-- RLS: Users can view all follows (public)
+CREATE POLICY "Anyone can view follows"
+    ON follows FOR SELECT
+    USING (true);
+
+-- RLS: Users can follow others
+CREATE POLICY "Users can follow others"
+    ON follows FOR INSERT
+    WITH CHECK (auth.uid() = follower_id);
+
+-- RLS: Users can unfollow
+CREATE POLICY "Users can unfollow"
+    ON follows FOR DELETE
+    USING (auth.uid() = follower_id);
+
+-- Index for performance
+CREATE INDEX IF NOT EXISTS idx_follows_follower ON follows(follower_id);
+CREATE INDEX IF NOT EXISTS idx_follows_following ON follows(following_id);
+
+-- Allow followers to view followed users' trades (read-only)
+CREATE POLICY "Users can view followed users trades"
+    ON trades FOR SELECT
+    USING (
+        auth.uid() = user_id OR
+        EXISTS (
+            SELECT 1 FROM follows
+            WHERE follows.follower_id = auth.uid()
+            AND follows.following_id = trades.user_id
+        )
+    );
