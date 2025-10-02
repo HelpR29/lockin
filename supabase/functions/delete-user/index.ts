@@ -104,6 +104,36 @@ Deno.serve(async (req: Request): Promise<Response> => {
       }
     } catch (_) { /* ignore */ }
 
+    // Diagnostics: check remaining rows across tables before deleting auth user
+    const tablesToCheck = [
+      'rule_violations','trades','trading_rules','user_defined_rules','notifications','share_history',
+      'daily_stats','daily_check_ins','beer_spills','beer_completions','user_stars','user_achievements',
+      'user_customization','user_onboarding','privacy_settings','user_subscriptions','follows','user_goals',
+      'user_progress','user_profiles'
+    ];
+    const remaining: Record<string, number> = {};
+    for (const t of tablesToCheck) {
+      try {
+        const { count } = await adminClient.from(t).select('*', { count: 'exact', head: true }).eq('user_id', userId);
+        if ((count ?? 0) > 0) remaining[t] = count as number;
+      } catch (_) { /* ignore count errors */ }
+      // Also check follows secondary columns
+      if (t === 'follows') {
+        try {
+          const { count: c1 } = await adminClient.from('follows').select('*', { count: 'exact', head: true }).eq('follower_id', userId);
+          if ((c1 ?? 0) > 0) remaining['follows.follower_id'] = c1 as number;
+          const { count: c2 } = await adminClient.from('follows').select('*', { count: 'exact', head: true }).eq('following_id', userId);
+          if ((c2 ?? 0) > 0) remaining['follows.following_id'] = c2 as number;
+        } catch (_) {}
+      }
+    }
+    if (Object.keys(remaining).length > 0) {
+      return new Response(JSON.stringify({ error: 'Rows still reference user', remaining }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     // Now delete the auth user
     const { error: delErr } = await adminClient.auth.admin.deleteUser(userId);
 
