@@ -378,7 +378,36 @@ async function saveTrade(e) {
             }
             
             await loadTrades();
-            
+
+            // If saved directly as closed, award XP only on profitable trades
+            try {
+                if (statusVal === 'closed' && exitVal !== null) {
+                    const isOption = tradeType === 'call' || tradeType === 'put';
+                    const multiplier = isOption ? 100 : 1;
+                    const entry = parseFloat(document.getElementById('entryPrice').value);
+                    const size = parseFloat(document.getElementById('positionSize').value);
+                    const dir = document.getElementById('direction').value;
+                    const pnl = (exitVal - entry) * size * multiplier * (dir === 'short' ? -1 : 1);
+                    if (pnl > 0) {
+                        const { data: { user } } = await supabase.auth.getUser();
+                        if (user) {
+                            const { data: progress } = await supabase
+                                .from('user_progress')
+                                .select('experience, level')
+                                .eq('user_id', user.id)
+                                .single();
+                            const newXP = (progress?.experience || 0) + 10;
+                            const levelInfo = calculateLevelFromXP(newXP);
+                            await supabase
+                                .from('user_progress')
+                                .update({ experience: newXP, level: levelInfo.level, next_level_xp: levelInfo.nextLevelXP })
+                                .eq('user_id', user.id);
+                            try { if (typeof updateXPBar === 'function') await updateXPBar(); } catch(_) {}
+                        }
+                    }
+                }
+            } catch (_) { /* non-fatal */ }
+
             // Update progress tracker immediately after saving
             if (typeof updatePnLChart === 'function') {
                 await updatePnLChart();
@@ -613,6 +642,7 @@ async function closeTrade(tradeId) {
         }
         
         // Show detailed success message
+        const xpMsg = pnl > 0 ? `\n\n+10 XP earned! 🎯` : '';
         if (isFullClose) {
             alert(
                 `✅ TRADE FULLY CLOSED\n\n` +
@@ -620,8 +650,7 @@ async function closeTrade(tradeId) {
                 `Entry: $${trade.entry_price}\n` +
                 `Exit: $${exitPrice}\n` +
                 `Change: ${pnlPercent >= 0 ? '+' : ''}${pnlPercent}%\n\n` +
-                `💰 P/L: ${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}\n\n` +
-                `+10 XP earned! 🎯`
+                `💰 P/L: ${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}` + xpMsg
             );
         } else {
             alert(
@@ -630,31 +659,23 @@ async function closeTrade(tradeId) {
                 `Closed: ${closeSize} @ $${exitPrice}\n` +
                 `Remaining: ${maxSize - closeSize}\n\n` +
                 `💰 This Close: ${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}\n` +
-                `📈 Change: ${pnlPercent >= 0 ? '+' : ''}${pnlPercent}%\n\n` +
-                `+10 XP earned! 🎯`
+                `📈 Change: ${pnlPercent >= 0 ? '+' : ''}${pnlPercent}%` + xpMsg
             );
         }
 
         // Award XP for closing trade
-        if (user) {
+        if (user && pnl > 0) {
             const { data: progress } = await supabase
                 .from('user_progress')
                 .select('experience, level')
                 .eq('user_id', user.id)
                 .single();
-            
             const newXP = (progress?.experience || 0) + 10;
             const levelInfo = calculateLevelFromXP(newXP);
-            
             await supabase
                 .from('user_progress')
-                .update({ 
-                    experience: newXP,
-                    level: levelInfo.level,
-                    next_level_xp: levelInfo.nextLevelXP
-                })
+                .update({ experience: newXP, level: levelInfo.level, next_level_xp: levelInfo.nextLevelXP })
                 .eq('user_id', user.id);
-            // Immediately refresh header XP widgets cross-page if available
             try { if (typeof updateXPBar === 'function') { await updateXPBar(); } } catch (_) {}
         }
         
