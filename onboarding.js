@@ -3,6 +3,7 @@ let currentStep = 1;
 const totalSteps = 6;
 let selectedToken = null;
 let selectedRules = [];
+let totalRulesAvailable = 0;
 
 // Onboarding data
 const onboardingData = {
@@ -307,6 +308,9 @@ async function loadRulesForSelection() {
     
     const container = document.getElementById('ruleSelectionContainer');
     container.innerHTML = '';
+    // Reset and track totals
+    selectedRules = [];
+    totalRulesAvailable = defaultRules.length;
     
     const categories = ['Risk Management', 'Entry Rules', 'Exit Rules', 'Psychology', 'General'];
     const categoryIcons = {
@@ -341,11 +345,13 @@ async function loadRulesForSelection() {
             ruleEl.onmouseout = () => ruleEl.style.background = 'rgba(255, 255, 255, 0.03)';
             
             ruleEl.innerHTML = `
-                <input type="checkbox" id="${ruleId}" data-category="${category}" data-rule="${ruleData.rule.replace(/"/g, '&quot;')}" onchange="toggleRuleSelection(this)" style="width: 20px; height: 20px; cursor: pointer;">
+                <input type="checkbox" id="${ruleId}" data-category="${category}" data-rule="${ruleData.rule.replace(/"/g, '&quot;')}" onchange="toggleRuleSelection(this)" style="width: 20px; height: 20px; cursor: pointer;" checked>
                 <label for="${ruleId}" style="flex: 1; cursor: pointer; user-select: none;">${ruleData.rule}</label>
             `;
             
             rulesList.appendChild(ruleEl);
+            // Preselect all rules by default
+            selectedRules.push({ category, rule: ruleData.rule });
         });
         
         container.appendChild(categoryEl);
@@ -361,11 +367,32 @@ function toggleRuleSelection(checkbox) {
     };
     
     if (checkbox.checked) {
-        selectedRules.push(rule);
+        // Avoid duplicates
+        if (!selectedRules.find(r => r.rule === rule.rule && r.category === rule.category)) {
+            selectedRules.push(rule);
+        }
     } else {
         selectedRules = selectedRules.filter(r => r.rule !== rule.rule);
     }
     
+    updateSelectedCount();
+}
+
+function selectAllRules() {
+    const container = document.getElementById('ruleSelectionContainer');
+    selectedRules = [];
+    container.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+        cb.checked = true;
+        const rule = { category: cb.getAttribute('data-category'), rule: cb.getAttribute('data-rule') };
+        selectedRules.push(rule);
+    });
+    updateSelectedCount();
+}
+
+function deselectAllRules() {
+    const container = document.getElementById('ruleSelectionContainer');
+    container.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+    selectedRules = [];
     updateSelectedCount();
 }
 
@@ -402,9 +429,14 @@ async function completeOnboarding() {
         alert('Please select a progress token');
         return;
     }
-    
-    if (selectedRules.length === 0) {
-        alert('Please select at least one trading rule to track your discipline!');
+    // Require acceptance of the full ruleset
+    const ack = document.getElementById('ackAllRules');
+    if (selectedRules.length !== totalRulesAvailable) {
+        alert('Please select ALL rules to proceed. You can press "Select All" to accept the full ruleset.');
+        return;
+    }
+    if (!ack || !ack.checked) {
+        alert('Please acknowledge and accept the full ruleset to continue.');
         return;
     }
     
@@ -738,3 +770,5 @@ window.loadRulesForSelection = loadRulesForSelection;
 window.toggleRuleSelection = toggleRuleSelection;
 window.addCustomRuleOnboarding = addCustomRuleOnboarding;
 window.updateSelectedCount = updateSelectedCount;
+window.selectAllRules = selectAllRules;
+window.deselectAllRules = deselectAllRules;

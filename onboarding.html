@@ -335,6 +335,16 @@
                                 <span style="font-size: 1.5rem; font-weight: 700; color: var(--primary-orange);" id="selectedRulesCount">0</span>
                             </div>
                         </div>
+                        <!-- Bulk selection helpers -->
+                        <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.75rem;">
+                            <button class="cta-secondary" onclick="selectAllRules()">Select All</button>
+                            <button class="cta-secondary" onclick="deselectAllRules()">Deselect All</button>
+                        </div>
+                        <!-- Acknowledgement -->
+                        <label style="display:flex; gap:0.5rem; align-items:center; margin-bottom:1rem;">
+                            <input id="ackAllRules" type="checkbox" style="width:auto;">
+                            <span>I acknowledge and accept the full rule set for trading discipline.</span>
+                        </label>
                         
                         <div class="step-actions">
                             <button class="cta-secondary" onclick="prevStep()">Back</button>
