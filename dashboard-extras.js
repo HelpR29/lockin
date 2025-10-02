@@ -591,9 +591,9 @@ async function resetAccountOneTime() {
         ops.push(supabase.from('share_history').delete().eq('user_id', user.id));
         await Promise.allSettled(ops);
 
-        // Mark used (best-effort)
+        // Mark used and set onboarding_completed to false (best-effort)
         try {
-            await supabase.from('user_profiles').update({ reset_used: true }).eq('user_id', user.id);
+            await supabase.from('user_profiles').update({ reset_used: true, onboarding_completed: false }).eq('user_id', user.id);
         } catch (_) { /* ignore */ }
         
         // Clear all cached data
@@ -606,9 +606,10 @@ async function resetAccountOneTime() {
         if (typeof window.currentProgressData !== 'undefined') window.currentProgressData = null;
         if (typeof window.userProgress !== 'undefined') window.userProgress = null;
 
-        alert('✅ Account reset complete. The page will reload.');
-        // Force a complete reload without cache
-        window.location.href = window.location.href.split('?')[0] + '?t=' + Date.now();
+        alert('✅ Account reset complete. You will be signed out.');
+        // Sign out and redirect to login
+        try { await supabase.auth.signOut(); } catch (_) {}
+        window.location.href = 'login.html';
     } catch (e) {
         console.error('resetAccountOneTime failed', e);
         alert('Failed to reset account.');
