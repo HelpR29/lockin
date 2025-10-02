@@ -539,7 +539,7 @@
             // Update hero beer display
             document.getElementById('heroBeerIcon').textContent = tokenEmoji;
             document.getElementById('bottlesRemainingLarge').textContent = progressSummary.goals?.bottles_remaining || 0;
-            document.getElementById('beersCrackedMain').textContent = progressSummary.beers_cracked;
+            document.getElementById('beersCrackedMain').textContent = progressSummary.goals?.bottles_cracked || 0;
             document.getElementById('beersSpilledMain').textContent = progressSummary.beers_spilled;
             document.getElementById('progressPercentMain').textContent = `${Math.floor(progressSummary.progressPercent)}%`;
             document.getElementById('progressBarLarge').style.width = `${progressSummary.progressPercent}%`;
@@ -774,12 +774,126 @@
                         </div>
                     </div>
                     <div class="share-buttons">
-                        <button class="cta-primary" onclick="shareCard('milestone', { username: '${username.replace(/'/g, "\'")}', milestone: 'Goal Achieved!', message: '${cracked}/${totalLabel} completed' })">Share 🎯</button>
+                        <button class="cta-primary" onclick="shareCard('milestone', { username: '${username.replace(/'/g, "\\'")}', milestone: 'Goal Achieved!', message: '${cracked}/${totalLabel} completed' })">Share 🎯</button>
+                        <button class="cta-secondary" onclick="openNextGoalModal()">Start Next Goal ➡️</button>
                         <button class="cta-secondary" onclick="this.closest('.share-modal').remove()">Close</button>
                     </div>
                 </div>
             `;
             document.body.appendChild(modal);
+        }
+
+        // Open Next Goal configuration modal
+        async function openNextGoalModal() {
+            try {
+                const g = (window.currentProgressData && window.currentProgressData.goals) || {};
+                const tokenEmoji = window.currentProgressData?.token?.emoji || '🍺';
+                const modal = document.createElement('div');
+                modal.className = 'share-modal';
+                modal.innerHTML = `
+                    <div class="share-modal-content">
+                        <span class="close-button" onclick="this.closest('.share-modal').remove()">&times;</span>
+                        <h2>Start Next Goal</h2>
+                        <div style="display:grid; gap:0.75rem; margin-top:0.75rem;">
+                            <label style="display:flex; justify-content:space-between; align-items:center; gap:1rem;">
+                                <span>Starting Capital</span>
+                                <input id="nextGoalStarting" type="number" step="0.01" value="${Number(g.current_capital || 0)}" style="background: var(--card-bg); color: #fff; border:1px solid var(--glass-border); border-radius:8px; padding:0.4rem 0.6rem; width: 180px; text-align:right;" />
+                            </label>
+                            <label style="display:flex; justify-content:space-between; align-items:center; gap:1rem;">
+                                <span>Target per Item (%)</span>
+                                <input id="nextGoalTarget" type="number" step="0.1" value="${Number(g.target_percent_per_beer || 8)}" style="background: var(--card-bg); color: #fff; border:1px solid var(--glass-border); border-radius:8px; padding:0.4rem 0.6rem; width: 180px; text-align:right;" />
+                            </label>
+                            <label style="display:flex; justify-content:space-between; align-items:center; gap:1rem;">
+                                <span>Total Items</span>
+                                <input id="nextGoalTotal" type="number" step="1" value="${parseInt(g.total_bottles || 50)}" style="background: var(--card-bg); color: #fff; border:1px solid var(--glass-border); border-radius:8px; padding:0.4rem 0.6rem; width: 180px; text-align:right;" />
+                            </label>
+                            <label style="display:flex; justify-content:space-between; align-items:center; gap:1rem;">
+                                <span>Max Loss (%)</span>
+                                <input id="nextGoalMaxLoss" type="number" step="0.1" value="${Number(g.max_loss_percent || 2)}" style="background: var(--card-bg); color: #fff; border:1px solid var(--glass-border); border-radius:8px; padding:0.4rem 0.6rem; width: 180px; text-align:right;" />
+                            </label>
+                            <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:0.25rem;">
+                                <button class="cta-secondary" onclick="(function(){
+                                    const t=document.getElementById('nextGoalTarget');
+                                    const n=document.getElementById('nextGoalTotal');
+                                    t.value = ${Number(g.target_percent_per_beer || 8)};
+                                    n.value = ${parseInt(g.total_bottles || 50)};
+                                })()">Maintain</button>
+                                <button class="cta-secondary" onclick="(function(){
+                                    const t=document.getElementById('nextGoalTarget');
+                                    const n=document.getElementById('nextGoalTotal');
+                                    t.value = (parseFloat(t.value)||0) + 1;
+                                    n.value = (parseInt(n.value)||0) + 10;
+                                })()">Ramp +1% / +10</button>
+                                <button class="cta-secondary" onclick="(function(){
+                                    const t=document.getElementById('nextGoalTarget');
+                                    t.value = Math.max(1, (parseFloat(t.value)||0) - 1);
+                                })()">Recovery -1%</button>
+                            </div>
+                        </div>
+                        <div class="share-buttons" style="margin-top:1rem;">
+                            <button class="cta-primary" onclick="startNextGoal()">Create Next Goal ${tokenEmoji}</button>
+                            <button class="cta-secondary" onclick="this.closest('.share-modal').remove()">Cancel</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            } catch (e) {
+                console.error('openNextGoalModal failed', e);
+                alert('Could not open Next Goal setup.');
+            }
+        }
+
+        // Archive current goal and create a new active goal
+        async function startNextGoal() {
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) { alert('Please sign in'); return; }
+                const g = (window.currentProgressData && window.currentProgressData.goals) || {};
+                const starting = parseFloat(document.getElementById('nextGoalStarting').value);
+                const targetPct = parseFloat(document.getElementById('nextGoalTarget').value);
+                const total = parseInt(document.getElementById('nextGoalTotal').value);
+                const maxLoss = parseFloat(document.getElementById('nextGoalMaxLoss').value);
+                if (!(starting > 0) || !(targetPct > 0) || !(total > 0)) { alert('Please enter valid values'); return; }
+
+                // Deactivate any active goals for this user (guard)
+                await supabase.from('user_goals').update({ is_active: false, completed_at: new Date().toISOString() }).eq('user_id', user.id).eq('is_active', true);
+                // Also ensure current goal (by id) is marked completed
+                if (g?.id) {
+                    await supabase.from('user_goals').update({ is_active: false, completed_at: new Date().toISOString() }).eq('id', g.id);
+                }
+
+                // Insert new active goal
+                const { error: insErr } = await supabase.from('user_goals').insert({
+                    user_id: user.id,
+                    starting_capital: starting,
+                    current_capital: starting,
+                    target_percent_per_beer: targetPct,
+                    total_bottles: total,
+                    bottles_remaining: total,
+                    bottles_cracked: 0,
+                    max_loss_percent: maxLoss,
+                    beers_spilled: 0,
+                    is_active: true
+                });
+                if (insErr) { console.error('startNextGoal insert error', insErr); alert('Failed to create next goal.'); return; }
+
+                // Close any open modals
+                document.querySelectorAll('.share-modal').forEach(m => m.remove());
+
+                // Refresh progress and grid
+                await loadUserProgress(user.id);
+                await loadBottlesGrid();
+
+                // Small toast
+                const toast = document.createElement('div');
+                toast.textContent = '✅ Next goal created!';
+                toast.style.cssText = 'position:fixed; top:16px; left:50%; transform:translateX(-50%); background:rgba(34,34,36,0.9); color:#fff; border:1px solid rgba(255,149,0,0.4); border-radius:10px; padding:10px 14px; z-index:10000;';
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 1800);
+            } catch (e) {
+                console.error('startNextGoal failed', e);
+                alert('Could not start next goal.');
+            }
         }
         
         // Initialize dashboard
