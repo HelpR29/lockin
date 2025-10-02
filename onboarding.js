@@ -550,6 +550,7 @@ async function completeOnboarding() {
                     level_bonus: 1.0,
                     achievement_bonus: 1.0,
                     total_growth_multiplier: 1.0,
+                    total_portfolio: onboardingData.goals.starting_capital,
                     created_at: new Date().toISOString(),
                     updated_at: new Date().toISOString()
                 },
