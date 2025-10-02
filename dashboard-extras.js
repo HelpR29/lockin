@@ -68,6 +68,13 @@ async function deleteAccount() {
             }
         } catch (e) { console.warn('Avatar storage cleanup failed', e); }
 
+        // Try to delete Auth user via Edge Function (best-effort)
+        try {
+            if (supabase?.functions?.invoke) {
+                await supabase.functions.invoke('delete-user', { body: {} });
+            }
+        } catch (e) { console.warn('Auth user deletion failed', e); }
+
         // Sign out and clear caches
         try { await supabase.auth.signOut(); } catch(_) {}
         localStorage.clear();
