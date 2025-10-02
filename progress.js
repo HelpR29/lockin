@@ -319,8 +319,9 @@ async function crackBeer(userId, completionData) {
             throw new Error(`Rules violated: ${rulesCheck.violations.join(', ')}`);
         }
         
-        const newBeersCracked = progress.beers_cracked + 1;
-        const newBottlesRemaining = goals.bottles_remaining - 1;
+        const newBeersCracked = progress.beers_cracked + 1; // lifetime
+        const newBottlesRemaining = goals.bottles_remaining - 1; // per-goal
+        const cycleCracked = (goals.bottles_cracked || 0) + 1; // per-goal
         
         // Calculate XP for completion
         const completionXP = 100;
@@ -364,7 +365,7 @@ async function crackBeer(userId, completionData) {
             .update({
                 current_capital: completionData.ending_balance,
                 bottles_remaining: newBottlesRemaining,
-                bottles_cracked: newBeersCracked
+                bottles_cracked: cycleCracked
             })
             .eq('id', goals.id);
         
@@ -377,6 +378,7 @@ async function crackBeer(userId, completionData) {
         return {
             success: true,
             beers_cracked: newBeersCracked,
+            cycle_cracked: cycleCracked,
             bottlesRemaining: newBottlesRemaining,
             xpEarned: completionXP,
             leveledUp: levelInfo.level > progress.level,
@@ -589,8 +591,8 @@ async function getUserProgressSummary(userId) {
             achievements ? achievements.map(a => a.achievements) : []
         );
         
-        // Calculate progress percentage
-        const progressPercent = goals ? (progress.beers_cracked / goals.total_bottles) * 100 : 0;
+        // Calculate progress percentage (per active goal)
+        const progressPercent = goals ? ((goals.bottles_cracked || 0) / goals.total_bottles) * 100 : 0;
         
         // Calculate projected final balance
         const projectedBalance = goals ? calculateProjectedBalance(
@@ -606,7 +608,8 @@ async function getUserProgressSummary(userId) {
             progressPercent,
             projectedBalance,
             totalGrowthMultiplier: totalGrowth,
-            achievements: achievements ? achievements.map(a => a.achievements) : []
+            achievements: achievements ? achievements.map(a => a.achievements) : [],
+            cycleCracked: goals?.bottles_cracked || 0
         };
         
     } catch (error) {
