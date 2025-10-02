@@ -4,8 +4,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.location.href = 'login.html';
         return;
     }
+    try {
+        await generateReports();
+    } catch (error) {
+        console.error('Error initializing reports:', error);
+        alert('Failed to load reports. Please refresh the page.');
+    }
+});
 
-// ===== Performance Calendar =====
+// Globals for Performance Calendar
+let allClosedTrades = [];
+let calendarYear = null;
+let calendarMonth = null; // 0-11
+
+// ===== Performance Calendar (global scope) =====
 function wireCalendarNav() {
     const prevBtn = document.getElementById('calendarPrev');
     const nextBtn = document.getElementById('calendarNext');
@@ -117,20 +129,6 @@ function openDayDetailsModal(dateObj, trades, totalPnl) {
     `;
     document.body.appendChild(modal);
 }
-
-    try {
-        await generateReports();
-    } catch (error) {
-        console.error('Error initializing reports:', error);
-        alert('Failed to load reports. Please refresh the page.');
-    }
-});
-
-// Globals for Performance Calendar
-let allClosedTrades = [];
-let calendarYear = null;
-let calendarMonth = null; // 0-11
-
 async function generateReports() {
     try {
         const { data: { user } } = await supabase.auth.getUser();
