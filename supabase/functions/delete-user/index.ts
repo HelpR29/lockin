@@ -5,7 +5,7 @@
 // - SUPABASE_ANON_KEY
 // - SUPABASE_SERVICE_ROLE_KEY (keep secret)
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from 'jsr:@supabase/supabase-js@2';
 
 const corsHeaders: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
@@ -26,9 +26,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
       });
     }
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
-    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    // Built-in envs are provided by Supabase. Allow custom fallbacks without the SUPABASE_ prefix
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || Deno.env.get('PROJECT_URL') || Deno.env.get('URL');
+    const anonKey = Deno.env.get('SUPABASE_ANON_KEY') || Deno.env.get('ANON_KEY');
+    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || Deno.env.get('SERVICE_ROLE_KEY');
 
     if (!supabaseUrl || !anonKey || !serviceKey) {
       return new Response(JSON.stringify({ error: 'Missing server configuration' }), {
