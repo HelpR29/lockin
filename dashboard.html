@@ -811,6 +811,16 @@
                                 <span>Max Loss (%)</span>
                                 <input id="nextGoalMaxLoss" type="number" step="0.1" value="${Number(g.max_loss_percent || 2)}" style="background: var(--card-bg); color: #fff; border:1px solid var(--glass-border); border-radius:8px; padding:0.4rem 0.6rem; width: 180px; text-align:right;" />
                             </label>
+                            <div style="height:8px;"></div>
+                            <div style="opacity:0.85; color: var(--text-secondary); font-size: 0.95rem;">Optional review for your completed goal</div>
+                            <label style="display:flex; justify-content:space-between; align-items:center; gap:1rem;">
+                                <span>End Discipline (1-10)</span>
+                                <input id="nextGoalReviewScore" type="number" min="1" max="10" step="1" placeholder="8" style="background: var(--card-bg); color: #fff; border:1px solid var(--glass-border); border-radius:8px; padding:0.4rem 0.6rem; width: 180px; text-align:right;" />
+                            </label>
+                            <label style="display:flex; flex-direction:column; gap:0.5rem;">
+                                <span>Review Notes</span>
+                                <textarea id="nextGoalReviewNotes" rows="3" placeholder="Key learnings from this cycle..." style="background: var(--card-bg); color:#fff; border:1px solid var(--glass-border); border-radius:8px; padding:0.6rem; resize:vertical;"></textarea>
+                            </label>
                             <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:0.25rem;">
                                 <button class="cta-secondary" onclick="(function(){
                                     const t=document.getElementById('nextGoalTarget');
@@ -855,11 +865,20 @@
                 const maxLoss = parseFloat(document.getElementById('nextGoalMaxLoss').value);
                 if (!(starting > 0) || !(targetPct > 0) || !(total > 0)) { alert('Please enter valid values'); return; }
 
+                // Build review payload for current (completed) goal
+                const rsEl = document.getElementById('nextGoalReviewScore');
+                const rnEl = document.getElementById('nextGoalReviewNotes');
+                const rs = rsEl ? parseInt(rsEl.value, 10) : null;
+                const rn = rnEl ? (rnEl.value || '').trim() : '';
+                const reviewPayload = { is_active: false, completed_at: new Date().toISOString() };
+                if (rs && rs >= 1 && rs <= 10) reviewPayload.discipline_score_end = rs;
+                if (rn) reviewPayload.review_notes = rn;
+
                 // Deactivate any active goals for this user (guard)
                 let deactErr1 = null;
                 try {
                     const res = await supabase.from('user_goals')
-                        .update({ is_active: false, completed_at: new Date().toISOString() })
+                        .update(reviewPayload)
                         .eq('user_id', user.id)
                         .eq('is_active', true);
                     deactErr1 = res.error || null;
@@ -872,7 +891,7 @@
                 if (g?.id) {
                     let deactErr2 = null;
                     try {
-                        const res2 = await supabase.from('user_goals').update({ is_active: false, completed_at: new Date().toISOString() }).eq('id', g.id);
+                        const res2 = await supabase.from('user_goals').update(reviewPayload).eq('id', g.id);
                         deactErr2 = res2.error || null;
                     } catch (e) { deactErr2 = e; }
                     if (deactErr2) {
