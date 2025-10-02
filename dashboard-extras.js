@@ -519,10 +519,20 @@ async function resetAccountOneTime() {
         try {
             await supabase.from('user_profiles').update({ reset_used: true }).eq('user_id', user.id);
         } catch (_) { /* ignore */ }
+        
+        // Clear all cached data
+        sessionStorage.clear();
+        const resetFlag = localStorage.getItem('lockin_reset_used');
+        localStorage.clear();
         localStorage.setItem('lockin_reset_used', '1');
+        
+        // Clear any global state
+        if (typeof window.currentProgressData !== 'undefined') window.currentProgressData = null;
+        if (typeof window.userProgress !== 'undefined') window.userProgress = null;
 
         alert('✅ Account reset complete. The page will reload.');
-        window.location.reload();
+        // Force a complete reload without cache
+        window.location.href = window.location.href.split('?')[0] + '?t=' + Date.now();
     } catch (e) {
         console.error('resetAccountOneTime failed', e);
         alert('Failed to reset account.');
