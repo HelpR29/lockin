@@ -64,10 +64,45 @@ Deno.serve(async (req: Request): Promise<Response> => {
     // Use an admin client with service role (bypasses RLS)
     const adminClient = createClient(supabaseUrl, serviceKey);
 
-    // Remove referencing rows to avoid FK errors (e.g., user_profiles -> auth.users)
+    // Remove user-owned rows across app tables to avoid FK violations
+    const safeDelete = async (table: string, column: string = 'user_id') => {
+      try { await adminClient.from(table).delete().eq(column, userId); } catch (_) {}
+    };
+
+    // Order matters where there may be cross-table FKs
+    await safeDelete('rule_violations');
+    await safeDelete('trades');
+    await safeDelete('trading_rules');
+    await safeDelete('user_defined_rules');
+    await safeDelete('notifications');
+    await safeDelete('share_history');
+    await safeDelete('daily_stats');
+    await safeDelete('daily_check_ins');
+    await safeDelete('beer_spills');
+    await safeDelete('beer_completions');
+    await safeDelete('user_stars');
+    await safeDelete('user_achievements');
+    await safeDelete('user_customization');
+    await safeDelete('user_onboarding');
+    await safeDelete('privacy_settings');
+    await safeDelete('user_subscriptions');
+    // follows has two foreign keys
+    await safeDelete('follows', 'follower_id');
+    await safeDelete('follows', 'following_id');
+    await safeDelete('user_goals');
+    await safeDelete('user_progress');
+    // Finally profile
+    await safeDelete('user_profiles');
+
+    // Remove avatar files in storage (best-effort)
     try {
-      await adminClient.from('user_profiles').delete().eq('user_id', userId);
-    } catch (_) { /* ignore - continue */ }
+      const listed = await adminClient.storage.from('avatars').list(userId, { limit: 1000 });
+      const files = listed?.data || [];
+      if (files.length) {
+        const paths = files.map((f: any) => `${userId}/${f.name}`);
+        await adminClient.storage.from('avatars').remove(paths);
+      }
+    } catch (_) { /* ignore */ }
 
     // Now delete the auth user
     const { error: delErr } = await adminClient.auth.admin.deleteUser(userId);
