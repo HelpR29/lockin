@@ -570,12 +570,40 @@
             document.getElementById('beersCrackedValue').textContent = progressSummary.beers_cracked;
             document.getElementById('beersSpilledValue').textContent = progressSummary.beers_spilled;
             document.getElementById('streakValue').textContent = progressSummary.streak;
-            document.getElementById('levelValue').textContent = progressSummary.level;
-            
-            // Update level progress
-            document.getElementById('currentLevel').textContent = progressSummary.level;
-            document.getElementById('xpProgress').textContent = `${progressSummary.experience} / ${progressSummary.next_level_xp} XP`;
-            const xpPercent = (progressSummary.experience / progressSummary.next_level_xp) * 100;
+            // Derive level/XP safely from experience (fallback if DB fields are missing)
+            const exp = Number(progressSummary.experience || 0);
+            let level = Number(progressSummary.level || 1);
+            let nextXP = Number(progressSummary.next_level_xp || 0);
+            let currentLevelXP = 0;
+            if (!Number.isFinite(nextXP) || nextXP <= 0) {
+                // Recompute like xp-live-update.js
+                let totalNeeded = 0;
+                let next = 100;
+                level = 1;
+                while (exp >= totalNeeded + next) {
+                    totalNeeded += next;
+                    level++;
+                    next = Math.floor(100 * Math.pow(1.5, level - 1));
+                }
+                currentLevelXP = exp - totalNeeded;
+                nextXP = next;
+            } else {
+                // When DB has next_level_xp, approximate currentLevelXP using level ladder
+                let totalNeeded = 0;
+                let next = 100;
+                let lv = 1;
+                while (exp >= totalNeeded + next) {
+                    totalNeeded += next; lv++;
+                    next = Math.floor(100 * Math.pow(1.5, lv - 1));
+                }
+                currentLevelXP = exp - totalNeeded;
+                level = lv;
+            }
+
+            document.getElementById('levelValue').textContent = level;
+            document.getElementById('currentLevel').textContent = level;
+            document.getElementById('xpProgress').textContent = `${currentLevelXP} / ${nextXP} XP`;
+            const xpPercent = Math.max(0, Math.min(100, (currentLevelXP / nextXP) * 100));
             document.getElementById('xpBarFill').style.width = `${xpPercent}%`;
         }
         
