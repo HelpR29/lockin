@@ -204,6 +204,47 @@ async function buildPerformanceCalendar() {
                 `;
                 weeklyContainer.appendChild(row);
             }
+
+            // Draw sparklines
+            try {
+                // Monthly per-day PnL sparkline
+                const monthCtx = document.getElementById('calendarMonthlySparkline')?.getContext('2d');
+                if (monthCtx) {
+                    const dailySeries = [];
+                    for (let day = 1; day <= daysInMonth; day++) {
+                        const dt = new Date(calendarYear, calendarMonth, day);
+                        const k = fmtLocalYMD(dt);
+                        const agg = dailyMap.get(k);
+                        dailySeries.push(agg ? agg.pnl : 0);
+                    }
+                    if (window.__calendarMonthSpark) { window.__calendarMonthSpark.destroy(); }
+                    window.__calendarMonthSpark = new Chart(monthCtx, {
+                        type: 'line',
+                        data: { labels: dailySeries.map((_, i) => i+1), datasets: [{ data: dailySeries, borderColor: '#FF9500', backgroundColor: 'rgba(255,149,0,0.12)', fill: true, pointRadius: 0, tension: 0.3 }] },
+                        options: { plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { display: false } }, elements: { line: { borderWidth: 2 } }, responsive: true, maintainAspectRatio: false }
+                    });
+                    const tot = dailySeries.reduce((a,b)=>a+b,0);
+                    const totEl = document.getElementById('sparkMonthTotal');
+                    if (totEl) { totEl.textContent = `$${tot.toFixed(2)}`; totEl.style.color = tot >= 0 ? '#34C759' : '#FF453A'; }
+                }
+
+                // Weekly totals sparkline
+                const weekCtx = document.getElementById('calendarWeeklySparkline')?.getContext('2d');
+                if (weekCtx) {
+                    const weekSeries = weeks
+                        .filter(w => w.end.getMonth() === calendarMonth || w.start.getMonth() === calendarMonth)
+                        .map(w => w.pnl);
+                    if (window.__calendarWeekSpark) { window.__calendarWeekSpark.destroy(); }
+                    window.__calendarWeekSpark = new Chart(weekCtx, {
+                        type: 'bar',
+                        data: { labels: weekSeries.map((_, i) => `W${i+1}`), datasets: [{ data: weekSeries, backgroundColor: weekSeries.map(v => v >= 0 ? '#34C759' : '#FF453A') }] },
+                        options: { plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { display: false } }, responsive: true, maintainAspectRatio: false }
+                    });
+                    const best = weekSeries.length ? Math.max(...weekSeries) : 0;
+                    const bestEl = document.getElementById('sparkWeekBest');
+                    if (bestEl) { bestEl.textContent = `Best: $${best.toFixed(2)}`; bestEl.style.color = best >= 0 ? '#34C759' : '#FF453A'; }
+                }
+            } catch (_) {}
         }
     } catch (_) {}
 }

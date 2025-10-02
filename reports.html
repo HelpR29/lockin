@@ -160,6 +160,23 @@
                         <h4 style="margin:0 0 0.5rem 0;">Weekly Totals</h4>
                         <div id="weeklyTotalsList" style="display:flex; flex-direction:column; gap:0.4rem;"></div>
                     </div>
+
+                    <div class="spark-wrap" style="margin-top:1rem; display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:0.75rem;">
+                        <div class="spark-card" style="background: rgba(255,255,255,0.03); border:1px solid var(--glass-border); border-radius:10px; padding:0.6rem 0.8rem;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
+                                <span style="font-size:0.9rem; font-weight:700;">Monthly P/L Trend</span>
+                                <span id="sparkMonthTotal" style="font-size:0.9rem; color: var(--text-secondary);"></span>
+                            </div>
+                            <div style="height:70px;"><canvas id="calendarMonthlySparkline"></canvas></div>
+                        </div>
+                        <div class="spark-card" style="background: rgba(255,255,255,0.03); border:1px solid var(--glass-border); border-radius:10px; padding:0.6rem 0.8rem;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
+                                <span style="font-size:0.9rem; font-weight:700;">Weekly P/L</span>
+                                <span id="sparkWeekBest" style="font-size:0.9rem; color: var(--text-secondary);"></span>
+                            </div>
+                            <div style="height:70px;"><canvas id="calendarWeeklySparkline"></canvas></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
