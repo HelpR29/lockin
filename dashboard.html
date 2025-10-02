@@ -687,7 +687,7 @@
             if (!currentProgressData) return;
             
             const totalBottles = currentProgressData.goals?.total_bottles || 50;
-            const beersCracked = currentProgressData.beers_cracked;
+            const beersCracked = currentProgressData.goals?.bottles_cracked || 0;
             const beersSpilled = currentProgressData.beers_spilled;
             const token = currentProgressData.token.emoji;
             
@@ -727,7 +727,7 @@
         function maybeCelebrateGoal(progressSummary) {
             const goalId = progressSummary.goals?.id || 'unknown';
             const total = progressSummary.goals?.total_bottles || 0;
-            const cracked = progressSummary.beers_cracked || 0;
+            const cracked = progressSummary.goals?.bottles_cracked || 0;
             if (!total || cracked < total) return;
             const key = `lockin_celebrated_${goalId}_${cracked}`;
             if (sessionStorage.getItem(key)) return;
@@ -856,10 +856,28 @@
                 if (!(starting > 0) || !(targetPct > 0) || !(total > 0)) { alert('Please enter valid values'); return; }
 
                 // Deactivate any active goals for this user (guard)
-                await supabase.from('user_goals').update({ is_active: false, completed_at: new Date().toISOString() }).eq('user_id', user.id).eq('is_active', true);
+                let deactErr1 = null;
+                try {
+                    const res = await supabase.from('user_goals')
+                        .update({ is_active: false, completed_at: new Date().toISOString() })
+                        .eq('user_id', user.id)
+                        .eq('is_active', true);
+                    deactErr1 = res.error || null;
+                } catch (e) { deactErr1 = e; }
+                if (deactErr1) {
+                    // Fallback for instances where completed_at column doesn't exist yet
+                    await supabase.from('user_goals').update({ is_active: false }).eq('user_id', user.id).eq('is_active', true);
+                }
                 // Also ensure current goal (by id) is marked completed
                 if (g?.id) {
-                    await supabase.from('user_goals').update({ is_active: false, completed_at: new Date().toISOString() }).eq('id', g.id);
+                    let deactErr2 = null;
+                    try {
+                        const res2 = await supabase.from('user_goals').update({ is_active: false, completed_at: new Date().toISOString() }).eq('id', g.id);
+                        deactErr2 = res2.error || null;
+                    } catch (e) { deactErr2 = e; }
+                    if (deactErr2) {
+                        await supabase.from('user_goals').update({ is_active: false }).eq('id', g.id);
+                    }
                 }
 
                 // Insert new active goal

@@ -721,3 +721,16 @@ CREATE TRIGGER update_privacy_settings_updated_at BEFORE UPDATE ON privacy_setti
 
 -- Success message
 SELECT 'Database schema with Monetization & Privacy created successfully!' as message;
+
+-- =======================
+-- Migrations (safe, idempotent)
+-- =======================
+
+-- Add completed_at to user_goals for archiving completed cycles
+ALTER TABLE user_goals
+    ADD COLUMN IF NOT EXISTS completed_at TIMESTAMP WITH TIME ZONE;
+
+-- Enforce at most one active goal per user
+CREATE UNIQUE INDEX IF NOT EXISTS one_active_goal_per_user
+    ON user_goals (user_id)
+    WHERE is_active;
