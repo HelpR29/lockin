@@ -95,14 +95,32 @@ async function checkPremiumStatus() {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        const { data: profile } = await supabase
-            .from('user_profiles')
-            .select('is_premium')
-            .eq('user_id', user.id)
-            .single();
+        let isPremium = false;
+        let isTrial = false;
 
-        isPremiumUser = !!profile?.is_premium;
-        console.log('💎 Premium status (journal):', isPremiumUser ? 'PREMIUM' : 'FREE');
+        try {
+            const { data: profile } = await supabase
+                .from('user_profiles')
+                .select('is_premium, created_at')
+                .eq('user_id', user.id)
+                .single();
+            isPremium = !!profile?.is_premium;
+            if (profile?.created_at) {
+                const created = new Date(profile.created_at);
+                const daysElapsed = Math.floor((Date.now() - created.getTime()) / 86400000);
+                const trialDaysLeft = Math.max(0, 7 - daysElapsed);
+                isTrial = trialDaysLeft > 0;
+            }
+        } catch (_) { /* ignore */ }
+
+        // Merge with global state if available
+        if (window.lockinPremium) {
+            isPremium = isPremium || !!window.lockinPremium.isPremium;
+            isTrial = isTrial || !!window.lockinPremium.isTrial;
+        }
+
+        isPremiumUser = isPremium || isTrial;
+        console.log('💎 Premium status (journal):', isPremiumUser ? (isPremium ? 'PREMIUM' : 'TRIAL') : 'FREE');
     } catch (error) {
         console.error('Error checking premium status:', error);
         isPremiumUser = false;

@@ -751,9 +751,12 @@
             (function confettiBurst(){
                 try {
                     if (window.confetti) {
-                        const end = Date.now() + 1200;
+                        const isMobile = window.innerWidth < 640;
+                        const duration = isMobile ? 800 : 1200;
+                        const count = isMobile ? 50 : 120;
+                        const end = Date.now() + duration;
                         (function frame(){
-                            window.confetti({ particleCount: 120, spread: 70, origin: { y: 0.2 } });
+                            window.confetti({ particleCount: count, spread: 70, origin: { y: 0.2 }, scalar: isMobile ? 0.8 : 1 });
                             if (Date.now() < end) requestAnimationFrame(frame);
                         })();
                     } else {
@@ -891,6 +894,12 @@
                 const total = parseInt(document.getElementById('nextGoalTotal').value);
                 const maxLoss = parseFloat(document.getElementById('nextGoalMaxLoss').value);
                 if (!(starting > 0) || !(targetPct > 0) || !(total > 0)) { alert('Please enter valid values'); return; }
+                // Ensure allocation does not exceed total portfolio
+                const portfolioCap = (window.currentProgressData?.total_portfolio ?? g.current_capital ?? 0);
+                if (starting > portfolioCap) {
+                    alert('Allocated capital cannot exceed total portfolio.');
+                    return;
+                }
 
                 // Build review payload for current (completed) goal
                 const rsEl = document.getElementById('nextGoalReviewScore');
@@ -927,10 +936,10 @@
                 }
 
                 // Update total_portfolio in user_progress (set to current_capital of completed goal)
-                const totalPortfolio = g.current_capital || starting;
+                const newTotalPortfolio = g.current_capital || starting;
                 try {
                     await supabase.from('user_progress')
-                        .update({ total_portfolio: totalPortfolio })
+                        .update({ total_portfolio: newTotalPortfolio })
                         .eq('user_id', user.id);
                 } catch (_) { /* ignore */ }
 

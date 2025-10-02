@@ -91,26 +91,40 @@ async function checkPremiumStatus() {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
+        let isPremium = false;
+        let isTrial = false;
+        let trialDaysLeft = 0;
+
         const { data: profile, error } = await supabase
             .from('user_profiles')
-            .select('is_premium')
+            .select('is_premium, created_at')
             .eq('user_id', user.id)
             .single();
 
-        // If column doesn't exist, default to free but don't block
-        if (error && error.message.includes('column')) {
-            console.warn('⚠️ is_premium column not found - defaulting to FREE (add column with SQL migration)');
-            isPremiumUser = false;
+        if (error && error.message?.includes('column')) {
+            console.warn('⚠️ is_premium/created_at columns not found - defaulting to FREE');
         } else if (error) {
             console.error('Error checking premium status:', error);
-            isPremiumUser = false;
-        } else {
-            isPremiumUser = profile?.is_premium || false;
+        } else if (profile) {
+            isPremium = !!profile.is_premium;
+            if (profile.created_at) {
+                const created = new Date(profile.created_at);
+                const daysElapsed = Math.floor((Date.now() - created.getTime()) / 86400000);
+                trialDaysLeft = Math.max(0, 7 - daysElapsed);
+                isTrial = trialDaysLeft > 0;
+            }
         }
-        
-        console.log('💎 Premium status:', isPremiumUser ? 'PREMIUM' : 'FREE');
-        
-        // Update UI based on premium status
+
+        // Merge with global state if available
+        if (window.lockinPremium) {
+            isPremium = isPremium || !!window.lockinPremium.isPremium;
+            isTrial = isTrial || !!window.lockinPremium.isTrial;
+        }
+
+        isPremiumUser = isPremium || isTrial;
+        console.log('💎 Premium status:', isPremiumUser ? (isPremium ? 'PREMIUM' : `TRIAL (${trialDaysLeft}d left)`) : 'FREE');
+
+        // Update UI based on premium/trial status
         updateUIForPremiumStatus();
     } catch (error) {
         console.error('Error checking premium status:', error);
