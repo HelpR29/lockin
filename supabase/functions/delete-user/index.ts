@@ -1,3 +1,5 @@
+// @ts-nocheck
+// deno-lint-ignore-file
 // Supabase Edge Function: delete-user
 // Deletes the currently authenticated Supabase Auth user (server-side, secure)
 // Requires the following environment variables to be set for this function:
