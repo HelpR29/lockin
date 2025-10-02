@@ -443,6 +443,8 @@ async function openSettingsModal() {
                 preview.textContent = '👤';
             }
         }
+        // Expose global premium/trial state
+        window.lockinPremium = { isPremium, isTrial, isPremiumOrTrial: (isPremium || isTrial), trialDaysLeft };
         // Gate upload for non-premium
         const uploadBtn = document.getElementById('uploadAvatarBtn');
         const note = document.getElementById('premiumPhotoNote');
