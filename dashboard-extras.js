@@ -500,7 +500,7 @@ async function resetAccountOneTime() {
         }
         if (!confirm('This will permanently clear your trades, rules, achievements, stars, and progress. Continue?')) return;
 
-        // Clear data
+        // Clear data (comprehensive reset)
         const ops = [];
         ops.push(supabase.from('trades').delete().eq('user_id', user.id));
         ops.push(supabase.from('rule_violations').delete().eq('user_id', user.id));
@@ -508,6 +508,11 @@ async function resetAccountOneTime() {
         ops.push(supabase.from('user_achievements').delete().eq('user_id', user.id));
         ops.push(supabase.from('user_stars').delete().eq('user_id', user.id));
         ops.push(supabase.from('user_progress').delete().eq('user_id', user.id));
+        ops.push(supabase.from('user_goals').delete().eq('user_id', user.id));
+        ops.push(supabase.from('beer_completions').delete().eq('user_id', user.id));
+        ops.push(supabase.from('beer_spills').delete().eq('user_id', user.id));
+        ops.push(supabase.from('daily_stats').delete().eq('user_id', user.id));
+        ops.push(supabase.from('share_history').delete().eq('user_id', user.id));
         await Promise.allSettled(ops);
 
         // Mark used (best-effort)
