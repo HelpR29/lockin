@@ -5,6 +5,7 @@ async function generateShareCard(type, data) {
     canvas.width = 1200;
     canvas.height = 630;
     const ctx = canvas.getContext('2d');
+    const PADDING = 60;
 
     // Get user customization
     const { data: { user } } = await supabase.auth.getUser();
@@ -18,39 +19,43 @@ async function generateShareCard(type, data) {
     const nameColor = customization?.name_color_hex || '#FFFFFF';
     const avatarUrl = customization?.avatar_url;
 
-    // Background gradient
+    // Background gradient + subtle radial glow
     const gradient = ctx.createLinearGradient(0, 0, 1200, 630);
-    gradient.addColorStop(0, '#1a1a1a');
-    gradient.addColorStop(1, '#2d2d2d');
+    gradient.addColorStop(0, '#141416');
+    gradient.addColorStop(1, '#232428');
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, 1200, 630);
+    const radial = ctx.createRadialGradient(900, 120, 50, 900, 120, 400);
+    radial.addColorStop(0, 'rgba(255,149,0,0.18)');
+    radial.addColorStop(1, 'rgba(255,149,0,0)');
+    ctx.fillStyle = radial;
+    ctx.fillRect(0, 0, 1200, 630);
 
-    // Add grid pattern
-    ctx.strokeStyle = 'rgba(255, 159, 28, 0.1)';
+    // Add subtle grid pattern
+    ctx.strokeStyle = 'rgba(255, 159, 28, 0.06)';
     ctx.lineWidth = 1;
-    for (let i = 0; i < 1200; i += 50) {
+    for (let i = 0; i < 1200; i += 60) {
         ctx.beginPath();
         ctx.moveTo(i, 0);
         ctx.lineTo(i, 630);
         ctx.stroke();
     }
-    for (let i = 0; i < 630; i += 50) {
+    for (let i = 0; i < 630; i += 60) {
         ctx.beginPath();
         ctx.moveTo(0, i);
         ctx.lineTo(1200, i);
         ctx.stroke();
     }
 
-    // Logo and branding (huge and centered at top)
+    // Brand small, top-left
     ctx.fillStyle = '#FF9F1C';
-    ctx.font = 'bold 120px Inter, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('🔒 LockIn', 600, 120);
-    ctx.textAlign = 'left'; // Reset alignment
+    ctx.font = 'bold 48px Inter, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('🔒 LockIn', PADDING, PADDING + 40);
 
-    // Load and draw profile picture if available
+    // Load and draw profile picture if available (top-right)
     if (avatarUrl) {
-        await drawProfilePicture(ctx, avatarUrl);
+        await drawProfilePicture(ctx, avatarUrl, 1200 - PADDING - 140, PADDING, 140);
     }
 
     switch (type) {
@@ -69,9 +74,9 @@ async function generateShareCard(type, data) {
     }
 
     // Footer
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
     ctx.font = '20px Inter, sans-serif';
-    ctx.fillText('Track your discipline journey at lockin.app', 50, 590);
+    ctx.fillText('Track your discipline journey at lockin.app', PADDING, 590);
 
     return canvas.toDataURL('image/png');
 }
