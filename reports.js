@@ -5,6 +5,119 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
+// ===== Performance Calendar =====
+function wireCalendarNav() {
+    const prevBtn = document.getElementById('calendarPrev');
+    const nextBtn = document.getElementById('calendarNext');
+    if (prevBtn) prevBtn.onclick = () => { shiftCalendar(-1); };
+    if (nextBtn) nextBtn.onclick = () => { shiftCalendar(1); };
+}
+
+function shiftCalendar(deltaMonths) {
+    if (calendarMonth == null || calendarYear == null) return;
+    calendarMonth += deltaMonths;
+    if (calendarMonth < 0) { calendarMonth = 11; calendarYear -= 1; }
+    if (calendarMonth > 11) { calendarMonth = 0; calendarYear += 1; }
+    buildPerformanceCalendar();
+}
+
+function buildPerformanceCalendar() {
+    const grid = document.getElementById('performanceCalendar');
+    const label = document.getElementById('calendarMonthLabel');
+    if (!grid || calendarMonth == null || calendarYear == null) return;
+
+    // Clear
+    grid.innerHTML = '';
+
+    // Month label
+    try {
+        const monthName = new Date(calendarYear, calendarMonth, 1).toLocaleString(undefined, { month: 'long', year: 'numeric' });
+        if (label) label.textContent = monthName;
+    } catch (_) { if (label) label.textContent = `${calendarMonth + 1}/${calendarYear}`; }
+
+    // Headers
+    const daysShort = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    for (let i = 0; i < 7; i++) {
+        const h = document.createElement('div');
+        h.style.cssText = 'text-align:center; font-weight:700; color: var(--text-secondary); padding:0.25rem 0;';
+        h.textContent = daysShort[i];
+        grid.appendChild(h);
+    }
+
+    // First day offset
+    const firstDay = new Date(calendarYear, calendarMonth, 1);
+    const startOffset = firstDay.getDay();
+    for (let i = 0; i < startOffset; i++) {
+        const blank = document.createElement('div');
+        blank.style.cssText = 'min-height:72px;';
+        grid.appendChild(blank);
+    }
+
+    const daysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate();
+
+    // Build daily aggregation map for selected month
+    const dailyMap = new Map();
+    for (const t of allClosedTrades) {
+        const d = new Date(t.created_at);
+        if (d.getFullYear() !== calendarYear || d.getMonth() !== calendarMonth) continue;
+        const key = d.toISOString().slice(0,10); // YYYY-MM-DD
+        const isOption = t.trade_type === 'call' || t.trade_type === 'put';
+        const multiplier = isOption ? 100 : 1;
+        const pnl = (t.exit_price - t.entry_price) * t.position_size * multiplier * (t.direction === 'short' ? -1 : 1);
+        const prev = dailyMap.get(key) || { pnl: 0, trades: [] };
+        prev.pnl += pnl;
+        prev.trades.push(t);
+        dailyMap.set(key, prev);
+    }
+
+    for (let day = 1; day <= daysInMonth; day++) {
+        const dateObj = new Date(calendarYear, calendarMonth, day);
+        const key = dateObj.toISOString().slice(0,10);
+        const agg = dailyMap.get(key) || { pnl: 0, trades: [] };
+
+        const cell = document.createElement('div');
+        cell.className = 'calendar-day' + (agg.trades.length ? (agg.pnl >= 0 ? ' win' : ' loss') : '');
+        cell.innerHTML = `
+            <div class="date">${day}</div>
+            <div class="summary">${agg.trades.length} trade${agg.trades.length === 1 ? '' : 's'}${agg.trades.length ? ` • $${agg.pnl.toFixed(2)}` : ''}</div>
+        `;
+        cell.onclick = () => openDayDetailsModal(dateObj, agg.trades, agg.pnl);
+        grid.appendChild(cell);
+    }
+}
+
+function openDayDetailsModal(dateObj, trades, totalPnl) {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'flex';
+
+    const dateStr = dateObj.toLocaleDateString();
+    const listHtml = trades.length ? trades.map(t => {
+        const isOption = t.trade_type === 'call' || t.trade_type === 'put';
+        const multiplier = isOption ? 100 : 1;
+        const pnl = (t.exit_price - t.entry_price) * t.position_size * multiplier * (t.direction === 'short' ? -1 : 1);
+        const color = pnl >= 0 ? '#34C759' : '#FF453A';
+        return `
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:0.5rem; border-bottom:1px solid var(--glass-border);">
+                <div style="font-weight:600;">${t.symbol} <span style="color:${t.direction==='short'?'#F44336':'#4CAF50'}; font-size:0.8rem;">${t.direction.toUpperCase()}</span></div>
+                <div style="color:${color}; font-weight:700;">${pnl>=0?'+':''}$${pnl.toFixed(2)}</div>
+            </div>`;
+    }).join('') : '<div style="color: var(--text-secondary); padding:1rem;">No trades this day.</div>';
+
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 560px;">
+            <span class="close-button" onclick="this.closest('.modal').remove()">&times;</span>
+            <h2 style="margin-bottom:0.5rem;">${dateStr}</h2>
+            <div style="font-size:0.9rem; color: var(--text-secondary); margin-bottom:0.75rem;">Total P/L: <span style="font-weight:700; color:${totalPnl>=0?'#34C759':'#FF453A'}">${totalPnl>=0?'+':''}$${totalPnl.toFixed(2)}</span></div>
+            <div style="max-height: 420px; overflow:auto; border:1px solid var(--glass-border); border-radius:12px;">
+                ${listHtml}
+            </div>
+            <div style="text-align:right; margin-top:1rem;"><button class="cta-primary" onclick="this.closest('.modal').remove()">Close</button></div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
     try {
         await generateReports();
     } catch (error) {
@@ -12,6 +125,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         alert('Failed to load reports. Please refresh the page.');
     }
 });
+
+// Globals for Performance Calendar
+let allClosedTrades = [];
+let calendarYear = null;
+let calendarMonth = null; // 0-11
 
 async function generateReports() {
     try {
@@ -58,6 +176,14 @@ async function generateReports() {
     renderPlChart(trades);
     renderWinLossChart(trades);
     renderDailyPlChart(trades);
+
+    // Initialize Performance Calendar
+    allClosedTrades = trades;
+    const now = new Date();
+    calendarYear = now.getFullYear();
+    calendarMonth = now.getMonth();
+    wireCalendarNav();
+    buildPerformanceCalendar();
     } catch (error) {
         console.error('Error generating reports:', error);
         throw error;
@@ -114,7 +240,9 @@ function renderPlChart(trades) {
     const ctx = canvas.getContext('2d');
     let cumulativePl = 0;
     const data = trades.map(trade => {
-        const pnl = (trade.exit_price - trade.entry_price) * trade.position_size * (trade.direction === 'short' ? -1 : 1);
+        const isOption = trade.trade_type === 'call' || trade.trade_type === 'put';
+        const multiplier = isOption ? 100 : 1;
+        const pnl = (trade.exit_price - trade.entry_price) * trade.position_size * multiplier * (trade.direction === 'short' ? -1 : 1);
         cumulativePl += pnl;
         return { x: new Date(trade.created_at), y: cumulativePl };
     });

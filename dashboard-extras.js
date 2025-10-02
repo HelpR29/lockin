@@ -24,6 +24,62 @@ async function showQuickShareButton() {
     }
 }
 
+// Permanently delete account and all data
+async function deleteAccount() {
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const confirmText = prompt('Type DELETE to permanently delete your account. This cannot be undone.');
+        if (confirmText !== 'DELETE') return alert('Deletion cancelled.');
+        if (!confirm('This will permanently remove your data and sign you out. Continue?')) return;
+
+        // Best-effort delete all user data across tables
+        const ops = [];
+        const uid = user.id;
+        ops.push(supabase.from('notifications').delete().eq('user_id', uid));
+        ops.push(supabase.from('share_history').delete().eq('user_id', uid));
+        ops.push(supabase.from('daily_stats').delete().eq('user_id', uid));
+        ops.push(supabase.from('beer_spills').delete().eq('user_id', uid));
+        ops.push(supabase.from('beer_completions').delete().eq('user_id', uid));
+        ops.push(supabase.from('user_goals').delete().eq('user_id', uid));
+        ops.push(supabase.from('user_progress').delete().eq('user_id', uid));
+        ops.push(supabase.from('user_stars').delete().eq('user_id', uid));
+        ops.push(supabase.from('user_achievements').delete().eq('user_id', uid));
+        ops.push(supabase.from('rule_violations').delete().eq('user_id', uid));
+        ops.push(supabase.from('trading_rules').delete().eq('user_id', uid));
+        ops.push(supabase.from('trades').delete().eq('user_id', uid));
+        ops.push(supabase.from('user_customization').delete().eq('user_id', uid));
+        ops.push(supabase.from('user_onboarding').delete().eq('user_id', uid));
+        // Remove follows both ways
+        ops.push(supabase.from('follows').delete().eq('follower_id', uid));
+        ops.push(supabase.from('follows').delete().eq('following_id', uid));
+        // Finally profile
+        ops.push(supabase.from('user_profiles').delete().eq('user_id', uid));
+        await Promise.allSettled(ops);
+
+        // Remove avatar files in storage (best-effort)
+        try {
+            const list = await supabase.storage.from('avatars').list(uid, { limit: 100 });
+            const files = list?.data || [];
+            if (files.length) {
+                const paths = files.map(f => `${uid}/${f.name}`);
+                await supabase.storage.from('avatars').remove(paths);
+            }
+        } catch (e) { console.warn('Avatar storage cleanup failed', e); }
+
+        // Sign out and clear caches
+        try { await supabase.auth.signOut(); } catch(_) {}
+        localStorage.clear();
+        sessionStorage.clear();
+        alert('✅ Your account and data have been deleted.');
+        window.location.replace('/index.html');
+    } catch (e) {
+        console.error('deleteAccount failed', e);
+        alert('Failed to delete account. Please try again.');
+    }
+}
+
 // Load Recent Activity (trades)
 async function loadRecentActivity() {
     try {
@@ -382,7 +438,7 @@ async function openSettingsModal() {
                     ♻️ Reset Account (one-time)
                 </button>
                 <div id="resetNote" style="font-size:0.8rem; color: var(--text-secondary); margin-bottom:0.75rem;">You can reset once. This clears trades, rules, achievements, stars, and progress. Friends and login remain.</div>
-                <button class="cta-secondary" onclick="if(confirm('Are you sure?')) alert('Account deletion coming soon!')" style="width: 100%; background: rgba(244, 67, 54, 0.2); border-color: #F44336; color: #F44336;">
+                <button class="cta-secondary" onclick="deleteAccount()" style="width: 100%; background: rgba(244, 67, 54, 0.2); border-color: #F44336; color: #F44336;">
                     🗑️ Delete Account
                 </button>
             </div>
@@ -559,6 +615,7 @@ window.openLeaderboardModal = openLeaderboardModal;
 window.openSettingsModal = openSettingsModal;
 window.applyPremiumCode = applyPremiumCode;
 window.resetAccountOneTime = resetAccountOneTime;
+window.deleteAccount = deleteAccount;
 
 // Open any user's profile by id (shared for Achievements/Friends)
 async function openUserProfileById(userId) {
