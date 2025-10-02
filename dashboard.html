@@ -690,11 +690,15 @@
             
             const grid = document.getElementById('bottlesGrid');
             grid.innerHTML = '';
-            
+            const frag = document.createDocumentFragment();
+            const nextIndex = beersCracked + 1;
+
             for (let i = 1; i <= totalBottles; i++) {
                 const bottle = document.createElement('div');
                 bottle.className = 'bottle-item';
-                
+                // stagger animation delay via CSS var
+                bottle.style.setProperty('--delay', `${(i - 1) * 0.02}s`);
+
                 if (i <= beersCracked) {
                     bottle.classList.add('cracked');
                     bottle.innerHTML = `
@@ -704,14 +708,16 @@
                     `;
                 } else {
                     bottle.classList.add('pending');
+                    if (i === nextIndex) bottle.classList.add('next');
                     bottle.innerHTML = `
                         <div class="bottle-icon">${token}</div>
                         <div class="bottle-number">${i}</div>
                     `;
                 }
                 
-                grid.appendChild(bottle);
+                frag.appendChild(bottle);
             }
+            grid.appendChild(frag);
         }
         
         // Initialize dashboard
