@@ -179,12 +179,21 @@ async function generateReports() {
     
     if (trades.length === 0) {
         console.warn('No closed trades found for reports');
-        document.querySelector('.reports-grid').innerHTML = `
+        const gridHost = document.querySelector('.reports-grid');
+        if (gridHost) {
+            gridHost.innerHTML = `
             <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: var(--text-secondary);">
                 <div style="font-size: 3rem; margin-bottom: 1rem;">📊</div>
                 <p>No closed trades yet. Close some trades to see your reports!</p>
-            </div>
-        `;
+            </div>`;
+        }
+        // Initialize Performance Calendar even with zero trades
+        allClosedTrades = [];
+        const now = new Date();
+        calendarYear = now.getFullYear();
+        calendarMonth = now.getMonth();
+        wireCalendarNav();
+        await buildPerformanceCalendar();
         return;
     }
 
@@ -207,7 +216,7 @@ async function generateReports() {
     calendarYear = now.getFullYear();
     calendarMonth = now.getMonth();
     wireCalendarNav();
-    buildPerformanceCalendar();
+    await buildPerformanceCalendar();
     } catch (error) {
         console.error('Error generating reports:', error);
         throw error;
