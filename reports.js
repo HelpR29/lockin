@@ -95,6 +95,9 @@ async function buildPerformanceCalendar() {
 
     // Build daily aggregation map for selected month
     const dailyMap = new Map();
+    let monthPnL = 0;
+    let monthTradesCount = 0;
+    let monthWins = 0;
     for (const t of monthTrades) {
         const d = new Date(t.created_at);
         if (d.getFullYear() !== calendarYear || d.getMonth() !== calendarMonth) continue;
@@ -106,6 +109,11 @@ async function buildPerformanceCalendar() {
         prev.pnl += pnl;
         prev.trades.push(t);
         dailyMap.set(key, prev);
+
+        // Monthly summary
+        monthPnL += pnl;
+        monthTradesCount += 1;
+        if (pnl > 0) monthWins += 1;
     }
 
     for (let day = 1; day <= daysInMonth; day++) {
@@ -122,6 +130,74 @@ async function buildPerformanceCalendar() {
         cell.onclick = () => openDayDetailsModal(dateObj, agg.trades, agg.pnl);
         grid.appendChild(cell);
     }
+
+    // Render monthly summary
+    try {
+        const monthPnLEl = document.getElementById('calendarMonthSummaryPnL');
+        const monthTradesEl = document.getElementById('calendarMonthSummaryTrades');
+        const monthWinRateEl = document.getElementById('calendarMonthSummaryWinRate');
+        if (monthPnLEl) monthPnLEl.textContent = `$${monthPnL.toFixed(2)}`;
+        if (monthTradesEl) monthTradesEl.textContent = monthTradesCount.toString();
+        if (monthWinRateEl) monthWinRateEl.textContent = monthTradesCount ? `${((monthWins / monthTradesCount) * 100).toFixed(1)}%` : '0%';
+        if (monthPnLEl) monthPnLEl.style.color = monthPnL >= 0 ? '#34C759' : '#FF453A';
+    } catch (_) {}
+
+    // Render weekly totals list
+    try {
+        const weeklyContainer = document.getElementById('weeklyTotalsList');
+        if (weeklyContainer) {
+            weeklyContainer.innerHTML = '';
+            // Build weekly buckets (Sun-Sat)
+            const weeks = [];
+            let current = new Date(calendarYear, calendarMonth, 1);
+            const end = new Date(calendarYear, calendarMonth + 1, 0);
+            // Start from the Sunday before the 1st for alignment
+            current.setDate(current.getDate() - current.getDay());
+            while (current <= end || current.getDay() !== 0) {
+                // For each week, compute totals Sun..Sat
+                let weekPnL = 0; let weekTrades = 0; let weekWins = 0;
+                const startOfWeek = new Date(current);
+                const days = [];
+                for (let i = 0; i < 7; i++) {
+                    const k = current.toISOString().slice(0,10);
+                    const agg = dailyMap.get(k);
+                    if (agg) {
+                        weekPnL += agg.pnl;
+                        weekTrades += agg.trades.length;
+                        weekWins += agg.trades.filter(t => {
+                            const isOption = t.trade_type === 'call' || t.trade_type === 'put';
+                            const multiplier = isOption ? 100 : 1;
+                            const pnl = (t.exit_price - t.entry_price) * t.position_size * multiplier * (t.direction === 'short' ? -1 : 1);
+                            return pnl > 0;
+                        }).length;
+                    }
+                    days.push(new Date(current));
+                    current.setDate(current.getDate() + 1);
+                }
+                const endOfWeek = new Date(current);
+                endOfWeek.setDate(endOfWeek.getDate() - 1);
+                weeks.push({ start: startOfWeek, end: endOfWeek, pnl: weekPnL, trades: weekTrades, wins: weekWins });
+                if (current > end && current.getDay() === 0) break;
+            }
+            // Render rows
+            for (const w of weeks) {
+                // Only show weeks that intersect selected month
+                if (w.end.getMonth() !== calendarMonth && w.start.getMonth() !== calendarMonth) continue;
+                const row = document.createElement('div');
+                row.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:0.5rem 0.6rem; border:1px solid var(--glass-border); border-radius:8px; background: rgba(255,255,255,0.03)';
+                const range = `${w.start.toLocaleDateString()} - ${w.end.toLocaleDateString()}`;
+                const color = w.pnl >= 0 ? '#34C759' : '#FF453A';
+                row.innerHTML = `
+                    <div style="display:flex; gap:0.6rem; flex-wrap:wrap; align-items:center;">
+                        <span style="font-weight:700;">${range}</span>
+                        <span style="color:${color}; font-weight:800;">$${w.pnl.toFixed(2)}</span>
+                    </div>
+                    <div style="font-size:0.9rem; color: var(--text-secondary);">${w.trades} trades • ${w.trades ? ((w.wins / w.trades) * 100).toFixed(0) : 0}% win</div>
+                `;
+                weeklyContainer.appendChild(row);
+            }
+        }
+    } catch (_) {}
 }
 
 function openDayDetailsModal(dateObj, trades, totalPnl) {
