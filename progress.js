@@ -346,14 +346,15 @@ async function crackBeer(userId, completionData) {
         
         if (completionError) throw completionError;
         
-        // Update progress
+        // Update progress (including total_portfolio)
         const { error: progressError } = await supabase
             .from('user_progress')
             .update({
                 beers_cracked: newBeersCracked,
                 experience: newXP,
                 level: levelInfo.level,
-                next_level_xp: levelInfo.nextLevelXP
+                next_level_xp: levelInfo.nextLevelXP,
+                total_portfolio: completionData.ending_balance
             })
             .eq('user_id', userId);
         

@@ -287,6 +287,7 @@ CREATE TABLE user_progress (
     level_bonus NUMERIC DEFAULT 1.0,
     achievement_bonus NUMERIC DEFAULT 1.0,
     total_growth_multiplier NUMERIC DEFAULT 1.0,
+    total_portfolio NUMERIC DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
@@ -786,3 +787,7 @@ CREATE POLICY "Users can view followed users trades"
             AND follows.following_id = trades.user_id
         )
     );
+
+-- Add total_portfolio column to user_progress (tracks actual total balance)
+ALTER TABLE user_progress
+    ADD COLUMN IF NOT EXISTS total_portfolio NUMERIC DEFAULT 0;
