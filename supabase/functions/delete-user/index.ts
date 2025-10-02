@@ -61,8 +61,15 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     const userId = userData.user.id;
 
-    // Use an admin client with service role to delete the user
+    // Use an admin client with service role (bypasses RLS)
     const adminClient = createClient(supabaseUrl, serviceKey);
+
+    // Remove referencing rows to avoid FK errors (e.g., user_profiles -> auth.users)
+    try {
+      await adminClient.from('user_profiles').delete().eq('user_id', userId);
+    } catch (_) { /* ignore - continue */ }
+
+    // Now delete the auth user
     const { error: delErr } = await adminClient.auth.admin.deleteUser(userId);
 
     if (delErr) {
