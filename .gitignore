@@ -1,0 +1,24 @@
+# Dependencies / environment
+node_modules/
+.env
+.env.*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.log
+.vscode/
+.idea/
+
+# Builds / caches
+.cache/
+dist/
+build/
+
+# Supabase local
+supabase/.branches
+supabase/.temp
+supabase/.env
+
+# Generated artifacts
+*.local
