@@ -16,24 +16,25 @@ document.addEventListener('DOMContentLoaded', async () => {
 let allClosedTrades = [];
 let calendarYear = null;
 let calendarMonth = null; // 0-11
+const calendarCache = new Map(); // key: YYYY-MM -> trades[]
 
 // ===== Performance Calendar (global scope) =====
 function wireCalendarNav() {
     const prevBtn = document.getElementById('calendarPrev');
     const nextBtn = document.getElementById('calendarNext');
-    if (prevBtn) prevBtn.onclick = () => { shiftCalendar(-1); };
-    if (nextBtn) nextBtn.onclick = () => { shiftCalendar(1); };
+    if (prevBtn) prevBtn.onclick = async () => { await shiftCalendar(-1); };
+    if (nextBtn) nextBtn.onclick = async () => { await shiftCalendar(1); };
 }
 
-function shiftCalendar(deltaMonths) {
+async function shiftCalendar(deltaMonths) {
     if (calendarMonth == null || calendarYear == null) return;
     calendarMonth += deltaMonths;
     if (calendarMonth < 0) { calendarMonth = 11; calendarYear -= 1; }
     if (calendarMonth > 11) { calendarMonth = 0; calendarYear += 1; }
-    buildPerformanceCalendar();
+    await buildPerformanceCalendar();
 }
 
-function buildPerformanceCalendar() {
+async function buildPerformanceCalendar() {
     const grid = document.getElementById('performanceCalendar');
     const label = document.getElementById('calendarMonthLabel');
     if (!grid || calendarMonth == null || calendarYear == null) return;
@@ -67,9 +68,34 @@ function buildPerformanceCalendar() {
 
     const daysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate();
 
+    // Fetch month trades (cache per month)
+    const keyMonth = `${calendarYear}-${String(calendarMonth + 1).padStart(2, '0')}`;
+    let monthTrades = calendarCache.get(keyMonth);
+    if (!monthTrades) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const startISO = new Date(calendarYear, calendarMonth, 1).toISOString();
+        const endISO = new Date(calendarYear, calendarMonth + 1, 1).toISOString();
+        const { data, error } = await supabase
+            .from('trades')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('status', 'closed')
+            .gte('created_at', startISO)
+            .lt('created_at', endISO)
+            .order('created_at', { ascending: true });
+        if (error) {
+            console.warn('Calendar month fetch failed:', error);
+            monthTrades = [];
+        } else {
+            monthTrades = data || [];
+        }
+        calendarCache.set(keyMonth, monthTrades);
+    }
+
     // Build daily aggregation map for selected month
     const dailyMap = new Map();
-    for (const t of allClosedTrades) {
+    for (const t of monthTrades) {
         const d = new Date(t.created_at);
         if (d.getFullYear() !== calendarYear || d.getMonth() !== calendarMonth) continue;
         const key = d.toISOString().slice(0,10); // YYYY-MM-DD
