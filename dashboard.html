@@ -544,6 +544,9 @@
             document.getElementById('progressPercentMain').textContent = `${Math.floor(progressSummary.progressPercent)}%`;
             document.getElementById('progressBarLarge').style.width = `${progressSummary.progressPercent}%`;
             
+            // Celebrate if goal achieved (once per session)
+            try { maybeCelebrateGoal(progressSummary); } catch (_) {}
+            
             // Update beer stats cards
             document.getElementById('targetPercentWall').textContent = `+${progressSummary.goals?.target_percent_per_beer || 8}%`;
             document.getElementById('currentBalanceWall').textContent = `$${(progressSummary.goals?.current_capital || 0).toLocaleString()}`;
@@ -718,6 +721,65 @@
                 frag.appendChild(bottle);
             }
             grid.appendChild(frag);
+        }
+        
+        // Goal celebration (confetti + modal). Runs once per session per (goalId, crackedCount)
+        function maybeCelebrateGoal(progressSummary) {
+            const goalId = progressSummary.goals?.id || 'unknown';
+            const total = progressSummary.goals?.total_bottles || 0;
+            const cracked = progressSummary.beers_cracked || 0;
+            if (!total || cracked < total) return;
+            const key = `lockin_celebrated_${goalId}_${cracked}`;
+            if (sessionStorage.getItem(key)) return;
+            sessionStorage.setItem(key, '1');
+
+            // Confetti burst (with fallback)
+            (function confettiBurst(){
+                try {
+                    if (window.confetti) {
+                        const end = Date.now() + 1200;
+                        (function frame(){
+                            window.confetti({ particleCount: 120, spread: 70, origin: { y: 0.2 } });
+                            if (Date.now() < end) requestAnimationFrame(frame);
+                        })();
+                    } else {
+                        const el = document.createElement('div');
+                        el.textContent = '🎉';
+                        el.style.position = 'fixed';
+                        el.style.top = '18%';
+                        el.style.left = '50%';
+                        el.style.transform = 'translateX(-50%)';
+                        el.style.fontSize = '48px';
+                        el.style.zIndex = '10000';
+                        document.body.appendChild(el);
+                        setTimeout(() => el.remove(), 900);
+                    }
+                } catch (_) {}
+            })();
+
+            // Modal UI (reuse share-modal styles)
+            const modal = document.createElement('div');
+            modal.className = 'share-modal';
+            const tokenEmoji = progressSummary.token?.emoji || '🎯';
+            const totalLabel = progressSummary.goals?.total_bottles || cracked;
+            const username = (document.getElementById('userName')?.textContent || 'You');
+            modal.innerHTML = `
+                <div class="share-modal-content">
+                    <span class="close-button" onclick="this.closest('.share-modal').remove()">&times;</span>
+                    <h2>Goal Achieved! 🎉</h2>
+                    <div class="share-preview" style="margin-top:0.5rem;">
+                        <div style="font-size:64px;">${tokenEmoji}</div>
+                        <div style="margin-top:0.75rem; font-size:1.1rem; color: var(--text-secondary);">
+                            ${username} cracked ${cracked}/${totalLabel} ${cracked === 1 ? 'item' : 'items'}.
+                        </div>
+                    </div>
+                    <div class="share-buttons">
+                        <button class="cta-primary" onclick="shareCard('milestone', { username: '${username.replace(/'/g, "\'")}', milestone: 'Goal Achieved!', message: '${cracked}/${totalLabel} completed' })">Share 🎯</button>
+                        <button class="cta-secondary" onclick="this.closest('.share-modal').remove()">Close</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
         }
         
         // Initialize dashboard
