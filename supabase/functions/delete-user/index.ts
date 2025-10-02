@@ -66,10 +66,43 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const { error: delErr } = await adminClient.auth.admin.deleteUser(userId);
 
     if (delErr) {
-      return new Response(JSON.stringify({ error: delErr.message }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      // Fallback: call Admin REST API directly for better error surfacing
+      try {
+        const resp = await fetch(`${supabaseUrl}/auth/v1/admin/users/${userId}`, {
+          method: 'DELETE',
+          headers: {
+            'apikey': serviceKey,
+            'Authorization': `Bearer ${serviceKey}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (resp.ok) {
+          return new Response(JSON.stringify({ success: true, note: 'Deleted via REST fallback' }), {
+            status: 200,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        // If 404, treat as success (already deleted)
+        if (resp.status === 404) {
+          return new Response(JSON.stringify({ success: true, note: 'User not found (already deleted)' }), {
+            status: 200,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        const text = await resp.text();
+        return new Response(JSON.stringify({ error: 'Admin API error', status: resp.status, detail: text || delErr.message }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      } catch (e) {
+        return new Response(JSON.stringify({ error: 'Database error deleting user', detail: String(delErr?.message || e) }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
     }
 
     return new Response(JSON.stringify({ success: true }), {
