@@ -591,9 +591,9 @@ async function resetAccountOneTime() {
         ops.push(supabase.from('share_history').delete().eq('user_id', user.id));
         await Promise.allSettled(ops);
 
-        // Mark used and set onboarding_completed to false (best-effort)
+        // Ensure onboarding restarts next login (do not reference non-existent columns)
         try {
-            await supabase.from('user_profiles').update({ reset_used: true, onboarding_completed: false }).eq('user_id', user.id);
+            await supabase.from('user_profiles').update({ onboarding_completed: false }).eq('user_id', user.id);
         } catch (_) { /* ignore */ }
         
         // Clear all cached data
