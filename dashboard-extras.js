@@ -396,10 +396,21 @@ async function openSettingsModal() {
     try {
         const { data: prof } = await supabase
             .from('user_profiles')
-            .select('is_premium, reset_used, avatar_url')
+            .select('is_premium, reset_used, avatar_url, created_at')
             .eq('user_id', user.id)
             .single();
         let isPremium = !!prof?.is_premium;
+        // 7-day free trial based on profile created_at
+        let trialDaysLeft = 0;
+        try {
+            const createdAt = prof?.created_at ? new Date(prof.created_at) : null;
+            if (createdAt) {
+                const ms = Date.now() - createdAt.getTime();
+                const daysElapsed = Math.floor(ms / 86400000);
+                trialDaysLeft = Math.max(0, 7 - daysElapsed);
+            }
+        } catch (_) { /* ignore */ }
+        const isTrial = trialDaysLeft > 0;
         if (!isPremium) {
             try {
                 const { data: lb } = await supabase
@@ -407,7 +418,7 @@ async function openSettingsModal() {
                     .select('is_premium')
                     .eq('user_id', user.id)
                     .single();
-                isPremium = !!lb?.is_premium;
+                isPremium = !!lb?.is_premium || isPremium;
             } catch(_) {}
         }
         if (!isPremium && localStorage.getItem('lockin_premium_local') === '1') {
@@ -415,7 +426,7 @@ async function openSettingsModal() {
         }
         const resetUsed = !!prof?.reset_used || localStorage.getItem('lockin_reset_used') === '1';
         const statusEl = document.getElementById('premiumStatusValue');
-        if (statusEl) statusEl.textContent = isPremium ? 'Premium' : 'Free';
+        if (statusEl) statusEl.textContent = isPremium ? 'Premium' : (isTrial ? `Trial (${trialDaysLeft} days left)` : 'Free');
         const codeInput = document.getElementById('premiumInviteCode');
         if (codeInput && isPremium) {
             codeInput.disabled = true;
@@ -435,12 +446,12 @@ async function openSettingsModal() {
         // Gate upload for non-premium
         const uploadBtn = document.getElementById('uploadAvatarBtn');
         const note = document.getElementById('premiumPhotoNote');
-        if (uploadBtn && !isPremium) {
+        if (uploadBtn && !isPremium && !isTrial) {
             uploadBtn.disabled = true;
-            if (note) note.textContent = 'Uploading a profile photo is a Premium feature.';
-        } else if (note) {
-            note.textContent = '';
+            if (note) note.textContent = 'Uploading a profile photo is a Premium feature. Start Premium to enable this.';
+        } else {
             if (uploadBtn) uploadBtn.disabled = false;
+            if (note) note.textContent = isPremium ? '' : `Trial active — ${trialDaysLeft} day(s) left`;
         }
     } catch (_) { /* ignore */ }
 }

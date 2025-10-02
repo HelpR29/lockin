@@ -820,6 +820,12 @@
                                 <span>Allocated Capital</span>
                                 <input id="nextGoalStarting" type="number" step="0.01" value="${Number(totalPortfolio)}" max="${Number(totalPortfolio)}" style="background: var(--card-bg); color: #fff; border:1px solid var(--glass-border); border-radius:8px; padding:0.4rem 0.6rem; width: 180px; text-align:right;" />
                             </label>
+                            <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.5rem;">
+                                <button class="cta-secondary" onclick="document.getElementById('nextGoalStarting').value=${Number(totalPortfolio)}">100%</button>
+                                <button class="cta-secondary" onclick="document.getElementById('nextGoalStarting').value=${Number(totalPortfolio * 0.75).toFixed(2)}">75%</button>
+                                <button class="cta-secondary" onclick="document.getElementById('nextGoalStarting').value=${Number(totalPortfolio * 0.5).toFixed(2)}">50%</button>
+                                <button class="cta-secondary" onclick="document.getElementById('nextGoalStarting').value=${Number(totalPortfolio * 0.25).toFixed(2)}">25%</button>
+                            </div>
                             <label style="display:flex; justify-content:space-between; align-items:center; gap:1rem;">
                                 <span>Target per Item (%)</span>
                                 <input id="nextGoalTarget" type="number" step="0.1" value="${Number(g.target_percent_per_beer || 8)}" style="background: var(--card-bg); color: #fff; border:1px solid var(--glass-border); border-radius:8px; padding:0.4rem 0.6rem; width: 180px; text-align:right;" />
