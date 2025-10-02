@@ -28,7 +28,7 @@ async function generateShareCard(type, data, options = {}) {
     const avatarUrl = customization?.avatar_url;
 
     // Background gradient + subtle radial glow
-    const gradient = ctx.createLinearGradient(0, 0, 1200, 630);
+    const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
     gradient.addColorStop(0, '#141416');
     gradient.addColorStop(1, '#232428');
     ctx.fillStyle = gradient;
