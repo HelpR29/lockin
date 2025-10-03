@@ -3229,9 +3229,24 @@ input:checked + .slider:before {
     .step-actions {
         flex-direction: column;
     }
-    
-    .step-actions .cta-secondary,
-    .step-actions .cta-primary-large {
+    /* Rules page mobile layout */
+    .rule-item {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 0.75rem;
+    }
+    .rule-item .rule-actions {
+        display: grid !important;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.5rem;
+        width: 100%;
+    }
+    .rule-item .rule-actions label {
+        grid-column: 1 / -1;
+        justify-content: center;
+        width: 100%;
+    }
+    .rule-item .rule-actions button {
         width: 100%;
     }
 }
