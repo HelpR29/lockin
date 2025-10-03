@@ -124,6 +124,16 @@ async function buildPerformanceCalendar() {
         if (pnl > 0) monthWins += 1;
     }
 
+    // Helper: compact currency for small screens
+    function formatShortCurrency(value) {
+        const sign = value >= 0 ? '' : '-';
+        const abs = Math.abs(value);
+        if (abs >= 1e9) return `${sign}$${(abs / 1e9).toFixed(2)}b`;
+        if (abs >= 1e6) return `${sign}$${(abs / 1e6).toFixed(2)}m`;
+        if (abs >= 1e3) return `${sign}$${(abs / 1e3).toFixed(2)}k`;
+        return `${sign}$${abs.toFixed(2)}`;
+    }
+
     for (let day = 1; day <= daysInMonth; day++) {
         const dateObj = new Date(calendarYear, calendarMonth, day);
         const key = fmtLocalYMD(dateObj);
@@ -133,7 +143,8 @@ async function buildPerformanceCalendar() {
         const hasTrades = agg.trades.length > 0;
         cell.className = 'calendar-day' + (hasTrades ? (agg.pnl >= 0 ? ' win' : ' loss') : '');
         const tradesCount = agg.trades.length;
-        const pnlText = `$${agg.pnl.toFixed(2)}`;
+        const pnlText = `${agg.pnl >= 0 ? '+' : ''}$${Math.abs(agg.pnl).toFixed(2)}`;
+        const pnlTextShort = `${agg.pnl >= 0 ? '+' : ''}${formatShortCurrency(Math.abs(agg.pnl)).replace('-', '')}`;
         cell.innerHTML = `
             <div class="date">${day}</div>
             <div class="summary">${hasTrades ? `
@@ -141,6 +152,7 @@ async function buildPerformanceCalendar() {
                 <span class="sum-trades-label">trades</span>
                 <span class="sum-sep">•</span>
                 <span class="sum-pnl">${pnlText}</span>
+                <span class="sum-pnl-short">${pnlTextShort}</span>
             ` : ''}</div>
         `;
         cell.onclick = () => openDayDetailsModal(dateObj, agg.trades, agg.pnl);
