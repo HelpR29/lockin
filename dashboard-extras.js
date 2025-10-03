@@ -232,8 +232,9 @@ async function openProfileModal() {
         }
     } catch (_) { /* ignore */ }
     
-    // Fetch avatar from onboarding (emoji fallback) and user_profiles (photo)
+    // Fetch avatar from onboarding (emoji fallback) and user_profiles (photo or emoji)
     let avatarEmoji = '👤'; // default
+    let avatarUrl = null;
     try {
         const { data: onboardingData, error } = await supabase
             .from('user_onboarding')
@@ -251,7 +252,11 @@ async function openProfileModal() {
             .eq('user_id', user.id)
             .single();
         if (profileAvatar?.avatar) {
-            avatarEmoji = profileAvatar.avatar;
+            if (profileAvatar.avatar.startsWith('http')) {
+                avatarUrl = profileAvatar.avatar;
+            } else {
+                avatarEmoji = profileAvatar.avatar;
+            }
         }
     } catch (_) { /* ignore */ }
     
@@ -271,7 +276,9 @@ async function openProfileModal() {
     const modal = document.createElement('div');
     modal.className = 'modal';
     modal.style.display = 'flex';
-    const avatarBlock = `<div style="width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), #FFB84D); margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; font-size: 4rem;">${avatarEmoji}</div>`;
+    const avatarBlock = avatarUrl
+        ? `<img src="${avatarUrl}" alt="avatar" style="width:120px;height:120px;border-radius:50%;object-fit:cover;display:block;margin:0 auto 1rem;">`
+        : `<div style="width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), #FFB84D); margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; font-size: 4rem;">${avatarEmoji}</div>`;
     modal.innerHTML = `
         <div class="modal-content" style="max-width: 500px;">
             <span class="close-button" onclick="this.closest('.modal').remove()">&times;</span>
