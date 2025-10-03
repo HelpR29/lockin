@@ -402,6 +402,58 @@ async function saveTrade(e) {
                                                 .update({ times_followed: (row?.times_followed || 0) + 1 })
                                                 .eq('id', r.id);
                                         }
+                        
+                        // Breakeven stop -> if stop equals entry OR net PnL ~ 0 on close
+                        try {
+                            const eps = Math.max(0.01, 0.001 * Number(savedTrade.entry_price || 0));
+                            const stopEqualsEntry = (savedTrade.stop_loss != null && Math.abs(Number(savedTrade.stop_loss) - Number(savedTrade.entry_price)) <= eps);
+                            const nearZeroPnl = (savedTrade.exit_price != null && Math.abs(Number(savedTrade.exit_price) - Number(savedTrade.entry_price)) <= eps);
+                            if (stopEqualsEntry || nearZeroPnl) {
+                                const { data: brkRules1 } = await supabase
+                                    .from('trading_rules')
+                                    .select('id, rule, is_active')
+                                    .eq('user_id', user.id)
+                                    .eq('is_active', true)
+                                    .ilike('rule', '%breakeven%');
+                                const { data: brkRules2 } = await supabase
+                                    .from('trading_rules')
+                                    .select('id, rule, is_active')
+                                    .eq('user_id', user.id)
+                                    .eq('is_active', true)
+                                    .ilike('rule', '%break even%');
+                                const markSet = new Map();
+                                [...(brkRules1||[]), ...(brkRules2||[])].forEach(r => markSet.set(r.id, r));
+                                for (const r of markSet.values()) {
+                                    try {
+                                        if (typeof markRuleFollowed === 'function') await markRuleFollowed(r.id); else {
+                                            const { data: row } = await supabase.from('trading_rules').select('times_followed').eq('id', r.id).single();
+                                            await supabase.from('trading_rules').update({ times_followed: (row?.times_followed || 0) + 1 }).eq('id', r.id);
+                                        }
+                                    } catch(_) { /* continue */}
+                                }
+                            }
+                        } catch(_) { /* ignore */ }
+
+                        // Trailing stop -> detect via notes keywords
+                        try {
+                            const txt = (savedTrade.notes || '').toLowerCase();
+                            if (txt.includes('trail') || txt.includes('trailing') || txt.includes('tsl')) {
+                                const { data: trailRules } = await supabase
+                                    .from('trading_rules')
+                                    .select('id, rule, is_active')
+                                    .eq('user_id', user.id)
+                                    .eq('is_active', true)
+                                    .ilike('rule', '%trail%');
+                                for (const r of (trailRules || [])) {
+                                    try {
+                                        if (typeof markRuleFollowed === 'function') await markRuleFollowed(r.id); else {
+                                            const { data: row } = await supabase.from('trading_rules').select('times_followed').eq('id', r.id).single();
+                                            await supabase.from('trading_rules').update({ times_followed: (row?.times_followed || 0) + 1 }).eq('id', r.id);
+                                        }
+                                    } catch(_) { /* continue */ }
+                                }
+                            }
+                        } catch(_) { /* ignore */ }
                                     } catch (_) { /* continue */ }
                                 }
                             }
@@ -790,22 +842,56 @@ async function closeTrade(tradeId) {
                 `P/L: ${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}\n` +
                 `Avg Exit So Far: $${avgExitPrice.toFixed(2)}\n` +
                 `Remaining: ${remainingSize}`;
-            
-            const { error: updateError } = await supabase
-                .from('trades')
-                .update({ 
-                    position_size: remainingSize,
-                    notes: updateNote
-                })
-                .eq('id', tradeId);
-            
-            if (updateError) throw updateError;
+                        const { error: updateError } = await supabase
+                    .from('trades')
+                    .update({ 
+                        position_size: remainingSize,
+                        notes: updateNote
+                    })
+                    .eq('id', tradeId);
+                
+                if (updateError) throw updateError;
+
+            // Auto-mark scale out / partial exit rules
+            try {
+                const { data: scaleRules1 } = await supabase
+                    .from('trading_rules')
+                    .select('id, rule, is_active')
+                    .eq('user_id', user.id)
+                    .eq('is_active', true)
+                    .ilike('rule', '%scale out%');
+                const { data: scaleRules2 } = await supabase
+                    .from('trading_rules')
+                    .select('id, rule, is_active')
+                    .eq('user_id', user.id)
+                    .eq('is_active', true)
+                    .ilike('rule', '%partial%');
+                const markSet = new Map();
+                [...(scaleRules1||[]), ...(scaleRules2||[])].forEach(r => markSet.set(r.id, r));
+                for (const r of markSet.values()) {
+                    try {
+                        if (typeof markRuleFollowed === 'function') {
+                            await markRuleFollowed(r.id);
+                        } else {
+                            const { data: row } = await supabase
+                                .from('trading_rules')
+                                .select('times_followed')
+                                .eq('id', r.id)
+                                .single();
+                            await supabase
+                                .from('trading_rules')
+                                .update({ times_followed: (row?.times_followed || 0) + 1 })
+                                .eq('id', r.id);
+                        }
+                    } catch(_) { /* continue */ }
+                }
+            } catch(_) { /* ignore */ }
         }
         
         // Show detailed success message
         const xpMsg = pnl > 0 ? `\n\n+10 XP earned! 🎯` : '';
         if (isFullClose) {
-            alert(
+{{ ... }}
                 `✅ TRADE FULLY CLOSED\n\n` +
                 `${trade.symbol}: ${closeSize} ${trade.trade_type === 'stock' ? 'shares' : 'contracts'}\n` +
                 `Entry: $${trade.entry_price}\n` +

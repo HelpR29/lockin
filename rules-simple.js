@@ -241,6 +241,7 @@ async function loadRules() {
                 const adherenceColor = adherencePercent >= 90 ? '#4CAF50' : adherencePercent >= 70 ? '#FFC107' : '#F44336';
                 
                 const ruleEl = document.createElement('div');
+                ruleEl.className = 'rule-item';
                 ruleEl.style.cssText = `
                     background: rgba(255, 255, 255, 0.03);
                     border-left: 3px solid ${rule.is_active ? 'var(--primary)' : '#666'};
@@ -269,7 +270,7 @@ async function loadRules() {
                             <span style="color: ${adherenceColor}; font-weight: 600;">Adherence: ${adherencePercent}%</span>
                         </div>
                     </div>
-                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <div class="rule-actions" style="display: flex; gap: 0.5rem; align-items: center;">
                         <label style="display: inline-flex; align-items: center; cursor: pointer;">
                             <input type="checkbox" ${rule.is_active ? 'checked' : ''} onchange="toggleRuleActive('${rule.id}', this.checked)" style="width: 20px; height: 20px; cursor: pointer;">
                             <span style="margin-left: 0.5rem; font-size: 0.875rem;">Active</span>
