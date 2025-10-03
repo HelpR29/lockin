@@ -1328,6 +1328,56 @@ body {
     font-style: italic;
 }
 
+/* Reports Page */
+.reports-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.5rem;
+    align-items: stretch;
+}
+
+.kpi-summary-card {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+}
+
+.kpi-item {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    padding: 0.8rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.kpi-label { color: var(--text-secondary); font-size: 0.9rem; }
+.kpi-value { font-weight: 800; font-size: 1.1rem; }
+
+.chart-card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 1rem 1rem 1.25rem;
+    overflow: hidden;
+}
+.chart-card h3 { margin: 0 0 0.75rem 0; }
+
+.chart-container-reports {
+    position: relative;
+    width: 100%;
+    min-height: 220px;
+}
+.chart-container-reports.chart-container-pie { min-height: 260px; }
+.chart-container-reports canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+@media (max-width: 640px) {
+    .kpi-summary-card { grid-template-columns: 1fr; }
+}
+
 /* Journal Page: center primary actions on mobile and small screens */
 .journal-actions {
     display: flex;
