@@ -437,18 +437,19 @@ async function openUserProfileModal(userId) {
                     <div style="background: rgba(255,255,255,0.05); padding:1rem; border-radius:12px; text-align:center; grid-column: span 2;">
                         <div style="font-size:1.25rem; font-weight:700;">${row.discipline_score}%</div>
                         <div style="font-size:0.8rem; color: var(--text-secondary);">Discipline</div>
+{{ ... }}
                     </div>
                 </div>
             </div>
         `;
         document.body.appendChild(modal);
-{{ ... }}
+    } catch (e) {
         console.warn('openUserProfileModal failed', e);
     }
 }
 
 // Event delegation for leaderboard name clicks
-document.addEventListener('click', (e) => {
+{{ ... }}
     const btn = e.target.closest('.lb-name');
     if (btn && btn.dataset.userId) {
         openUserProfileModal(btn.dataset.userId);
