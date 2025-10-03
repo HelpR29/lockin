@@ -21,18 +21,24 @@
     .shop-item-card > div:last-child { flex-direction: column !important; align-items: center !important; gap: 0.75rem !important; }
     .shop-item-card > div:last-child > div:first-child { width: 100%; text-align: center; }
     .shop-item-card .cta-primary { width: 100%; text-align: center; }
+    /* Extra centering guard for stars cost */
+    #tab-shop .shop-item-card > div:last-child { justify-content: center !important; }
 }
 
 /* Leaderboard heading not overlapped by podium */
 #tab-leaderboard h2 { position: relative; z-index: 2; text-align: center; margin-bottom: 1rem; }
-#tab-leaderboard .podium { position: relative; z-index: 1; margin-top: 2.75rem !important; }
+#tab-leaderboard .podium { position: relative; z-index: 1; margin-top: 2.25rem !important; height: auto !important; gap: 0.75rem !important; }
 
 @media (max-width: 640px) {
     /* Make leaderboard rows mobile-friendly */
-    #tab-leaderboard .leaderboard-row { grid-template-columns: 50px 1fr 80px !important; gap: 0.5rem; }
-    #tab-leaderboard .leaderboard-row > :nth-child(3),
-    #tab-leaderboard .leaderboard-row > :nth-child(5) { display: none; }
+    #tab-leaderboard .leaderboard-row { grid-template-columns: 50px 1fr !important; gap: 0.5rem; }
+    #tab-leaderboard .leaderboard-row.leaderboard-header { grid-template-columns: 50px 1fr !important; }
+    #tab-leaderboard .leaderboard-row > :nth-child(n+3) { display: none; }
     #tab-leaderboard .leaderboard-table { overflow-x: auto; }
+    /* Reduce podium base heights to prevent crowding */
+    #tab-leaderboard .podium-place:nth-child(1) .podium-base { height: 110px !important; }
+    #tab-leaderboard .podium-place:nth-child(2) .podium-base { height: 90px  !important; }
+    #tab-leaderboard .podium-place:nth-child(3) .podium-base { height: 70px  !important; }
 }
 
 /* Dashboard mobile header & avatar fixes */
