@@ -385,7 +385,7 @@
                     .eq('user_id', user.id)
                     .single();
                 if (profRow?.avatar && avatarEl) {
-                    avatarEl.innerHTML = `<img src="${profRow.avatar}" alt="avatar" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+                    avatarEl.textContent = profRow.avatar;
                 }
             } catch (_) { /* ignore */ }
             
