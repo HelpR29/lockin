@@ -56,23 +56,23 @@ function renderRuleAdherenceSection(rules, violations) {
 
     container.innerHTML = `
         <div class="psychology-card">
-            <h3>📋 Rule Adherence</h3>
+            <h3 data-tooltip="How well you follow your trading rules.">📋 Rule Adherence</h3>
             <div class="stat-grid">
-                <div class="stat-item">
+                <div class="stat-item" data-tooltip="Overall adherence = Times followed / (Times followed + Violations)" title="Overall adherence = Followed / (Followed + Violations)">
                     <div class="stat-value" style="color: ${adherenceRate >= 90 ? '#34C759' : adherenceRate >= 70 ? '#FFC107' : '#FF453A'};">
                         ${adherenceRate}%
                     </div>
                     <div class="stat-label">Overall Adherence</div>
                 </div>
-                <div class="stat-item">
+                <div class="stat-item" data-tooltip="Number of rules currently enabled" title="Active rules enabled">
                     <div class="stat-value">${totalRules}</div>
                     <div class="stat-label">Active Rules</div>
                 </div>
-                <div class="stat-item">
+                <div class="stat-item" data-tooltip="Total times a rule was explicitly marked as followed" title="Times rules were followed">
                     <div class="stat-value" style="color: #34C759;">${totalFollowed}</div>
                     <div class="stat-label">Times Followed</div>
                 </div>
-                <div class="stat-item">
+                <div class="stat-item" data-tooltip="Number of violations recorded across your rules" title="Total rule violations">
                     <div class="stat-value" style="color: #FF453A;">${totalViolated}</div>
                     <div class="stat-label">Times Violated</div>
                 </div>
@@ -137,23 +137,23 @@ function renderEmotionalAnalysis(trades) {
 
     container.innerHTML = `
         <div class="psychology-card">
-            <h3>🧠 Emotional State Analysis</h3>
+            <h3 data-tooltip="Sentiment inferred from your trade notes (keywords)">🧠 Emotional State Analysis</h3>
             <div class="stat-grid">
-                <div class="stat-item">
+                <div class="stat-item" data-tooltip="Percent of trades whose notes contain positive language" title="Positive emotion rate">
                     <div class="stat-value" style="color: ${emotionalScore >= 70 ? '#34C759' : emotionalScore >= 50 ? '#FFC107' : '#FF453A'};">
                         ${emotionalScore}%
                     </div>
                     <div class="stat-label">Positive Emotion Rate</div>
                 </div>
-                <div class="stat-item">
+                <div class="stat-item" data-tooltip="Trades with notes that include positive keywords (e.g., confident, calm)" title="Positive trades">
                     <div class="stat-value" style="color: #34C759;">${positiveCount}</div>
                     <div class="stat-label">Positive Trades</div>
                 </div>
-                <div class="stat-item">
+                <div class="stat-item" data-tooltip="Trades with notes that include negative keywords (e.g., anxious, greedy)" title="Negative trades">
                     <div class="stat-value" style="color: #FF453A;">${negativeCount}</div>
                     <div class="stat-label">Negative Trades</div>
                 </div>
-                <div class="stat-item">
+                <div class="stat-item" data-tooltip="Trades with notes but neither positive nor negative keywords detected" title="Neutral trades">
                     <div class="stat-value">${neutralCount}</div>
                     <div class="stat-label">Neutral Trades</div>
                 </div>
@@ -224,7 +224,7 @@ function renderDisciplineScore(trades, violations) {
 
     container.innerHTML = `
         <div class="psychology-card">
-            <h3>⭐ Discipline Score</h3>
+            <h3 data-tooltip="Weighted score of your trading discipline (stops, targets, journaling, violations)">⭐ Discipline Score</h3>
             <div style="text-align: center; margin: 2rem 0;">
                 <div style="font-size: 4rem; font-weight: 900; color: ${scoreColor};">
                     ${disciplineScore}
@@ -235,25 +235,25 @@ function renderDisciplineScore(trades, violations) {
             </div>
             
             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
-                <div style="text-align: center; padding: 1rem; background: rgba(255, 255, 255, 0.05); border-radius: 12px;">
+                <div style="text-align: center; padding: 1rem; background: rgba(255, 255, 255, 0.05); border-radius: 12px;" data-tooltip="Share of closed trades with a stop loss set" title="Stop loss usage">
                     <div style="font-size: 1.5rem; font-weight: 700; color: ${stopLossRate >= 90 ? '#34C759' : '#FFC107'};">
                         ${stopLossRate.toFixed(0)}%
                     </div>
                     <div style="font-size: 0.875rem; color: var(--text-secondary);">Stop Loss Usage</div>
                 </div>
-                <div style="text-align: center; padding: 1rem; background: rgba(255, 255, 255, 0.05); border-radius: 12px;">
+                <div style="text-align: center; padding: 1rem; background: rgba(255, 255, 255, 0.05); border-radius: 12px;" data-tooltip="Share of closed trades with a profit target set" title="Target setting rate">
                     <div style="font-size: 1.5rem; font-weight: 700; color: ${targetRate >= 90 ? '#34C759' : '#FFC107'};">
                         ${targetRate.toFixed(0)}%
                     </div>
                     <div style="font-size: 0.875rem; color: var(--text-secondary);">Target Setting</div>
                 </div>
-                <div style="text-align: center; padding: 1rem; background: rgba(255, 255, 255, 0.05); border-radius: 12px;">
+                <div style="text-align: center; padding: 1rem; background: rgba(255, 255, 255, 0.05); border-radius: 12px;" data-tooltip="Share of closed trades with detailed notes (≥ 10 characters)" title="Trade journaling rate">
                     <div style="font-size: 1.5rem; font-weight: 700; color: ${journalRate >= 90 ? '#34C759' : '#FFC107'};">
                         ${journalRate.toFixed(0)}%
                     </div>
                     <div style="font-size: 0.875rem; color: var(--text-secondary);">Trade Journaling</div>
                 </div>
-                <div style="text-align: center; padding: 1rem; background: rgba(255, 255, 255, 0.05); border-radius: 12px;">
+                <div style="text-align: center; padding: 1rem; background: rgba(255, 255, 255, 0.05); border-radius: 12px;" data-tooltip="Total rule violations logged across all trades" title="Rule violations count">
                     <div style="font-size: 1.5rem; font-weight: 700; color: ${violationRate <= 10 ? '#34C759' : '#FF453A'};">
                         ${violations.length}
                     </div>
@@ -281,7 +281,8 @@ function renderPsychologyInsights(trades, violations) {
         const isOption2 = currTrade.trade_type === 'call' || currTrade.trade_type === 'put';
         const mult1 = isOption1 ? 100 : 1;
         const mult2 = isOption2 ? 100 : 1;
-        const prevPnL = (prevTrade.exit_price - prevTrade.entry_price) * prevTrade.position_size * mult1;
+        const dir1 = (prevTrade.direction || '').toLowerCase() === 'short' ? -1 : 1;
+        const prevPnL = (prevTrade.exit_price - prevTrade.entry_price) * prevTrade.position_size * mult1 * dir1;
         const timeDiff = (new Date(currTrade.created_at) - new Date(prevTrade.created_at)) / (1000 * 60);
         
         if (prevPnL < 0 && timeDiff < 60) {
@@ -332,7 +333,7 @@ function renderPsychologyInsights(trades, violations) {
 
     container.innerHTML = `
         <div class="psychology-card">
-            <h3>💡 Psychology Insights</h3>
+            <h3 data-tooltip="Automated highlights based on your trading behavior and rule activity">💡 Psychology Insights</h3>
             ${insights.length > 0 ? insights.map(insight => `
                 <div style="padding: 1rem; margin-bottom: 0.75rem; background: ${
                     insight.type === 'success' ? 'rgba(52, 199, 89, 0.1)' : 
