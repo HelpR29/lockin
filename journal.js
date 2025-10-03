@@ -406,6 +406,134 @@ async function saveTrade(e) {
                                 }
                             }
                         }
+
+                        // Target set -> mark rules referencing targets/take profit
+                        if (savedTrade.target_price != null && Number(savedTrade.target_price) > 0) {
+                            const { data: targetRules } = await supabase
+                                .from('trading_rules')
+                                .select('id, rule, is_active')
+                                .eq('user_id', user.id)
+                                .eq('is_active', true)
+                                .ilike('rule', '%target%');
+                            if (Array.isArray(targetRules)) {
+                                for (const r of targetRules) {
+                                    try {
+                                        if (typeof markRuleFollowed === 'function') {
+                                            await markRuleFollowed(r.id);
+                                        } else {
+                                            const { data: row } = await supabase
+                                                .from('trading_rules')
+                                                .select('times_followed')
+                                                .eq('id', r.id)
+                                                .single();
+                                            await supabase
+                                                .from('trading_rules')
+                                                .update({ times_followed: (row?.times_followed || 0) + 1 })
+                                                .eq('id', r.id);
+                                        }
+                                    } catch (_) { /* continue */ }
+                                }
+                            }
+                        }
+
+                        // Journaling -> if notes present, mark rules referencing journaling/logging
+                        if ((savedTrade.notes || '').trim().length >= 10) {
+                            const seen = new Set();
+                            const markMany = async (rules) => {
+                                for (const r of (rules || [])) {
+                                    if (seen.has(r.id)) continue; seen.add(r.id);
+                                    try {
+                                        if (typeof markRuleFollowed === 'function') {
+                                            await markRuleFollowed(r.id);
+                                        } else {
+                                            const { data: row } = await supabase
+                                                .from('trading_rules')
+                                                .select('times_followed')
+                                                .eq('id', r.id)
+                                                .single();
+                                            await supabase
+                                                .from('trading_rules')
+                                                .update({ times_followed: (row?.times_followed || 0) + 1 })
+                                                .eq('id', r.id);
+                                        }
+                                    } catch (_) { /* continue */ }
+                                }
+                            };
+                            const { data: journalRules } = await supabase
+                                .from('trading_rules')
+                                .select('id, rule, is_active')
+                                .eq('user_id', user.id)
+                                .eq('is_active', true)
+                                .ilike('rule', '%journal%');
+                            await markMany(journalRules);
+                            const { data: logRules } = await supabase
+                                .from('trading_rules')
+                                .select('id, rule, is_active')
+                                .eq('user_id', user.id)
+                                .eq('is_active', true)
+                                .ilike('rule', '%log%');
+                            await markMany(logRules);
+                        }
+
+                        // Reward-to-Risk adherence -> if both stop and target set, compute R:R
+                        if (savedTrade.stop_loss != null && Number(savedTrade.stop_loss) > 0 && savedTrade.target_price != null && Number(savedTrade.target_price) > 0) {
+                            const risk = Math.abs(Number(savedTrade.entry_price) - Number(savedTrade.stop_loss));
+                            const reward = Math.abs(Number(savedTrade.target_price) - Number(savedTrade.entry_price));
+                            if (risk > 0) {
+                                const rr = reward / risk;
+                                const seenRR = new Set();
+                                const markMany = async (rules) => {
+                                    for (const r of (rules || [])) {
+                                        if (seenRR.has(r.id)) continue; seenRR.add(r.id);
+                                        try {
+                                            if (typeof markRuleFollowed === 'function') {
+                                                await markRuleFollowed(r.id);
+                                            } else {
+                                                const { data: row } = await supabase
+                                                    .from('trading_rules')
+                                                    .select('times_followed')
+                                                    .eq('id', r.id)
+                                                    .single();
+                                                await supabase
+                                                    .from('trading_rules')
+                                                    .update({ times_followed: (row?.times_followed || 0) + 1 })
+                                                    .eq('id', r.id);
+                                            }
+                                        } catch (_) { /* continue */ }
+                                    }
+                                };
+                                // Mark generic reward/risk rules
+                                if (rr >= 2) {
+                                    const { data: rrGeneric } = await supabase
+                                        .from('trading_rules')
+                                        .select('id, rule, is_active')
+                                        .eq('user_id', user.id)
+                                        .eq('is_active', true)
+                                        .ilike('rule', '%reward%');
+                                    await markMany((rrGeneric || []).filter(r => /risk/i.test(r.rule || '')));
+                                }
+                                // Mark explicit 3:1 rules when ratio >= 3
+                                if (rr >= 3) {
+                                    const { data: rrThree } = await supabase
+                                        .from('trading_rules')
+                                        .select('id, rule, is_active')
+                                        .eq('user_id', user.id)
+                                        .eq('is_active', true)
+                                        .ilike('rule', '%3:1%');
+                                    await markMany(rrThree);
+                                }
+                                // Mark explicit 1:2 rules when ratio >= 2
+                                if (rr >= 2) {
+                                    const { data: rrTwo } = await supabase
+                                        .from('trading_rules')
+                                        .select('id, rule, is_active')
+                                        .eq('user_id', user.id)
+                                        .eq('is_active', true)
+                                        .ilike('rule', '%1:2%');
+                                    await markMany(rrTwo);
+                                }
+                            }
+                        }
                     } catch (_) { /* ignore auto-mark errors */ }
                 }
             }
