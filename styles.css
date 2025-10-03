@@ -821,9 +821,20 @@ body {
         font-size: 2.5rem;
     }
     
+    .hero {
+        text-align: center;
+    }
+    
     .hero-visual {
         width: 250px;
         height: 250px;
+        position: relative;
+        z-index: 10;
+    }
+    
+    .features {
+        position: relative;
+        z-index: 1;
     }
     
     .section-title {
