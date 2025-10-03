@@ -248,10 +248,10 @@ async function openProfileModal() {
     try {
         const { data: profileAvatar } = await supabase
             .from('user_profiles')
-            .select('avatar_url')
+            .select('avatar')
             .eq('user_id', user.id)
             .single();
-        avatarUrl = profileAvatar?.avatar_url || null;
+        avatarUrl = profileAvatar?.avatar || null;
     } catch (_) { /* ignore */ }
     
     // Fetch premium status for inline badge
