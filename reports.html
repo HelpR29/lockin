@@ -255,6 +255,25 @@
             font-size: 0.875rem;
             color: var(--text-secondary);
         }
+        /* Mobile alignment fixes for Psychology cards */
+        @media (max-width: 600px) {
+            .psychology-card h3 {
+                text-align: center;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 0.4rem;
+            }
+            .psychology-card .stat-grid {
+                justify-items: center;
+            }
+            .psychology-card .stat-item {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+        }
         
         /* Performance Calendar */
         .calendar-grid {
