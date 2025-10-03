@@ -396,38 +396,53 @@ function renderLeaderboard(data) {
 // Simple user profile modal for leaderboard entries
 async function openUserProfileModal(userId) {
     try {
-        const { data: row } = await supabase
-            .from('leaderboard_stats')
-            .select('*')
-            .eq('user_id', userId)
-            .single();
+        const [{ data: row }, { data: profile }] = await Promise.all([
+            supabase
+                .from('leaderboard_stats')
+                .select('*')
+                .eq('user_id', userId)
+                .single(),
+            supabase
+                .from('user_profiles')
+                .select('avatar_url, username, is_premium')
+                .eq('user_id', userId)
+                .single()
+        ]);
         if (!row) return;
-        const badge = row.is_premium ? '<span title="PREMIUM" style="color:#FFD54F; margin-left:0.25rem;">💎</span>' : '';
+        const isPremium = row.is_premium || !!profile?.is_premium;
+        const displayName = row.full_name || profile?.username || 'Trader';
+        const badge = isPremium ? '<span title="PREMIUM" style="color:#FFD54F; margin-left:0.25rem;">💎</span>' : '';
+        const avatarUrl = profile?.avatar_url || '';
+        const avatarBlock = avatarUrl
+            ? `<img src="${avatarUrl}" alt="avatar" style="width:96px;height:96px;border-radius:50%;object-fit:cover;display:block;margin:0 auto 0.75rem;">`
+            : `<div style="width:96px;height:96px;border-radius:50%;background: linear-gradient(135deg, var(--primary), #FFB84D); display:flex;align-items:center;justify-content:center;font-size:2.5rem;margin:0 auto 0.75rem;">👤</div>`;
+
         const modal = document.createElement('div');
         modal.className = 'modal';
         modal.style.display = 'flex';
         modal.innerHTML = `
             <div class="modal-content" style="max-width:520px;">
                 <span class="close-button" onclick="this.closest('.modal').remove()">&times;</span>
-                <h2 style="margin-bottom:1rem;">${row.full_name || 'Trader'} ${badge}</h2>
+                <div style="text-align:center; margin-bottom:0.5rem;">${avatarBlock}</div>
+                <h2 style="margin-bottom:1rem; text-align:center;">${displayName} ${badge}</h2>
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
                     <div style="background: rgba(255,255,255,0.05); padding:1rem; border-radius:12px; text-align:center;">
                         <div style="font-size:1.75rem; font-weight:800; color:var(--primary);">${row.level}</div>
-                        <div style="font-size:0.8rem; color:var(--text-secondary);">Level</div>
+                        <div style="font-size:0.8rem; color: var(--text-secondary);">Level</div>
                     </div>
                     <div style="background: rgba(255,255,255,0.05); padding:1rem; border-radius:12px; text-align:center;">
                         <div style="font-size:1.75rem; font-weight:800;">${row.completions}</div>
-                        <div style="font-size:0.8rem; color:var(--text-secondary);">Completions</div>
+                        <div style="font-size:0.8rem; color: var(--text-secondary);">Completions</div>
                     </div>
                     <div style="background: rgba(255,255,255,0.05); padding:1rem; border-radius:12px; text-align:center; grid-column: span 2;">
                         <div style="font-size:1.25rem; font-weight:700;">${row.discipline_score}%</div>
-                        <div style="font-size:0.8rem; color:var(--text-secondary);">Discipline</div>
+                        <div style="font-size:0.8rem; color: var(--text-secondary);">Discipline</div>
                     </div>
                 </div>
             </div>
         `;
         document.body.appendChild(modal);
-    } catch (e) {
+{{ ... }}
         console.warn('openUserProfileModal failed', e);
     }
 }
