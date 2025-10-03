@@ -275,8 +275,8 @@ async function loadRules() {
                             <input type="checkbox" ${rule.is_active ? 'checked' : ''} onchange="toggleRuleActive('${rule.id}', this.checked)" style="width: 20px; height: 20px; cursor: pointer;">
                             <span style="margin-left: 0.5rem; font-size: 0.875rem;">Active</span>
                         </label>
-                        <button class="rule-edit-btn" onclick="markFollowedAndRefresh('${rule.id}')" title="Mark this rule as followed" style="background: rgba(76, 175, 80, 0.12); border-color:#4CAF50; color:#4CAF50;">✓ Followed</button>
-                        <button class="rule-delete-btn" onclick="reportViolationForRule('${rule.id}')" title="Report a violation for this rule" style="background: rgba(255, 87, 34, 0.12); border-color:#FF5722; color:#FF5722;">🚨 Violation</button>
+                        <button class="rule-edit-btn" onclick="markFollowedAndRefresh('${rule.id}')" title="Mark as followed" aria-label="Mark as followed" style="background: rgba(76, 175, 80, 0.12); border-color:#4CAF50; color:#4CAF50;">✓</button>
+                        <button class="rule-delete-btn" onclick="reportViolationForRule('${rule.id}')" title="Report violation" aria-label="Report violation" style="background: rgba(255, 87, 34, 0.12); border-color:#FF5722; color:#FF5722;">🚨</button>
                         ${editButton}
                         ${deleteButton}
                     </div>
