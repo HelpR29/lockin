@@ -155,6 +155,12 @@ async function buildPerformanceCalendar() {
                 <span class="sum-pnl-short">${pnlTextShort}</span>
             ` : ''}</div>
         `;
+        // Tooltip for day cell
+        if (hasTrades) {
+            cell.setAttribute('data-tooltip', `Day: ${dateObj.toLocaleDateString()}\nP/L: ${agg.pnl >= 0 ? '+' : ''}$${agg.pnl.toFixed(2)} • Trades: ${tradesCount}`);
+        } else {
+            cell.setAttribute('data-tooltip', `Day: ${dateObj.toLocaleDateString()}\nNo closed trades`);
+        }
         cell.onclick = () => openDayDetailsModal(dateObj, agg.trades, agg.pnl);
         grid.appendChild(cell);
     }
