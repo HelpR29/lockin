@@ -5,6 +5,12 @@
     box-sizing: border-box;
 }
 
+/* Dashboard desktop avatar & container overflow (prevents clipping on wide screens) */
+.dashboard-header { overflow: visible; }
+.dashboard-container { overflow: visible; }
+#dashboardAvatar { overflow: hidden; border-radius: 50%; }
+#dashboardAvatar img { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
+
 /* Achievements & Rewards: Reward Shop and Leaderboard fixes */
 .shop-grid {
     display: grid;
@@ -2591,7 +2597,7 @@ input:checked + .slider:before {
 
 .chart-container-reports {
     position: relative;
-    min-height: 220px;
+    min-height: 260px; /* unify with pie for consistent row height */
     height: auto;
 }
 
@@ -2599,6 +2605,20 @@ input:checked + .slider:before {
     min-height: 260px;
     max-width: 100%;
     margin: 0;
+}
+
+/* Ensure canvases fully fill their containers */
+.chart-card canvas { display: block; width: 100% !important; height: 100% !important; }
+
+/* Desktop: lock reports grid to 3 equal columns for tidy layout */
+@media (min-width: 1280px) {
+    .reports-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+}
+
+/* Psychology grid: use 2x2 layout on desktop to avoid lone card and dead space */
+.psychology-grid { display: grid; gap: 1.5rem; }
+@media (min-width: 1024px) {
+    .psychology-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
 }
 
 
