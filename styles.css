@@ -23,7 +23,7 @@
 
 /* Leaderboard heading not overlapped by podium */
 #tab-leaderboard h2 { position: relative; z-index: 2; }
-.podium { position: relative; z-index: 1; margin-top: 1rem; }
+#tab-leaderboard .podium { position: relative; z-index: 1; margin-top: 1.5rem !important; }
 
 /* Dashboard mobile header & avatar fixes */
 @media (max-width: 640px) {
