@@ -1352,12 +1352,20 @@ body {
 .calendar-grid > * { min-width: 0; }
 .calendar-day { min-width: 0; }
 .calendar-day .summary { white-space: normal; word-break: break-word; }
+/* Better summary layout */
+.calendar-day .summary { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+.calendar-day .sum-pnl-short { display: none; }
 
 @media (max-width: 480px) {
     .calendar-grid { gap: 0.35rem !important; padding: 0.5rem !important; }
     .calendar-day { min-height: 60px; padding: 0.35rem; }
     .calendar-day .date { font-size: 0.8rem; }
-    .calendar-day .summary { font-size: 0.7rem; }
+    .calendar-day .summary { font-size: 0.7rem; flex-wrap: nowrap; }
+    /* Hide verbose labels; use compact currency */
+    .calendar-day .sum-trades-label,
+    .calendar-day .sum-sep,
+    .calendar-day .sum-pnl { display: none; }
+    .calendar-day .sum-pnl-short { display: inline; }
 }
 
 .kpi-summary-card {
