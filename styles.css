@@ -837,7 +837,7 @@ body {
         width: 250px;
         height: 250px;
         position: relative;
-        z-index: 10;
+        z-index: 20;
         margin: 0 auto;
     }
     
