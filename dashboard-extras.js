@@ -665,12 +665,38 @@ async function openUserProfileById(userId) {
         } catch (_) { /* not following */ }
 
         const badge = row.is_premium ? '<span title="PREMIUM" style="color:#FFD54F; margin-left:0.25rem;">💎</span>' : '';
+
+        // Fetch avatar/photo (public profile info)
+        let avatarEmoji = '👤';
+        let avatarUrl = null;
+        try {
+            const { data: prof } = await supabase
+                .from('user_profiles')
+                .select('avatar, avatar_url')
+                .eq('user_id', userId)
+                .single();
+            if (prof) {
+                if (prof.avatar_url) {
+                    avatarUrl = prof.avatar_url;
+                } else if (prof.avatar) {
+                    if (typeof prof.avatar === 'string' && prof.avatar.startsWith('http')) {
+                        avatarUrl = prof.avatar;
+                    } else {
+                        avatarEmoji = prof.avatar;
+                    }
+                }
+            }
+        } catch (_) { /* ignore */ }
+        const avatarBlock = avatarUrl
+            ? `<img src="${avatarUrl}" alt="avatar" style="width:96px;height:96px;border-radius:50%;object-fit:cover;display:block;margin:0 auto 0.5rem;">`
+            : `<div style="width:96px;height:96px;border-radius:50%;background: linear-gradient(135deg, var(--primary), #FFB84D); display:flex;align-items:center;justify-content:center;font-size:2.25rem;margin:0 auto 0.5rem;">${avatarEmoji}</div>`;
         const modal = document.createElement('div');
         modal.className = 'modal';
         modal.style.display = 'flex';
         modal.innerHTML = `
             <div class="modal-content" style="max-width:520px; position: relative;">
                 <span class="close-button" onclick="this.closest('.modal').remove()">&times;</span>
+                <div style="text-align:center;">${avatarBlock}</div>
                 <div style="display:flex; align-items:center; justify-content:center; gap:0.5rem; margin-bottom:0.75rem;">
                     <h2 style="margin:0; text-align:center;">${row.full_name || 'Trader'} ${badge}</h2>
                     <button id="followIconBtn_${row.user_id}"
