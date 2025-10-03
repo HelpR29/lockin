@@ -1363,9 +1363,8 @@ body {
     min-width: 0; /* allow text truncation */
 }
 .rule-category .rule-list > div > div:first-child p {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    /* default: allow wrapping unless overridden */
+    white-space: normal;
 }
 .rule-category .rule-list > div > div:last-child {
     flex: 0 0 auto; /* don't shrink action icons */
@@ -1376,6 +1375,15 @@ body {
         flex-wrap: wrap; /* allow actions to move to next line */
         align-items: flex-start !important;
         gap: 0.5rem;
+    }
+    .rule-category .rule-list > div > div:first-child {
+        flex: 1 1 100%; /* let description take full width */
+    }
+    .rule-category .rule-list > div > div:first-child p {
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+        word-break: break-word;
     }
     .rule-category .rule-list > div > div:last-child {
         width: 100%;
