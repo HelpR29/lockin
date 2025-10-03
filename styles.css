@@ -2593,6 +2593,18 @@ input:checked + .slider:before {
     grid-column: 1 / -1;
 }
 
+/* Following & Community mobile centering */
+@media (max-width: 640px) {
+    .social-grid { grid-template-columns: 1fr !important; }
+    .social-card { text-align: center; }
+    .social-card h3 { text-align: center; margin-left: auto; margin-right: auto; }
+    .social-card .search-box { display: flex !important; flex-direction: column; align-items: center; gap: 0.5rem; }
+    .social-card .search-box input { width: 100%; max-width: 320px; }
+    .social-card .user-list { display: flex; flex-direction: column; align-items: center; gap: 0.6rem; }
+    .social-card .user-item { display: flex; align-items: center; justify-content: center; gap: 0.6rem; width: 100%; }
+    .social-card .user-item button { align-self: center; }
+}
+
 .social-card h3 {
     font-family: 'Orbitron', sans-serif;
     color: var(--primary-orange);
