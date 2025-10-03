@@ -378,6 +378,7 @@
             // Fetch and display avatar. Prefer uploaded photo (user_profiles.avatar); fallback to onboarding emoji
             const avatarEl = document.getElementById('dashboardAvatar');
             let avatarEmoji = '👤'; // default
+            let avatarSet = false;
             try {
                 const { data: profRow } = await supabase
                     .from('user_profiles')
@@ -386,26 +387,31 @@
                     .single();
                 if (profRow?.avatar && avatarEl) {
                     avatarEl.textContent = profRow.avatar;
+                    avatarSet = true;
                 }
             } catch (_) { /* ignore */ }
             
             // Fallback to onboarding emoji if no photo set
-            try {
-                const { data: onboardingData, error } = await supabase
-                    .from('user_onboarding')
-                    .select('avatar')
-                    .eq('user_id', user.id)
-                    .single();
-                
-                if (!error && onboardingData?.avatar) {
-                    avatarEmoji = onboardingData.avatar;
+            if (!avatarSet) {
+                try {
+                    const { data: onboardingData, error } = await supabase
+                        .from('user_onboarding')
+                        .select('avatar')
+                        .eq('user_id', user.id)
+                        .single();
+                    
+                    if (!error && onboardingData?.avatar) {
+                        avatarEmoji = onboardingData.avatar;
+                    }
+                } catch (err) {
+                    console.log('No onboarding data yet, using default avatar');
                 }
-            } catch (err) {
-                console.log('No onboarding data yet, using default avatar');
-            }
-            
-            if (avatarEl && avatarEl.childElementCount === 0) {
-                avatarEl.textContent = avatarEmoji;
+                
+                if (avatarEl) {
+                    avatarEl.textContent = avatarEmoji;
+                    avatarEl.title = `Click to view ${userName}'s profile`;
+                }
+            } else if (avatarEl) {
                 avatarEl.title = `Click to view ${userName}'s profile`;
             }
             
