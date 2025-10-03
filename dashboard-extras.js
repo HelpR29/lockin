@@ -232,7 +232,7 @@ async function openProfileModal() {
         }
     } catch (_) { /* ignore */ }
     
-    // Fetch avatar from onboarding (emoji fallback) and user_profiles (photo or emoji)
+    // Fetch avatar from onboarding (emoji fallback) and user_profiles (photo url or emoji)
     let avatarEmoji = '👤'; // default
     let avatarUrl = null;
     try {
@@ -248,11 +248,15 @@ async function openProfileModal() {
     try {
         const { data: profileAvatar } = await supabase
             .from('user_profiles')
-            .select('avatar')
+            .select('avatar, avatar_url')
             .eq('user_id', user.id)
             .single();
-        if (profileAvatar?.avatar) {
-            if (profileAvatar.avatar.startsWith('http')) {
+        // Prefer explicit avatar_url if present
+        if (profileAvatar?.avatar_url) {
+            avatarUrl = profileAvatar.avatar_url;
+        } else if (profileAvatar?.avatar) {
+            // Backward compatibility: avatar column may contain emoji OR url
+            if (typeof profileAvatar.avatar === 'string' && profileAvatar.avatar.startsWith('http')) {
                 avatarUrl = profileAvatar.avatar;
             } else {
                 avatarEmoji = profileAvatar.avatar;

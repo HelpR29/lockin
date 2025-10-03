@@ -375,19 +375,28 @@
             const userName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Trader';
             document.getElementById('userName').textContent = userName;
             
-            // Fetch and display avatar. Prefer uploaded photo (user_profiles.avatar); fallback to onboarding emoji
+            // Fetch and display avatar. Prefer uploaded photo (user_profiles.avatar_url); fallback to emoji in user_profiles.avatar or onboarding emoji
             const avatarEl = document.getElementById('dashboardAvatar');
             let avatarEmoji = '👤'; // default
             let avatarSet = false;
             try {
                 const { data: profRow } = await supabase
                     .from('user_profiles')
-                    .select('avatar')
+                    .select('avatar, avatar_url')
                     .eq('user_id', user.id)
                     .single();
-                if (profRow?.avatar && avatarEl) {
-                    avatarEl.textContent = profRow.avatar;
-                    avatarSet = true;
+                if (avatarEl && profRow) {
+                    if (profRow.avatar_url) {
+                        avatarEl.innerHTML = `<img src="${profRow.avatar_url}" alt="avatar" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+                        avatarSet = true;
+                    } else if (profRow.avatar) {
+                        if (typeof profRow.avatar === 'string' && profRow.avatar.startsWith('http')) {
+                            avatarEl.innerHTML = `<img src="${profRow.avatar}" alt="avatar" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+                        } else {
+                            avatarEl.textContent = profRow.avatar;
+                        }
+                        avatarSet = true;
+                    }
                 }
             } catch (_) { /* ignore */ }
             
