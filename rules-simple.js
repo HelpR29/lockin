@@ -623,8 +623,19 @@ async function markFollowedAndRefresh(ruleId) {
     try {
         if (typeof markRuleFollowed === 'function') {
             await markRuleFollowed(ruleId);
-            await loadRules();
+        } else {
+            // Fallback: directly increment times_followed
+            const { data: rule } = await supabase
+                .from('trading_rules')
+                .select('times_followed')
+                .eq('id', ruleId)
+                .single();
+            await supabase
+                .from('trading_rules')
+                .update({ times_followed: (rule?.times_followed || 0) + 1 })
+                .eq('id', ruleId);
         }
+        await loadRules();
     } catch (e) {
         console.error('markFollowedAndRefresh failed', e);
         alert('Could not mark as followed.');
