@@ -726,19 +726,24 @@ async function selectAndUploadAvatar() {
                 await supabase.from('user_profiles').update({ avatar_url: publicUrl }).eq('user_id', user.id);
                 // Update UI
                 const preview = document.getElementById('settingsAvatarPreview');
-                if (preview) preview.innerHTML = `<img src="${publicUrl}" alt="avatar" style="width:100%; height:100%; object-fit:cover;">`;
-                const dashAvatar = document.getElementById('dashboardAvatar');
-                if (dashAvatar) dashAvatar.innerHTML = `<img src="${publicUrl}" alt="avatar" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
-                alert('✅ Profile photo updated');
-            } catch(err) {
-                console.error('avatar onchange failed', err);
-                alert('Upload failed.');
+                    if (profRow.avatar_url) {
+                        avatarEl.innerHTML = `<img src="${profRow.avatar_url}" alt="avatar" style="width:100%; height:100%; border-radius:50%; object-fit:cover; object-position:center;">`;
+                        avatarSet = true;
+                    } else if (profRow.avatar) {
+                        if (typeof profRow.avatar === 'string' && profRow.avatar.startsWith('http')) {
+                            avatarEl.innerHTML = `<img src="${profRow.avatar}" alt="avatar" style="width:100%; height:100%; border-radius:50%; object-fit:cover; object-position:center;">`;
+                        } else {
+                            avatarEl.textContent = profRow.avatar;
+                        }
+                        avatarSet = true;
+                    }
+alert('Upload failed.');
             }
         };
         // Fire picker synchronously
         input.click();
     } catch (e) {
-        console.error('selectAndUploadAvatar failed', e);
+{{ ... }}
         alert('Upload failed.');
     }
 }
