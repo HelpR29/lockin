@@ -5,6 +5,26 @@
     box-sizing: border-box;
 }
 
+/* Achievements & Rewards: Reward Shop and Leaderboard fixes */
+.shop-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)) !important; /* override inline */
+    gap: 1.5rem;
+}
+.shop-item-card > div:first-child { align-items: flex-start !important; }
+.shop-item-card > div:last-child { align-items: center; }
+
+@media (max-width: 640px) {
+    .shop-grid { grid-template-columns: 1fr !important; }
+    /* Stack price and button for narrow widths */
+    .shop-item-card > div:last-child { flex-direction: column !important; align-items: flex-start !important; gap: 0.75rem !important; }
+    .shop-item-card .cta-primary { width: 100%; text-align: center; }
+}
+
+/* Leaderboard heading not overlapped by podium */
+#tab-leaderboard h2 { position: relative; z-index: 2; }
+.podium { position: relative; z-index: 1; margin-top: 1rem; }
+
 /* Dashboard mobile header & avatar fixes */
 @media (max-width: 640px) {
     .dashboard-header { 
