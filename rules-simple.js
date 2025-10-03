@@ -274,6 +274,8 @@ async function loadRules() {
                             <input type="checkbox" ${rule.is_active ? 'checked' : ''} onchange="toggleRuleActive('${rule.id}', this.checked)" style="width: 20px; height: 20px; cursor: pointer;">
                             <span style="margin-left: 0.5rem; font-size: 0.875rem;">Active</span>
                         </label>
+                        <button class="rule-edit-btn" onclick="markFollowedAndRefresh('${rule.id}')" title="Mark this rule as followed" style="background: rgba(76, 175, 80, 0.12); border-color:#4CAF50; color:#4CAF50;">✓ Followed</button>
+                        <button class="rule-delete-btn" onclick="reportViolationForRule('${rule.id}')" title="Report a violation for this rule" style="background: rgba(255, 87, 34, 0.12); border-color:#FF5722; color:#FF5722;">🚨 Violation</button>
                         ${editButton}
                         ${deleteButton}
                     </div>
@@ -615,4 +617,67 @@ function upgradeToPremium() {
 window.showPremiumModal = showPremiumModal;
 window.closePremiumModal = closePremiumModal;
 window.upgradeToPremium = upgradeToPremium;
+
+// ---- Quick action handlers ----
+async function markFollowedAndRefresh(ruleId) {
+    try {
+        if (typeof markRuleFollowed === 'function') {
+            await markRuleFollowed(ruleId);
+            await loadRules();
+        }
+    } catch (e) {
+        console.error('markFollowedAndRefresh failed', e);
+        alert('Could not mark as followed.');
+    }
+}
+
+async function reportViolationForRule(ruleId) {
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return alert('Please log in');
+
+        // Try to associate with most recent trade (optional)
+        let tradeId = null;
+        try {
+            const { data: lastTrade } = await supabase
+                .from('trades')
+                .select('id')
+                .eq('user_id', user.id)
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .single();
+            tradeId = lastTrade?.id || null;
+        } catch (_) { /* ignore */ }
+
+        const notes = prompt('Add a note for this violation (optional):', 'Manual');
+
+        if (typeof logViolation === 'function') {
+            await logViolation(ruleId, tradeId, user.id, notes || 'Manual');
+        } else {
+            // Fallback: write directly and increment counter
+            await supabase.from('rule_violations').insert({
+                user_id: user.id,
+                rule_id: ruleId,
+                trade_id: tradeId,
+                notes: notes || 'Manual'
+            });
+            const { data: rule } = await supabase
+                .from('trading_rules')
+                .select('times_violated')
+                .eq('id', ruleId)
+                .single();
+            await supabase
+                .from('trading_rules')
+                .update({ times_violated: (rule?.times_violated || 0) + 1 })
+                .eq('id', ruleId);
+        }
+        await loadRules();
+    } catch (e) {
+        console.error('reportViolationForRule failed', e);
+        alert('Could not report violation.');
+    }
+}
+
+window.reportViolationForRule = reportViolationForRule;
+window.markFollowedAndRefresh = markFollowedAndRefresh;
 
