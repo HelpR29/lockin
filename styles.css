@@ -3248,5 +3248,28 @@ input:checked + .slider:before {
     }
     .rule-item .rule-actions button {
         width: 100%;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.9rem;
     }
+    .rule-item .rule-title {
+        font-size: 1rem;
+        line-height: 1.35;
+        word-break: break-word;
+        hyphens: auto;
+    }
+    .rule-item .rule-stats {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr;
+        row-gap: 0.25rem;
+        column-gap: 0.5rem;
+    }
+    .rule-item .rule-stats .rule-adherence {
+        grid-column: 1 / -1;
+        justify-self: end;
+    }
+}
+
+@media (max-width: 420px) {
+    .rule-item .rule-title { font-size: 0.95rem; }
+    .rule-item .rule-actions { grid-template-columns: 1fr 1fr; }
 }
