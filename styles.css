@@ -1344,6 +1344,15 @@ body {
 }
 .reports-grid > * { min-width: 0; }
 
+/* Performance Calendar: ensure 7 columns fit on small screens */
+.calendar-grid {
+    width: 100%;
+    grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+}
+.calendar-grid > * { min-width: 0; }
+.calendar-day { min-width: 0; }
+.calendar-day .summary { white-space: normal; word-break: break-word; }
+
 .kpi-summary-card {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
