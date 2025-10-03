@@ -374,6 +374,39 @@ async function saveTrade(e) {
                         const violationMessages = violations.map(v => `• ${v.rule.rule}: ${v.reason}`).join('\n');
                         alert(`⚠️ Rule Violations Detected:\n\n${violationMessages}\n\n-30 XP penalty applied for each violation.`);
                     }
+
+                    // Auto-mark detectable rule follows
+                    try {
+                        // Example: "Always set Stop Loss" -> if stop_loss provided, mark as followed
+                        if (savedTrade.stop_loss != null && Number(savedTrade.stop_loss) > 0) {
+                            const { data: stopLossRules } = await supabase
+                                .from('trading_rules')
+                                .select('id, rule, is_active')
+                                .eq('user_id', user.id)
+                                .eq('is_active', true)
+                                .ilike('rule', '%stop loss%');
+                            if (Array.isArray(stopLossRules)) {
+                                for (const r of stopLossRules) {
+                                    try {
+                                        if (typeof markRuleFollowed === 'function') {
+                                            await markRuleFollowed(r.id);
+                                        } else {
+                                            // Fallback increment
+                                            const { data: row } = await supabase
+                                                .from('trading_rules')
+                                                .select('times_followed')
+                                                .eq('id', r.id)
+                                                .single();
+                                            await supabase
+                                                .from('trading_rules')
+                                                .update({ times_followed: (row?.times_followed || 0) + 1 })
+                                                .eq('id', r.id);
+                                        }
+                                    } catch (_) { /* continue */ }
+                                }
+                            }
+                        }
+                    } catch (_) { /* ignore auto-mark errors */ }
                 }
             }
             
