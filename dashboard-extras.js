@@ -641,20 +641,45 @@ window.deleteAccount = deleteAccount;
 // Open any user's profile by id (shared for Achievements/Friends)
 async function openUserProfileById(userId) {
     try {
+        const { data: { user: me } } = await supabase.auth.getUser();
+        if (!me) return;
+
         const { data: row } = await supabase
             .from('leaderboard_stats')
             .select('*')
             .eq('user_id', userId)
             .single();
         if (!row) return;
+
+        // Determine follow state
+        let isFollowing = false;
+        try {
+            const { data: followRec } = await supabase
+                .from('follows')
+                .select('id')
+                .eq('follower_id', me.id)
+                .eq('following_id', userId)
+                .limit(1)
+                .single();
+            isFollowing = !!followRec;
+        } catch (_) { /* not following */ }
+
         const badge = row.is_premium ? '<span title="PREMIUM" style="color:#FFD54F; margin-left:0.25rem;">💎</span>' : '';
         const modal = document.createElement('div');
         modal.className = 'modal';
         modal.style.display = 'flex';
         modal.innerHTML = `
-            <div class="modal-content" style="max-width:520px;">
+            <div class="modal-content" style="max-width:520px; position: relative;">
                 <span class="close-button" onclick="this.closest('.modal').remove()">&times;</span>
-                <h2 style="margin-bottom:1rem;">${row.full_name || 'Trader'} ${badge}</h2>
+                <div style="display:flex; align-items:center; justify-content:center; gap:0.5rem; margin-bottom:0.75rem;">
+                    <h2 style="margin:0; text-align:center;">${row.full_name || 'Trader'} ${badge}</h2>
+                    <button id="followIconBtn_${row.user_id}"
+                        title="${isFollowing ? 'Unfollow' : 'Follow'}"
+                        style="all:unset; cursor:pointer; background: rgba(255,255,255,0.08); border:1px solid var(--glass-border); width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1rem;">
+                        ${isFollowing ? '✓' : '+'}
+                    </button>
+                </div>
+
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
                     <div style="background: rgba(255,255,255,0.05); padding:1rem; border-radius:12px; text-align:center;">
                         <div style="font-size:1.75rem; font-weight:800; color:var(--primary);">${row.level}</div>
@@ -669,16 +694,124 @@ async function openUserProfileById(userId) {
                         <div style="font-size:0.8rem; color:var(--text-secondary);">Discipline</div>
                     </div>
                 </div>
+
+                <!-- Advanced Stats -->
+                <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:1rem; margin-top:1rem;">
+                    <div style="background: rgba(255,255,255,0.05); padding:1rem; border-radius:12px; text-align:center;">
+                        <div id="profileGrowth_${row.user_id}" style="font-size:1.25rem; font-weight:700;">—</div>
+                        <div style="font-size:0.8rem; color:var(--text-secondary);">Growth %</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.05); padding:1rem; border-radius:12px; text-align:center;">
+                        <div id="profileRMultiple_${row.user_id}" style="font-size:1.25rem; font-weight:700;">—</div>
+                        <div style="font-size:0.8rem; color:var(--text-secondary);">R Multiple</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.05); padding:1rem; border-radius:12px; text-align:center;">
+                        <div id="profileProfitFactor_${row.user_id}" style="font-size:1.25rem; font-weight:700;">—</div>
+                        <div style="font-size:0.8rem; color:var(--text-secondary);">Profit Factor</div>
+                    </div>
+                </div>
+
                 <div style="display:flex; gap:0.5rem; justify-content:flex-end; margin-top:1rem;">
                     <button class="cta-secondary" onclick="this.closest('.modal').remove()">Close</button>
-                    <button class="cta-primary" id="followActionBtn_${row.user_id}" onclick="toggleFollow('${row.user_id}')">Follow</button>
+                    <button class="cta-primary" id="followActionBtn_${row.user_id}" onclick="toggleFollow('${row.user_id}')">${isFollowing ? 'Unfollow' : 'Follow'}</button>
                 </div>
             </div>
         `;
         document.body.appendChild(modal);
+
+        // Wire follow icon toggle and keep bottom button in sync
+        const iconBtn = document.getElementById(`followIconBtn_${row.user_id}`);
+        const actionBtn = document.getElementById(`followActionBtn_${row.user_id}`);
+        if (iconBtn) {
+            iconBtn.addEventListener('click', async () => {
+                await toggleFollow(row.user_id);
+                isFollowing = !isFollowing;
+                iconBtn.textContent = isFollowing ? '✓' : '+';
+                iconBtn.title = isFollowing ? 'Unfollow' : 'Follow';
+                if (actionBtn) actionBtn.textContent = isFollowing ? 'Unfollow' : 'Follow';
+                // Try loading stats again if now following
+                try { await _loadProfileAdvancedStats(userId, me.id === userId || isFollowing); } catch (_) {}
+            });
+        }
+
+        // Load advanced stats (if self or following)
+        await _loadProfileAdvancedStats(userId, me.id === userId || isFollowing);
+
     } catch (e) { console.warn('openUserProfileById failed', e); }
 }
 window.openUserProfileById = openUserProfileById;
+
+// Helper to compute and render advanced stats
+async function _loadProfileAdvancedStats(targetUserId, canView) {
+    try {
+        const growthEl = document.getElementById(`profileGrowth_${targetUserId}`);
+        const rEl = document.getElementById(`profileRMultiple_${targetUserId}`);
+        const pfEl = document.getElementById(`profileProfitFactor_${targetUserId}`);
+        if (!growthEl || !rEl || !pfEl) return;
+
+        // Default placeholders
+        growthEl.textContent = '—';
+        rEl.textContent = '—';
+        pfEl.textContent = '—';
+
+        // Only proceed if allowed
+        if (!canView) {
+            return; // Cannot read other user's trades/goals unless following (RLS)
+        }
+
+        // Fetch closed trades for stats
+        const { data: trades, error: tErr } = await supabase
+            .from('trades')
+            .select('entry_price, exit_price, position_size, trade_type, direction, status')
+            .eq('user_id', targetUserId)
+            .eq('status', 'closed')
+            .limit(1000);
+        if (tErr) { return; }
+
+        let totalWins = 0, totalLosses = 0, winCount = 0, lossCount = 0;
+        (trades || []).forEach(t => {
+            if (t.exit_price == null || t.entry_price == null) return;
+            const isOption = t.trade_type === 'call' || t.trade_type === 'put';
+            const mult = isOption ? 100 : 1;
+            const dir = (t.direction || '').toLowerCase() === 'short' ? -1 : 1;
+            const pnl = (t.exit_price - t.entry_price) * (t.position_size || 0) * mult * dir;
+            if (pnl > 0) { totalWins += pnl; winCount++; }
+            else if (pnl < 0) { totalLosses += Math.abs(pnl); lossCount++; }
+        });
+
+        // Profit Factor
+        if (totalWins > 0 && totalLosses > 0) {
+            pfEl.textContent = (totalWins / totalLosses).toFixed(2);
+        } else if (totalWins > 0 && totalLosses === 0) {
+            pfEl.textContent = '∞';
+        }
+
+        // R Multiple (avg win / avg loss)
+        const avgWin = winCount > 0 ? (totalWins / winCount) : 0;
+        const avgLoss = lossCount > 0 ? (totalLosses / lossCount) : 0;
+        if (avgWin > 0 && avgLoss > 0) {
+            rEl.textContent = (avgWin / avgLoss).toFixed(2);
+        }
+
+        // Growth % (only for self, using goals baseline)
+        const { data: { user: me } } = await supabase.auth.getUser();
+        const isSelf = me && me.id === targetUserId;
+        if (isSelf) {
+            try {
+                const { data: goal } = await supabase
+                    .from('user_goals')
+                    .select('starting_capital, current_capital')
+                    .eq('user_id', targetUserId)
+                    .eq('is_active', true)
+                    .single();
+                if (goal && Number(goal.starting_capital) > 0 && goal.current_capital != null) {
+                    const growth = ((Number(goal.current_capital) - Number(goal.starting_capital)) / Number(goal.starting_capital)) * 100;
+                    growthEl.textContent = `${growth.toFixed(1)}%`;
+                }
+            } catch (_) { /* keep placeholder */ }
+        }
+    } catch (_) { /* ignore */ }
+}
 
 // Avatar upload/remove (Premium)
 async function selectAndUploadAvatar() {
