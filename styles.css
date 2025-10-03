@@ -159,10 +159,12 @@ body {
     align-items: center;
     gap: 0.5rem;
     flex-wrap: nowrap;
-    overflow-x: auto; /* allow horizontal scroll on mobile */
-    overflow-y: hidden;
+    overflow-x: auto !important; /* override inline overflow */
+    overflow-y: hidden !important;
     -webkit-overflow-scrolling: touch;
     margin-left: auto;
+    min-width: 0; /* allow flex item to shrink */
+    max-width: 100%;
 }
 
 /* Optional: links/buttons inside header nav */
@@ -172,6 +174,7 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
+    flex: 0 0 auto; /* prevent unwanted flex shrinking/growing calculations */
 }
 
 /* Hide header nav scrollbar visually */

@@ -416,7 +416,11 @@ function renderPlChart(trades) {
                 fill: true
             }]
         },
-        options: { scales: { x: { type: 'time', time: { unit: 'day' } } } }
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { x: { type: 'time', time: { unit: 'day' } } }
+        }
     });
 }
 
