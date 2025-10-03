@@ -1353,6 +1353,13 @@ body {
 .calendar-day { min-width: 0; }
 .calendar-day .summary { white-space: normal; word-break: break-word; }
 
+@media (max-width: 480px) {
+    .calendar-grid { gap: 0.35rem !important; padding: 0.5rem !important; }
+    .calendar-day { min-height: 60px; padding: 0.35rem; }
+    .calendar-day .date { font-size: 0.8rem; }
+    .calendar-day .summary { font-size: 0.7rem; }
+}
+
 .kpi-summary-card {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
