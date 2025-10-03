@@ -24,6 +24,7 @@
 html {
     font-size: 16px;
     scroll-behavior: smooth;
+    overflow-x: hidden; /* prevent horizontal scroll globally */
 }
 
 body {
@@ -1339,6 +1340,7 @@ body {
     gap: 1.5rem;
     align-items: stretch;
     width: 100%;
+    overflow-x: hidden;
 }
 .reports-grid > * { min-width: 0; }
 
@@ -1388,7 +1390,8 @@ body {
 }
 
 @media (max-width: 640px) {
-    .reports-grid { grid-template-columns: 1fr; }
+    .reports-grid { grid-template-columns: 1fr !important; }
+    .kpi-summary-card { grid-template-columns: 1fr !important; }
 }
 
 @media (max-width: 1024px) {
