@@ -891,7 +891,7 @@ async function closeTrade(tradeId) {
         // Show detailed success message
         const xpMsg = pnl > 0 ? `\n\n+10 XP earned! 🎯` : '';
         if (isFullClose) {
-{{ ... }}
+            alert(
                 `✅ TRADE FULLY CLOSED\n\n` +
                 `${trade.symbol}: ${closeSize} ${trade.trade_type === 'stock' ? 'shares' : 'contracts'}\n` +
                 `Entry: $${trade.entry_price}\n` +
