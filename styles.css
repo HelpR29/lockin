@@ -159,7 +159,9 @@ body {
     align-items: center;
     gap: 0.5rem;
     flex-wrap: nowrap;
-    overflow: hidden;
+    overflow-x: auto; /* allow horizontal scroll on mobile */
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
     margin-left: auto;
 }
 
@@ -171,6 +173,25 @@ body {
     align-items: center;
     gap: 0.35rem;
 }
+
+/* Hide header nav scrollbar visually */
+.header .nav::-webkit-scrollbar { display: none; }
+.header .nav { scrollbar-width: none; }
+
+/* Global header responsiveness (applies across pages) */
+#headerXpProgress { display: none; }
+@media (max-width: 1700px) {
+    .header .nav { gap: 0.45rem; }
+    .header .nav a { padding: 0.5rem 0.75rem; }
+    .header .nav .nav-label { display: none; }
+    #headerXpBarContainer { flex-basis: 100px; width: 100px; }
+    #xpWidget { max-width: 220px; }
+}
+@media (max-width: 1400px) { #headerLevelLabel { display: none; } }
+@media (max-width: 1350px) { #headerXpBarContainer { flex-basis: 90px; width: 90px; } }
+@media (max-width: 1200px) { .header .notification-bell { display: none; } }
+@media (max-width: 1024px) { #headerXpBarContainer { display: none; } }
+@media (max-width: 980px) { #xpWidget { display: none; } }
 
 /* Hero Section */
 .hero {
