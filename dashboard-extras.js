@@ -724,25 +724,20 @@ async function selectAndUploadAvatar() {
                 const publicUrl = pub?.publicUrl;
                 if (!publicUrl) { alert('Could not get public URL.'); return; }
                 await supabase.from('user_profiles').update({ avatar_url: publicUrl }).eq('user_id', user.id);
-                // Update UI
+                // Update UI previews
                 const preview = document.getElementById('settingsAvatarPreview');
-                const avatarEl = document.getElementById('dashboardAvatar');
-                if (avatarEl && preview) {
-                    if (profRow.avatar_url) {
-                        avatarEl.innerHTML = `<img src="${profRow.avatar_url}" alt="avatar" style="width:100%; height:100%; border-radius:50%; object-fit:cover; object-position:center;">`;
-                        preview.innerHTML = `<img src="${profRow.avatar_url}" alt="avatar" style="width:100%; height:100%; border-radius:50%; object-fit:cover; object-position:center;">`;
-                        avatarSet = true;
-                    } else if (profRow.avatar) {
-                        if (typeof profRow.avatar === 'string' && profRow.avatar.startsWith('http')) {
-                            avatarEl.innerHTML = `<img src="${profRow.avatar}" alt="avatar" style="width:100%; height:100%; border-radius:50%; object-fit:cover; object-position:center;">`;
-                            preview.innerHTML = `<img src="${profRow.avatar}" alt="avatar" style="width:100%; height:100%; border-radius:50%; object-fit:cover; object-position:center;">`;
-                        } else {
-                            avatarEl.textContent = profRow.avatar;
-                            preview.textContent = profRow.avatar;
-                        }
-                        avatarSet = true;
-                    }
-                }
+                if (preview) preview.innerHTML = `<img src="${publicUrl}" alt="avatar" style="width:100%; height:100%; object-fit:cover; object-position:center;">`;
+                const dash = document.getElementById('dashboardAvatar');
+                if (dash) dash.innerHTML = `<img src="${publicUrl}" alt="avatar" style="width:100%; height:100%; border-radius:50%; object-fit:cover; object-position:center;">`;
+            } catch (err) {
+                console.error('Avatar upload failed', err);
+                alert('Upload failed.');
+            }
+        };
+        // Fire picker synchronously
+        input.click();
+    } catch (e) {
+        console.error('selectAndUploadAvatar failed', e);
         alert('Upload failed.');
     }
 }
