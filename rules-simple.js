@@ -263,11 +263,11 @@ async function loadRules() {
                 
                 ruleEl.innerHTML = `
                     <div style="flex: 1;">
-                        <p style="font-weight: 500; margin: 0 0 0.5rem 0; color: var(--text-primary);">${rule.rule}</p>
-                        <div style="display: flex; gap: 1rem; font-size: 0.875rem; color: var(--text-secondary);">
+                        <p class="rule-title" style="font-weight: 500; margin: 0 0 0.5rem 0; color: var(--text-primary); line-height:1.3; word-break: break-word; hyphens: auto;">${rule.rule}</p>
+                        <div class="rule-stats" style="display: flex; flex-wrap: wrap; gap: 0.75rem; font-size: 0.875rem; color: var(--text-secondary); align-items:center;">
                             <span>✓ Followed: ${rule.times_followed || 0}</span>
                             <span>✗ Violated: ${rule.times_violated || 0}</span>
-                            <span style="color: ${adherenceColor}; font-weight: 600;">Adherence: ${adherencePercent}%</span>
+                            <span class="rule-adherence" style="color: ${adherenceColor}; font-weight: 600;">Adherence: ${adherencePercent}%</span>
                         </div>
                     </div>
                     <div class="rule-actions" style="display: flex; gap: 0.5rem; align-items: center;">
