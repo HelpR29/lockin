@@ -1366,9 +1366,9 @@ body {
 
 @media (max-width: 480px) {
     .calendar-grid { gap: 0.35rem !important; padding: 0.5rem !important; }
-    .calendar-day { min-height: 60px; padding: 0.35rem; }
-    .calendar-day .date { font-size: 0.8rem; }
-    .calendar-day .summary { font-size: 0.7rem; flex-wrap: nowrap; }
+    .calendar-day { min-height: 60px; padding: 0.35rem; justify-content: center; align-items: center; }
+    .calendar-day .date { font-size: 0.9rem; }
+    .calendar-day .summary { display: none !important; }
     /* Hide verbose labels; use compact currency */
     .calendar-day .sum-trades-label,
     .calendar-day .sum-sep,
