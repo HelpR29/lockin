@@ -133,17 +133,17 @@
                 
                 <!-- Performance Calendar -->
                 <div class="chart-card" id="performanceCalendarCard" style="margin-top: 1.5rem;">
-                    <h3>Performance Calendar</h3>
+                    <h3 data-tooltip="Heatmap of daily results for the selected month. Tap a day to see trades.">Performance Calendar</h3>
                     <div class="calendar-summary" id="calendarSummary" style="display:flex; gap:0.75rem; margin:0.25rem 0 0.75rem; flex-wrap: wrap;">
-                        <div class="summary-item" style="flex:1; min-width:160px; background: rgba(255,255,255,0.03); border:1px solid var(--glass-border); border-radius:10px; padding:0.6rem 0.8rem;">
+                        <div class="summary-item" data-tooltip="Sum of all daily P/L for the current month." style="flex:1; min-width:160px; background: rgba(255,255,255,0.03); border:1px solid var(--glass-border); border-radius:10px; padding:0.6rem 0.8rem;">
                             <div class="label" style="font-size:0.8rem; color: var(--text-secondary);">Monthly P/L</div>
                             <div class="value" id="calendarMonthSummaryPnL" style="font-weight:800; font-size:1.05rem;">$0.00</div>
                         </div>
-                        <div class="summary-item" style="flex:1; min-width:140px; background: rgba(255,255,255,0.03); border:1px solid var(--glass-border); border-radius:10px; padding:0.6rem 0.8rem;">
+                        <div class="summary-item" data-tooltip="Number of closed trades in the current month." style="flex:1; min-width:140px; background: rgba(255,255,255,0.03); border:1px solid var(--glass-border); border-radius:10px; padding:0.6rem 0.8rem;">
                             <div class="label" style="font-size:0.8rem; color: var(--text-secondary);">Trades</div>
                             <div class="value" id="calendarMonthSummaryTrades" style="font-weight:800; font-size:1.05rem;">0</div>
                         </div>
-                        <div class="summary-item" style="flex:1; min-width:140px; background: rgba(255,255,255,0.03); border:1px solid var(--glass-border); border-radius:10px; padding:0.6rem 0.8rem;">
+                        <div class="summary-item" data-tooltip="Wins divided by total closed trades in the month." style="flex:1; min-width:140px; background: rgba(255,255,255,0.03); border:1px solid var(--glass-border); border-radius:10px; padding:0.6rem 0.8rem;">
                             <div class="label" style="font-size:0.8rem; color: var(--text-secondary);">Win Rate</div>
                             <div class="value" id="calendarMonthSummaryWinRate" style="font-weight:800; font-size:1.05rem;">0%</div>
                         </div>
