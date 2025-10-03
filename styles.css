@@ -15,6 +15,7 @@
         gap: 1rem !important; 
         overflow: visible !important;
     }
+    .dashboard-container { overflow-x: visible !important; }
     #dashboardAvatar { 
         width: 110px !important; 
         height: 110px !important; 
