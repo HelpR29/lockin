@@ -130,10 +130,18 @@ async function buildPerformanceCalendar() {
         const agg = dailyMap.get(key) || { pnl: 0, trades: [] };
 
         const cell = document.createElement('div');
-        cell.className = 'calendar-day' + (agg.trades.length ? (agg.pnl >= 0 ? ' win' : ' loss') : '');
+        const hasTrades = agg.trades.length > 0;
+        cell.className = 'calendar-day' + (hasTrades ? (agg.pnl >= 0 ? ' win' : ' loss') : '');
+        const tradesCount = agg.trades.length;
+        const pnlText = `$${agg.pnl.toFixed(2)}`;
         cell.innerHTML = `
             <div class="date">${day}</div>
-            <div class="summary">${agg.trades.length} trade${agg.trades.length === 1 ? '' : 's'}${agg.trades.length ? ` • $${agg.pnl.toFixed(2)}` : ''}</div>
+            <div class="summary">${hasTrades ? `
+                <span class="sum-trades">${tradesCount}</span>
+                <span class="sum-trades-label">trades</span>
+                <span class="sum-sep">•</span>
+                <span class="sum-pnl">${pnlText}</span>
+            ` : ''}</div>
         `;
         cell.onclick = () => openDayDetailsModal(dateObj, agg.trades, agg.pnl);
         grid.appendChild(cell);
