@@ -222,6 +222,9 @@ async function buildPerformanceCalendar() {
                     </div>
                     <div style="font-size:0.9rem; color: var(--text-secondary);">${w.trades} trades • ${w.trades ? ((w.wins / w.trades) * 100).toFixed(0) : 0}% win</div>
                 `;
+                // Tooltip for weekly row
+                const weekWinRate = w.trades ? ((w.wins / w.trades) * 100).toFixed(0) : '0';
+                row.setAttribute('data-tooltip', `Weekly summary: ${range}\nP/L: ${w.pnl >= 0 ? '+' : ''}$${w.pnl.toFixed(2)} • Trades: ${w.trades} • Win rate: ${weekWinRate}%`);
                 weeklyContainer.appendChild(row);
             }
 
@@ -267,6 +270,9 @@ async function buildPerformanceCalendar() {
             } catch (_) {}
         }
     } catch (_) {}
+
+    // Re-bind tooltips after rebuilding calendar (for month navigation)
+    try { initReportTooltips(); } catch (_) {}
 }
 
 function openDayDetailsModal(dateObj, trades, totalPnl) {
