@@ -362,6 +362,8 @@ async function generateReports() {
     calendarMonth = now.getMonth();
     wireCalendarNav();
     await buildPerformanceCalendar();
+    // Initialize tooltips after dynamic content is in the DOM
+    try { initReportTooltips(); } catch (_) {}
     } catch (error) {
         console.error('Error generating reports:', error);
         throw error;
@@ -516,5 +518,44 @@ function renderDailyPlChart(trades) {
                 }
             }
         }
+    });
+}
+
+// -------------------- Tooltips --------------------
+function initReportTooltips() {
+    const els = document.querySelectorAll('[data-tooltip]');
+    if (!els.length) return;
+    let bubble = document.getElementById('__reportsTooltip');
+    if (!bubble) {
+        bubble = document.createElement('div');
+        bubble.id = '__reportsTooltip';
+        bubble.className = 'tooltip-bubble';
+        document.body.appendChild(bubble);
+    }
+    const show = (el) => {
+        const text = el.getAttribute('data-tooltip');
+        if (!text) return;
+        bubble.textContent = text;
+        const r = el.getBoundingClientRect();
+        const top = window.scrollY + r.top - 10;
+        const left = window.scrollX + r.left + r.width / 2;
+        bubble.style.top = `${top}px`;
+        bubble.style.left = `${left}px`;
+        bubble.style.transform = 'translate(-50%, -8px)';
+        bubble.classList.add('visible');
+    };
+    const hide = () => bubble.classList.remove('visible');
+    els.forEach(el => {
+        el.setAttribute('tabindex', '0');
+        el.addEventListener('mouseenter', () => show(el));
+        el.addEventListener('mouseleave', hide);
+        el.addEventListener('focus', () => show(el));
+        el.addEventListener('blur', hide);
+        el.addEventListener('click', (e) => {
+            // Mobile/tap support: toggle briefly
+            e.preventDefault();
+            show(el);
+            setTimeout(hide, 1800);
+        });
     });
 }
