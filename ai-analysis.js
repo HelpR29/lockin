@@ -324,7 +324,8 @@ async function analyzeWithAI(trades, stats, userRules) {
         direction: t.direction,
         entry: t.entry_price,
         exit: t.exit_price,
-        pnl: t.exit_price ? (t.exit_price - t.entry_price) * t.position_size * (t.direction === 'short' ? -1 : 1) : 0,
+        // Include options multiplier (100) for calls/puts
+        pnl: t.exit_price ? (t.exit_price - t.entry_price) * t.position_size * ((t.trade_type === 'call' || t.trade_type === 'put') ? 100 : 1) * (t.direction === 'short' ? -1 : 1) : 0,
         emotions: t.emotions,
         notes: t.notes
     }));
@@ -499,12 +500,20 @@ function displayAIAnalysis(analysis) {
 }
 
 function calculateAdvancedStats(trades) {
+    // Helper: stable local YYYY-MM-DD to avoid timezone parsing/sorting issues
+    function toLocalYMD(dateLike) {
+        const d = new Date(dateLike);
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+    }
     const closedTrades = trades.filter(t => t.status === 'closed' && t.exit_price);
     
     // Group by day
     const tradesByDay = {};
     closedTrades.forEach(trade => {
-        const day = new Date(trade.created_at).toLocaleDateString();
+        const day = toLocalYMD(trade.created_at);
         if (!tradesByDay[day]) tradesByDay[day] = [];
         tradesByDay[day].push(trade);
     });
@@ -551,7 +560,7 @@ function calculateAdvancedStats(trades) {
     let peak = 0;
     let maxDrawdown = 0;
     let cumulative = 0;
-    const sortedDays = Object.keys(dailyPnL).sort();
+    const sortedDays = Object.keys(dailyPnL).sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
     sortedDays.forEach(day => {
         cumulative += dailyPnL[day];
         if (cumulative > peak) peak = cumulative;
