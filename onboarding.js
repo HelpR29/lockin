@@ -597,12 +597,14 @@ async function completeOnboarding() {
         
         // Save selected trading rules
         console.log('💾 Saving', selectedRules.length, 'selected trading rules...');
+        const severityByCategory = { 'Risk Management': 3, 'Exit Rules': 3, 'Entry Rules': 2, 'Psychology': 2, 'General': 1 };
         for (const ruleData of selectedRules) {
             await supabase.from('trading_rules').insert({
                 user_id: user.id,
                 rule: ruleData.rule,
                 category: ruleData.category,
                 is_active: true,
+                severity: severityByCategory[ruleData.category] || 1,
                 times_followed: 0,
                 times_violated: 0
             });
