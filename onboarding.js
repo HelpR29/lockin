@@ -162,7 +162,7 @@ function renderPresetAvatars() {
     else if (g === 'female') list = PRESET_AVATARS.female;
     else list = [...(PRESET_AVATARS.male || []), ...(PRESET_AVATARS.female || [])];
     gallery.innerHTML = (list || []).map(url => `
-        <div class="preset-avatar-item" data-url="${url}" style="width:64px; height:64px; border-radius:50%; overflow:hidden; border:2px solid ${selectedAvatarUrl===url ? 'var(--primary)' : 'var(--glass-border)'}; cursor:pointer;">
+        <div class="preset-avatar-item" data-url="${url}" style="width:64px; height:64px; border-radius:50%; overflow:hidden; border:2px solid ${selectedAvatarUrl===url ? 'var(--primary-orange)' : 'var(--glass-border)'}; cursor:pointer;">
             <img src="${url}" alt="avatar" style="width:100%; height:100%; object-fit:cover; display:block;"/>
         </div>
     `).join('');
@@ -173,13 +173,26 @@ function renderPresetAvatars() {
             selectPresetAvatar(url);
         };
     });
+    // Keep preview in sync after re-render
+    updateAvatarPreview(selectedAvatarUrl);
 }
 
 function selectPresetAvatar(url) {
     selectedAvatarUrl = url;
     // Clear emoji selection (keep the hidden emoji if already set, but photo will take precedence)
     onboardingData.profile = { ...(onboardingData.profile || {}), avatar_url: url };
+    updateAvatarPreview(url);
     renderPresetAvatars();
+}
+
+function updateAvatarPreview(url) {
+    const preview = document.getElementById('avatarLivePreview');
+    if (!preview) return;
+    if (url) {
+        preview.innerHTML = `<img src="${url}" alt="avatar" style="width:100%; height:100%; object-fit:cover; display:block;"/>`;
+    } else {
+        preview.innerHTML = `<span style="font-size:2.25rem;">👤</span>`;
+    }
 }
 
 // Step 2: Save Profile
@@ -191,7 +204,7 @@ async function saveProfile() {
     }
     
     if (!selectedAvatar && !selectedAvatarUrl) {
-        alert('Please select a profile picture (emoji or preset)!');
+        alert('Please select a preset avatar!');
         return;
     }
     
