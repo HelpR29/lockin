@@ -419,13 +419,13 @@ async function openSettingsModal() {
                     <div style="font-size:0.9rem; color: var(--text-secondary); margin-bottom: 0.4rem;">Or choose a preset:</div>
                     <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
                         <div style="width:56px; height:56px; border-radius:50%; overflow:hidden; border:1px solid var(--glass-border);">
-                            <img src="/assets/avatars/male.png" alt="Male" style="width:100%; height:100%; object-fit:cover;">
+                            <img src="assets/avatars/male.png" alt="Male" style="width:100%; height:100%; object-fit:cover;">
                         </div>
-                        <button class="cta-secondary" onclick="applyPresetAvatar('/assets/avatars/male.png')">Use Male</button>
+                        <button class="cta-secondary" onclick="applyPresetAvatar('assets/avatars/male.png')">Use Male</button>
                         <div style="width:56px; height:56px; border-radius:50%; overflow:hidden; border:1px solid var(--glass-border);">
-                            <img src="/assets/avatars/female.png" alt="Female" style="width:100%; height:100%; object-fit:cover;">
+                            <img src="assets/avatars/female.png" alt="Female" style="width:100%; height:100%; object-fit:cover;">
                         </div>
-                        <button class="cta-secondary" onclick="applyPresetAvatar('/assets/avatars/female.png')">Use Female</button>
+                        <button class="cta-secondary" onclick="applyPresetAvatar('assets/avatars/female.png')">Use Female</button>
                     </div>
                 </div>
                 <div id="premiumPhotoNote" style="font-size:0.8rem; color:var(--text-secondary); margin-top:0.5rem;"></div>
