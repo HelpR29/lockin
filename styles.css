@@ -2403,9 +2403,9 @@ input:checked + .slider:before {
 /* Achievements Page Styles */
 /* Legendary name glow */
 .legendary-name {
-  color: #ffd700;
-  text-shadow: 0 0 6px rgba(255, 215, 0, 0.6), 0 0 14px rgba(255, 215, 0, 0.35);
-  filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.4));
+  color: #ffd700 !important;
+  text-shadow: 0 0 6px rgba(255, 215, 0, 0.6), 0 0 14px rgba(255, 215, 0, 0.35) !important;
+  filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.4)) !important;
 }
 @media (prefers-reduced-motion: no-preference) {
   .legendary-name {
