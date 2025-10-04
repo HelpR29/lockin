@@ -79,7 +79,13 @@ SELECT
                 (COUNT(DISTINCT CASE WHEN t.stop_loss IS NOT NULL AND t.stop_loss > 0 THEN t.id END)::NUMERIC / COUNT(DISTINCT t.id) * 30) +
                 (COUNT(DISTINCT CASE WHEN t.target_price IS NOT NULL AND t.target_price > 0 THEN t.id END)::NUMERIC / COUNT(DISTINCT t.id) * 20) +
                 (COUNT(DISTINCT CASE WHEN t.notes IS NOT NULL AND LENGTH(t.notes) > 10 THEN t.id END)::NUMERIC / COUNT(DISTINCT t.id) * 20) +
-                (100 - LEAST(COUNT(DISTINCT rv.id)::NUMERIC / GREATEST(COUNT(DISTINCT t.id), 1) * 100, 100)) * 0.3
+                (
+                    100 - LEAST(
+                        GREATEST(COUNT(DISTINCT rv.id)::NUMERIC, COALESCE(trsum.tr_violated_sum, 0))
+                        / GREATEST(COUNT(DISTINCT t.id), 1) * 100,
+                        100
+                    )
+                ) * 0.3
             , 1)
         ELSE 100
     END as discipline_score,
@@ -91,6 +97,11 @@ LEFT JOIN user_stars us ON u.id = us.user_id
 LEFT JOIN user_achievements ua ON u.id = ua.user_id
 LEFT JOIN trades t ON u.id = t.user_id AND t.status = 'closed'
 LEFT JOIN rule_violations rv ON u.id = rv.user_id
+LEFT JOIN LATERAL (
+    SELECT SUM(times_violated)::NUMERIC AS tr_violated_sum
+    FROM trading_rules
+    WHERE user_id = u.id
+) trsum ON TRUE
 GROUP BY u.id, u.email, u.raw_user_meta_data, uprof.is_premium, up.beers_cracked, up.level, up.total_check_ins, us.total_stars, up.updated_at
 ORDER BY completions DESC, discipline_score DESC, total_xp DESC;
 
