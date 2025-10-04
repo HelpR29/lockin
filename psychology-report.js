@@ -287,9 +287,9 @@ function renderDisciplineScore(trades, rules, violations) {
     // Overall discipline score (weighted average)
     const disciplineScoreRaw = (
         stopLossRate * 0.3 + 
-        targetRate * 0.2 + 
-        journalRate * 0.2 + 
-        (100 - violationRate) * 0.3
+        targetRate * 0.15 + 
+        journalRate * 0.15 + 
+        (100 - violationRate) * 0.4
     );
     const disciplineScore = Math.max(0, Math.min(100, Number(disciplineScoreRaw.toFixed(1))));
 
