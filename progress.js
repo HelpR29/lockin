@@ -555,7 +555,7 @@ const calculateDisciplineScore = async (userId) => {
 
     if (tradesError || violationsError) {
         console.error('Error fetching discipline data:', tradesError || violationsError);
-        return 0;
+        return null; // signal failure so callers can fallback
     }
 
     const totalTrades = trades.length;
@@ -625,6 +625,9 @@ async function getUserProgressSummary(userId) {
         
         // Calculate projected final balance
         const disciplineScore = await calculateDisciplineScore(userId);
+        const disciplineScoreFinal = (disciplineScore ?? null) !== null && Number.isFinite(Number(disciplineScore))
+            ? Number(disciplineScore)
+            : Number(progress?.discipline_score ?? 0);
 
         const projectedBalance = goals ? calculateProjectedBalance(
             goals.starting_capital,
@@ -641,7 +644,7 @@ async function getUserProgressSummary(userId) {
             totalGrowthMultiplier: totalGrowth,
             achievements: achievements ? achievements.map(a => a.achievements) : [],
             cycleCracked: goals?.bottles_cracked || 0,
-            disciplineScore
+            disciplineScore: disciplineScoreFinal
         };
         
     } catch (error) {
