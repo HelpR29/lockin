@@ -624,13 +624,37 @@ async function getUserProgressSummary(userId) {
         const progressPercent = goals ? ((goals.bottles_cracked || 0) / goals.total_bottles) * 100 : 0;
         
         // Calculate projected final balance
-        const disciplineScore = await calculateDisciplineScore(userId);
-        let disciplineScoreFinal = (disciplineScore ?? null) !== null && Number.isFinite(Number(disciplineScore))
-            ? Number(disciplineScore)
-            : Number(progress?.discipline_score ?? 0);
-        // If brand-new (no check-ins yet) and no computed score, default to 100%
-        if ((!Number.isFinite(disciplineScoreFinal) || disciplineScoreFinal <= 0) && Number(progress?.total_check_ins || 0) === 0) {
-            disciplineScoreFinal = 100;
+        // IMPORTANT: Prefer the same metric the leaderboard/profile uses (user_progress.discipline_score)
+        let disciplineScoreFinal;
+        const dbScoreRaw = progress?.discipline_score;
+        const dbScore = Number(dbScoreRaw);
+        if (Number.isFinite(dbScore) && dbScore >= 0) {
+            disciplineScoreFinal = Math.max(0, Math.min(100, Math.round(dbScore)));
+        } else {
+            // Fallback: compute from trades vs. violations if DB score missing
+            const computed = await calculateDisciplineScore(userId);
+            if ((computed ?? null) !== null && Number.isFinite(Number(computed))) {
+                disciplineScoreFinal = Math.max(0, Math.min(100, Math.round(Number(computed))));
+            } else {
+                // Secondary fallback: use leaderboard view (keeps parity with UI elsewhere)
+                try {
+                    const { data: lb } = await supabase
+                        .from('leaderboard_stats')
+                        .select('discipline_score')
+                        .eq('user_id', userId)
+                        .single();
+                    const lbScore = Number(lb?.discipline_score);
+                    if (Number.isFinite(lbScore)) {
+                        disciplineScoreFinal = Math.max(0, Math.min(100, Math.round(lbScore)));
+                    }
+                } catch (_) { /* ignore */ }
+            }
+            if (disciplineScoreFinal == null && Number(progress?.total_check_ins || 0) === 0) {
+                // Brand new account: default to 100
+                disciplineScoreFinal = 100;
+            } else if (disciplineScoreFinal == null) {
+                disciplineScoreFinal = 0;
+            }
         }
 
         const projectedBalance = goals ? calculateProjectedBalance(
