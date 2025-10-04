@@ -327,7 +327,7 @@ async function loadLeaderboard() {
             if (ids.length) {
                 const { data: profiles } = await supabase
                     .from('user_profiles')
-                    .select('user_id, username, avatar, avatar_url')
+                    .select('user_id, username, avatar, avatar_url, is_legendary')
                     .in('user_id', ids);
                 const pmap = new Map((profiles || []).map(p => [p.user_id, p]));
                 rows = rows.map(r => {
@@ -341,7 +341,8 @@ async function loadLeaderboard() {
                         ...r,
                         display_name,
                         avatar_url: p?.avatar_url || (typeof p?.avatar === 'string' && p.avatar.startsWith('http') ? p.avatar : null),
-                        avatar: p?.avatar || null
+                        avatar: p?.avatar || null,
+                        is_legendary: !!p?.is_legendary
                     };
                 });
             }
@@ -387,7 +388,12 @@ function renderLeaderboard(data) {
                 <div class="podium-user">
                     <div class="podium-rank">${medals[actualRank - 1]}</div>
                     ${avatarBlock}
-                    <div class="podium-name"><button class="lb-name" data-user-id="${user.user_id}" style="all:unset; cursor:pointer; font-weight:700;">${user.display_name || user.full_name || 'Trader'}</button>${badge}</div>
+                    <div class="podium-name">
+                        <span class="${user.is_legendary ? 'legendary-name' : ''}">
+                            <button class="lb-name" data-user-id="${user.user_id}" style="all:unset; cursor:pointer; font-weight:700;">${user.display_name || user.full_name || 'Trader'}</button>
+                        </span>
+                        ${badge}
+                    </div>
                     <div class="podium-stats">
                         ${user.completions} completions<br>
                         ${user.discipline_score}% discipline
@@ -422,7 +428,7 @@ function renderLeaderboard(data) {
                     <div style="font-weight: 700; color: var(--primary);">#${idx + 1}</div>
                     <div style="font-weight: 600; display:flex; align-items:center; gap:0.6rem;">
                         ${avatarBlock}
-                        <button class="lb-name" data-user-id="${user.user_id}" style="all:unset; cursor:pointer; font-weight:600;">${user.display_name || user.full_name || 'Trader'}</button>${badge}
+                        <span class="${user.is_legendary ? 'legendary-name' : ''}"><button class="lb-name" data-user-id="${user.user_id}" style="all:unset; cursor:pointer; font-weight:600;">${user.display_name || user.full_name || 'Trader'}</button></span>${badge}
                     </div>
                     <div>${user.completions}</div>
                     <div>${user.discipline_score}%</div>

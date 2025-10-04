@@ -48,7 +48,7 @@ async function loadFollowingData() {
     const followingIds = follows.map(f => f.following_id);
     const { data: profiles } = await supabase
         .from('user_profiles')
-        .select('user_id, username, is_premium, avatar, avatar_url')
+        .select('user_id, username, is_premium, avatar, avatar_url, is_legendary')
         .in('user_id', followingIds);
     const { data: lbRows } = await supabase
         .from('leaderboard_stats')
@@ -60,6 +60,7 @@ async function loadFollowingData() {
     (profiles || []).forEach(p => profileMap.set(p.user_id, {
         username: (p.username && p.username.trim()) ? p.username : null,
         is_premium: !!p.is_premium,
+        is_legendary: !!p.is_legendary,
         avatar: p.avatar || null,
         avatar_url: p.avatar_url || null
     }));
@@ -96,7 +97,7 @@ async function loadFollowingData() {
             <div style="display:flex; align-items:center; gap:0.75rem; justify-content:space-between; width:100%;">
                 <div style="display:flex; align-items:center; gap:0.6rem;">
                     ${avatarBlock}
-                    <span><button class="lb-name" data-user-id="${followingId}" style="all:unset; cursor:pointer; font-weight:600;">${profile.username || 'User'}</button>${badge}</span>
+                    <span><span class="${profile.is_legendary ? 'legendary-name' : ''}"><button class="lb-name" data-user-id="${followingId}" style="all:unset; cursor:pointer; font-weight:600;">${profile.username || 'User'}</button></span>${badge}</span>
                 </div>
                 <button onclick="unfollowUser('${followingId}')">Unfollow</button>
             </div>`;
@@ -268,7 +269,7 @@ async function loadLeaderboard() {
         const userIds = leaderboard.map(r => r.user_id);
         const { data: profiles } = await supabase
             .from('user_profiles')
-            .select('user_id, username, is_premium, avatar, avatar_url')
+            .select('user_id, username, is_premium, avatar, avatar_url, is_legendary')
             .in('user_id', userIds);
         const { data: lbRows } = await supabase
             .from('leaderboard_stats')
@@ -279,6 +280,7 @@ async function loadLeaderboard() {
         (profiles || []).forEach(p => profileMap.set(p.user_id, {
             username: (p.username && p.username.trim()) ? p.username : null,
             is_premium: !!p.is_premium,
+            is_legendary: !!p.is_legendary,
             avatar: p.avatar || null,
             avatar_url: p.avatar_url || null
         }));
@@ -339,13 +341,17 @@ async function loadLeaderboard() {
                     <div style="font-weight: 700; min-width: 2.5rem; text-align: center; font-size: 1.125rem;">${rankEmoji}</div>
                     ${avatarBlock}
                     <div style="flex: 1;">
-                        <div style="font-weight: 600;"><button class="lb-name" data-user-id="${entry.user_id}" style="all:unset; cursor:pointer; font-weight:600;">${profile.username || 'User'}</button>${badge}${isCurrentUser ? ' <span style="font-size: 0.75rem; color: var(--primary);">(You)</span>' : ''}</div>
+                        <div style="font-weight: 600;"><span class="${profile.is_legendary ? 'legendary-name' : ''}"><button class="lb-name" data-user-id="${entry.user_id}" style="all:unset; cursor:pointer; font-weight:600;">${profile.username || 'User'}</button></span>${badge}${isCurrentUser ? ' <span style="font-size: 0.75rem; color: var(--primary);">(You)</span>' : ''}</div>
                         <div style="font-size: 0.75rem; color: var(--text-secondary);">Level ${entry.level} • ${entry.experience} XP</div>
                     </div>
                 </div>
             `;
             leaderboardEl2.appendChild(itemEl);
         });
+                    existing.is_legendary = existing.is_legendary || !!r.is_legendary;
+                    profileMap.set(r.user_id, existing);
+                }
+            });
     } catch (error) {
         console.error('Error loading leaderboard:', error);
     }
