@@ -1683,13 +1683,13 @@ body {
         display: none;
     }
 }
-
 /* View Toggle */
 .view-toggle {
     display: flex;
     gap: 1rem;
-    margin-bottom: 2rem;
     justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 0.75rem;
 }
 
 .toggle-btn {
