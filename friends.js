@@ -97,7 +97,7 @@ async function loadFollowingData() {
             <div style="display:flex; align-items:center; gap:0.75rem; justify-content:space-between; width:100%;">
                 <div style="display:flex; align-items:center; gap:0.6rem;">
                     ${avatarBlock}
-                    <span><span class="${profile.is_legendary ? 'legendary-name' : ''}"><button class="lb-name" data-user-id="${followingId}" style="all:unset; cursor:pointer; font-weight:600;">${profile.username || 'User'}</button></span>${badge}</span>
+                    <span><button class="lb-name ${profile.is_legendary ? 'legendary-name' : ''}" data-user-id="${followingId}" style="all:unset; cursor:pointer; font-weight:600;">${profile.username || 'User'}</button>${badge}</span>
                 </div>
                 <button onclick="unfollowUser('${followingId}')">Unfollow</button>
             </div>`;
