@@ -21,7 +21,7 @@ async function generatePsychologyReport() {
         // Render all sections
         renderRuleAdherenceSection(rules, violations);
         renderEmotionalAnalysis(trades);
-        renderDisciplineScore(trades, violations);
+        renderDisciplineScore(trades, rules, violations);
         renderPsychologyInsights(trades, violations);
         renderRulesPerformance(trades, rules, violations);
     } catch (error) {
@@ -202,7 +202,7 @@ function renderEmotionalAnalysis(trades) {
 }
 
 // 3. Discipline Score
-function renderDisciplineScore(trades, violations) {
+function renderDisciplineScore(trades, rules, violations) {
     const container = document.getElementById('disciplineScoreSection');
     if (!container) return;
 
@@ -216,7 +216,10 @@ function renderDisciplineScore(trades, violations) {
     const stopLossRate = closedTrades.length > 0 ? (hasStopLoss / closedTrades.length) * 100 : 0;
     const targetRate = closedTrades.length > 0 ? (hasTarget / closedTrades.length) * 100 : 0;
     const journalRate = closedTrades.length > 0 ? (hasNotes / closedTrades.length) * 100 : 0;
-    const violationRate = closedTrades.length > 0 ? (violations.length / closedTrades.length) * 100 : 0;
+    const violationsFromRecords = violations.length;
+    const violationsFromCounters = (rules || []).reduce((sum, r) => sum + (r.times_violated || 0), 0);
+    const violationsCount = Math.max(violationsFromRecords, violationsFromCounters);
+    const violationRate = closedTrades.length > 0 ? (violationsCount / closedTrades.length) * 100 : 0;
 
     // Overall discipline score (weighted average)
     const disciplineScore = (
@@ -262,7 +265,7 @@ function renderDisciplineScore(trades, violations) {
                 </div>
                 <div style="text-align: center; padding: 1rem; background: rgba(255, 255, 255, 0.05); border-radius: 12px;" data-tooltip="Total rule violations logged across all trades" title="Rule violations count">
                     <div style="font-size: 1.5rem; font-weight: 700; color: ${violationRate <= 10 ? '#34C759' : '#FF453A'};">
-                        ${violations.length}
+                        ${violationsCount}
                     </div>
                     <div style="font-size: 0.875rem; color: var(--text-secondary);">Rule Violations</div>
                 </div>
@@ -381,7 +384,7 @@ function renderRulesPerformance(trades, rules, violations) {
     const ruleStats = rules.filter(r => r.is_active).map(rule => {
         const ruleViolations = violations.filter(v => v.rule_id === rule.id);
         const followed = rule.times_followed || 0;
-        const violated = ruleViolations.length;
+        const violated = Math.max(ruleViolations.length, rule.times_violated || 0);
         const total = followed + violated;
         const adherenceRate = total > 0 ? ((followed / total) * 100) : 100;
         
