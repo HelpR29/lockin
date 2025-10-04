@@ -2967,6 +2967,23 @@ input:checked + .slider:before {
     margin-bottom: 1.5rem;
 }
 
+/* Onboarding Step 2: limit top avatar preview size */
+#step2 .step-icon {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin-left: auto;
+    margin-right: auto;
+}
+#step2 .step-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    display: block;
+}
+
 .step-title {
     font-family: 'Orbitron', sans-serif;
     font-size: 2rem;
