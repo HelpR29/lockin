@@ -625,9 +625,13 @@ async function getUserProgressSummary(userId) {
         
         // Calculate projected final balance
         const disciplineScore = await calculateDisciplineScore(userId);
-        const disciplineScoreFinal = (disciplineScore ?? null) !== null && Number.isFinite(Number(disciplineScore))
+        let disciplineScoreFinal = (disciplineScore ?? null) !== null && Number.isFinite(Number(disciplineScore))
             ? Number(disciplineScore)
             : Number(progress?.discipline_score ?? 0);
+        // If brand-new (no check-ins yet) and no computed score, default to 100%
+        if ((!Number.isFinite(disciplineScoreFinal) || disciplineScoreFinal <= 0) && Number(progress?.total_check_ins || 0) === 0) {
+            disciplineScoreFinal = 100;
+        }
 
         const projectedBalance = goals ? calculateProjectedBalance(
             goals.starting_capital,
