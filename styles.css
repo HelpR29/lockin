@@ -2400,16 +2400,31 @@ input:checked + .slider:before {
   border-radius: 50%;
 }
 
-
 /* Achievements Page Styles */
+/* Legendary name glow */
+.legendary-name {
+  color: #ffd700;
+  text-shadow: 0 0 6px rgba(255, 215, 0, 0.6), 0 0 14px rgba(255, 215, 0, 0.35);
+  filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.4));
+}
+@media (prefers-reduced-motion: no-preference) {
+  .legendary-name {
+    animation: legendaryPulse 2.6s ease-in-out infinite;
+  }
+  @keyframes legendaryPulse {
+    0%, 100% { text-shadow: 0 0 6px rgba(255, 215, 0, 0.6), 0 0 14px rgba(255, 215, 0, 0.35); }
+    50% { text-shadow: 0 0 10px rgba(255, 215, 0, 0.9), 0 0 20px rgba(255, 215, 0, 0.55); }
+  }
+}
 .achievement-view {
-    display: none;
+  display: none;
 }
 
 .achievement-view.active {
-    display: block;
+  display: block;
 }
 
+{{ ... }}
 .achievements-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
