@@ -679,16 +679,18 @@ async function openUserProfileById(userId) {
 
         const badge = row.is_premium ? '<span title="PREMIUM" style="color:#FFD54F; margin-left:0.25rem;">💎</span>' : '';
 
-        // Fetch avatar/photo (public profile info)
+        // Fetch avatar/photo and username (public profile info)
         let avatarEmoji = '👤';
         let avatarUrl = null;
+        let profileUsername = null;
         try {
             const { data: prof } = await supabase
                 .from('user_profiles')
-                .select('avatar, avatar_url')
+                .select('username, avatar, avatar_url')
                 .eq('user_id', userId)
                 .single();
             if (prof) {
+                profileUsername = (prof.username && prof.username.trim()) ? prof.username : null;
                 if (prof.avatar_url) {
                     avatarUrl = prof.avatar_url;
                 } else if (prof.avatar) {
@@ -706,12 +708,18 @@ async function openUserProfileById(userId) {
         const modal = document.createElement('div');
         modal.className = 'modal';
         modal.style.display = 'flex';
+        const displayName = (row.full_name && row.full_name.trim())
+            ? row.full_name
+            : (profileUsername && profileUsername.trim())
+                ? profileUsername
+                : (row.email ? (row.email.split('@')[0]) : 'Trader');
+
         modal.innerHTML = `
             <div class="modal-content" style="max-width:520px; position: relative;">
                 <span class="close-button" onclick="this.closest('.modal').remove()">&times;</span>
                 <div style="text-align:center;">${avatarBlock}</div>
                 <div style="display:flex; align-items:center; justify-content:center; gap:0.5rem; margin-bottom:0.75rem;">
-                    <h2 style="margin:0; text-align:center;">${row.full_name || 'Trader'} ${badge}</h2>
+                    <h2 style="margin:0; text-align:center;">${displayName} ${badge}</h2>
                     <button id="followIconBtn_${row.user_id}"
                         title="${isFollowing ? 'Unfollow' : 'Follow'}"
                         style="all:unset; cursor:pointer; background: rgba(255,255,255,0.08); border:1px solid var(--glass-border); width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1rem;">
@@ -750,7 +758,7 @@ async function openUserProfileById(userId) {
                     </div>
                 </div>
 
-                <div style="display:flex; gap:0.5rem; justify-content:flex-end; margin-top:1rem;">
+                <div style="display:flex; gap:0.5rem; justify-content:center; margin-top:1rem;">
                     <button class="cta-secondary" onclick="this.closest('.modal').remove()">Close</button>
                     <button class="cta-primary" id="followActionBtn_${row.user_id}" onclick="toggleFollow('${row.user_id}')">${isFollowing ? 'Unfollow' : 'Follow'}</button>
                 </div>
