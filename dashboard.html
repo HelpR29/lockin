@@ -378,7 +378,18 @@
             
             // Fetch and display avatar. Prefer uploaded photo (user_profiles.avatar_url); fallback to emoji in user_profiles.avatar or onboarding emoji
             const avatarEl = document.getElementById('dashboardAvatar');
-            const heroAvatarEl = document.getElementById('heroAvatar');
+            let heroAvatarEl = document.getElementById('heroAvatar');
+            // Fallback: inject hero avatar node if missing
+            if (!heroAvatarEl) {
+                const container = document.querySelector('.hero-beer-display');
+                const ref = document.getElementById('heroBeerIcon');
+                if (container && ref) {
+                    heroAvatarEl = document.createElement('div');
+                    heroAvatarEl.id = 'heroAvatar';
+                    heroAvatarEl.className = 'hero-avatar';
+                    container.insertBefore(heroAvatarEl, ref.nextSibling);
+                }
+            }
             let avatarEmoji = '👤'; // default
             let avatarSet = false;
             try {
