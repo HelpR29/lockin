@@ -44,15 +44,36 @@ async function loadFollowingData() {
         return;
     }
 
-    // Fetch usernames and premium status
+    // Fetch usernames and premium status (with robust fallbacks)
     const followingIds = follows.map(f => f.following_id);
     const { data: profiles } = await supabase
         .from('user_profiles')
         .select('user_id, username, is_premium')
         .in('user_id', followingIds);
+    const { data: lbRows } = await supabase
+        .from('leaderboard_stats')
+        .select('user_id, full_name, email, is_premium')
+        .in('user_id', followingIds);
 
     const profileMap = new Map();
-    (profiles || []).forEach(p => profileMap.set(p.user_id, { username: p.username || 'User', is_premium: !!p.is_premium }));
+    // Primary: username from user_profiles
+    (profiles || []).forEach(p => profileMap.set(p.user_id, { username: (p.username && p.username.trim()) ? p.username : null, is_premium: !!p.is_premium }));
+    // Fallback: full_name/email from leaderboard_stats
+    (lbRows || []).forEach(r => {
+        const fallbackName = (r.full_name && r.full_name.trim())
+            ? r.full_name
+            : (r.email ? (r.email.split('@')[0]) : null);
+        const existing = profileMap.get(r.user_id);
+        if (!existing) {
+            profileMap.set(r.user_id, { username: fallbackName || 'User', is_premium: !!r.is_premium });
+        } else {
+            if (!existing.username || existing.username.trim() === '') {
+                existing.username = fallbackName || 'User';
+            }
+            existing.is_premium = existing.is_premium || !!r.is_premium;
+            profileMap.set(r.user_id, existing);
+        }
+    });
 
     // Render following list
     follows.forEach(f => {
