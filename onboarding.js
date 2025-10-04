@@ -49,6 +49,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
+// Render preset avatars on load and when gender changes
+document.addEventListener('DOMContentLoaded', () => {
+    try {
+        renderPresetAvatars();
+        const genderEl = document.getElementById('gender');
+        if (genderEl && !genderEl.__lockinBound) {
+            genderEl.addEventListener('change', renderPresetAvatars);
+            genderEl.__lockinBound = true;
+        }
+    } catch (_) { /* no-op */ }
+});
+
 // Navigation Functions
 function nextStep() {
     if (currentStep < totalSteps) {
@@ -90,6 +102,7 @@ function updateProgress() {
 
 // Avatar selection
 let selectedAvatar = '';
+let selectedAvatarUrl = '';
 function selectAvatar(emoji) {
     // Remove previous selection
     document.querySelectorAll('.profile-pic-option').forEach(el => {
@@ -106,6 +119,51 @@ function selectAvatar(emoji) {
     
     selectedAvatar = emoji;
     document.getElementById('profileAvatar').value = emoji;
+    // If user picks an emoji, clear any preset photo selection
+    selectedAvatarUrl = '';
+    onboardingData.profile = { ...(onboardingData.profile || {}), avatar_url: '' };
+}
+
+// Preset avatars list (update paths to match your files)
+const PRESET_AVATARS = {
+    male: [
+        'assets/avatars/male.png'
+        // Add more e.g., 'assets/avatars/male2.png', 'assets/avatars/male3.png'
+    ],
+    female: [
+        'assets/avatars/female.png'
+        // Add more e.g., 'assets/avatars/female2.png', 'assets/avatars/female3.png'
+    ]
+};
+
+function renderPresetAvatars() {
+    const gallery = document.getElementById('presetAvatarGallery');
+    if (!gallery) return;
+    const genderEl = document.getElementById('gender');
+    const g = (genderEl?.value || '').toLowerCase();
+    let list = [];
+    if (g === 'male') list = PRESET_AVATARS.male;
+    else if (g === 'female') list = PRESET_AVATARS.female;
+    else list = [...(PRESET_AVATARS.male || []), ...(PRESET_AVATARS.female || [])];
+    gallery.innerHTML = (list || []).map(url => `
+        <div class="preset-avatar-item" data-url="${url}" style="width:64px; height:64px; border-radius:50%; overflow:hidden; border:2px solid ${selectedAvatarUrl===url ? 'var(--primary)' : 'var(--glass-border)'}; cursor:pointer;">
+            <img src="${url}" alt="avatar" style="width:100%; height:100%; object-fit:cover; display:block;"/>
+        </div>
+    `).join('');
+    // Bind clicks
+    Array.from(gallery.querySelectorAll('.preset-avatar-item')).forEach(el => {
+        el.onclick = () => {
+            const url = el.getAttribute('data-url');
+            selectPresetAvatar(url);
+        };
+    });
+}
+
+function selectPresetAvatar(url) {
+    selectedAvatarUrl = url;
+    // Clear emoji selection (keep the hidden emoji if already set, but photo will take precedence)
+    onboardingData.profile = { ...(onboardingData.profile || {}), avatar_url: url };
+    renderPresetAvatars();
 }
 
 // Step 2: Save Profile
@@ -127,7 +185,8 @@ async function saveProfile() {
         gender: document.getElementById('gender').value,
         experience: document.getElementById('experience').value,
         trading_style: document.getElementById('tradingStyle').value,
-        markets: document.getElementById('markets').value
+        markets: document.getElementById('markets').value,
+        avatar_url: selectedAvatarUrl || (onboardingData.profile?.avatar_url || '')
     };
     
     nextStep();
@@ -504,6 +563,7 @@ async function completeOnboarding() {
                     user_id: user.id,
                     username: onboardingData.profile.username,
                     avatar: onboardingData.profile.avatar || '👤',
+                    avatar_url: onboardingData.profile.avatar_url || null,
                     gender: onboardingData.profile.gender || 'prefer-not-to-say',
                     experience: onboardingData.profile.experience,
                     trading_style: onboardingData.profile.trading_style,
