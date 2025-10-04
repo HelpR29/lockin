@@ -51,14 +51,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // Render preset avatars on load and when gender changes
 document.addEventListener('DOMContentLoaded', () => {
-    try {
-        renderPresetAvatars();
-        const genderEl = document.getElementById('gender');
-        if (genderEl && !genderEl.__lockinBound) {
-            genderEl.addEventListener('change', renderPresetAvatars);
-            genderEl.__lockinBound = true;
-        }
-    } catch (_) { /* no-op */ }
+    (async () => {
+        try {
+            await loadAvatarManifest();
+            renderPresetAvatars();
+            const genderEl = document.getElementById('gender');
+            if (genderEl && !genderEl.__lockinBound) {
+                genderEl.addEventListener('change', renderPresetAvatars);
+                genderEl.__lockinBound = true;
+            }
+        } catch (_) { /* no-op */ }
+    })();
 });
 
 // Navigation Functions
@@ -124,7 +127,7 @@ function selectAvatar(emoji) {
     onboardingData.profile = { ...(onboardingData.profile || {}), avatar_url: '' };
 }
 
-// Preset avatars list (update paths to match your files)
+// Preset avatars list (fallback values if no manifest is present)
 const PRESET_AVATARS = {
     male: [
         'assets/avatars/male.png'
@@ -135,6 +138,19 @@ const PRESET_AVATARS = {
         // Add more e.g., 'assets/avatars/female2.png', 'assets/avatars/female3.png'
     ]
 };
+
+// Try to load a manifest with full lists (assets/avatars/manifest.json)
+async function loadAvatarManifest() {
+    try {
+        const resp = await fetch('assets/avatars/manifest.json', { cache: 'no-cache' });
+        if (!resp.ok) return;
+        const data = await resp.json();
+        if (data && (Array.isArray(data.male) || Array.isArray(data.female))) {
+            if (Array.isArray(data.male)) PRESET_AVATARS.male = data.male;
+            if (Array.isArray(data.female)) PRESET_AVATARS.female = data.female;
+        }
+    } catch (_) { /* ignore if manifest missing */ }
+}
 
 function renderPresetAvatars() {
     const gallery = document.getElementById('presetAvatarGallery');
