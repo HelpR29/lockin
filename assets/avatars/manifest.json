@@ -1,0 +1,22 @@
+{
+  "male": [
+    "assets/avatars/male/business.png",
+    "assets/avatars/male/chad.png",
+    "assets/avatars/male/gamer.png",
+    "assets/avatars/male/memelord.png",
+    "assets/avatars/male/monk.png",
+    "assets/avatars/male/normie.png",
+    "assets/avatars/male/samurai.png",
+    "assets/avatars/male/scientist.png"
+  ],
+  "female": [
+    "assets/avatars/female/business.png",
+    "assets/avatars/female/chad.png",
+    "assets/avatars/female/gamer.png",
+    "assets/avatars/female/memelord.png",
+    "assets/avatars/female/monk.png",
+    "assets/avatars/female/normie.png",
+    "assets/avatars/female/samurai.png",
+    "assets/avatars/female/scientist.png"
+  ]
+}
