@@ -132,7 +132,6 @@
                 <div class="view-content active" id="view-wall">
                     <div class="hero-beer-display">
                         <div class="beer-icon-large" id="heroBeerIcon">🍺</div>
-                        <div id="heroAvatar" class="hero-avatar" title="Your avatar"></div>
                         <div class="beer-main-info">
                             <div class="beer-count-display">
                                 <div class="count-remaining" id="bottlesRemainingLarge">50</div>
@@ -378,40 +377,6 @@
             
             // Fetch and display avatar. Prefer uploaded photo (user_profiles.avatar_url); fallback to emoji in user_profiles.avatar or onboarding emoji
             const avatarEl = document.getElementById('dashboardAvatar');
-            let heroAvatarEl = document.getElementById('heroAvatar');
-            // Ensure hero avatar exists and is positioned on the right
-            if (!heroAvatarEl) {
-                const container = document.querySelector('.hero-beer-display');
-                const ref = document.getElementById('heroBeerIcon');
-                if (container && ref) {
-                    heroAvatarEl = document.createElement('div');
-                    heroAvatarEl.id = 'heroAvatar';
-                    heroAvatarEl.className = 'hero-avatar';
-                    // Inline fallback styles in case CSS is cached
-                    heroAvatarEl.style.cssText = 'position:absolute;right:1.25rem;top:50%;transform:translateY(-50%);width:110px;height:110px;border-radius:50%;overflow:hidden;border:2px solid var(--glass-border);box-shadow:0 0 0 6px rgba(255,149,0,0.15);display:flex;align-items:center;justify-content:center;font-size:2rem;';
-                    heroAvatarEl.textContent = '\uD83D\uDC64';
-                    container.insertBefore(heroAvatarEl, ref.nextSibling);
-                }
-            }
-            // Enforce container spacing and right-side placement regardless of cache
-            (function(){
-                const container = document.querySelector('.hero-beer-display');
-                if (container) {
-                    container.style.position = 'relative';
-                    if (!container.style.paddingRight) container.style.paddingRight = '9rem';
-                }
-                if (heroAvatarEl) {
-                    heroAvatarEl.style.position = 'absolute';
-                    heroAvatarEl.style.right = '1.25rem';
-                    heroAvatarEl.style.top = '50%';
-                    heroAvatarEl.style.transform = 'translateY(-50%)';
-                    if (!heroAvatarEl.style.width) heroAvatarEl.style.width = '110px';
-                    if (!heroAvatarEl.style.height) heroAvatarEl.style.height = '110px';
-                    heroAvatarEl.style.borderRadius = '50%';
-                }
-            })();
-            // Ensure default emoji shown until photo loads
-            if (heroAvatarEl && !heroAvatarEl.innerHTML) heroAvatarEl.textContent = '👤';
             let avatarEmoji = '👤'; // default
             let avatarSet = false;
             try {
@@ -423,17 +388,14 @@
                 if (avatarEl && profRow) {
                     if (profRow.avatar_url) {
                         avatarEl.innerHTML = `<img src="${profRow.avatar_url}" alt="avatar" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
-                        if (heroAvatarEl) heroAvatarEl.innerHTML = `<img src="${profRow.avatar_url}" alt="avatar" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
                         
                         avatarSet = true;
                     } else if (profRow.avatar) {
                         if (typeof profRow.avatar === 'string' && profRow.avatar.startsWith('http')) {
                             avatarEl.innerHTML = `<img src="${profRow.avatar}" alt="avatar" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
-                            if (heroAvatarEl) heroAvatarEl.innerHTML = `<img src="${profRow.avatar}" alt="avatar" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
                             
                         } else {
                             avatarEl.textContent = profRow.avatar;
-                            if (heroAvatarEl) heroAvatarEl.textContent = profRow.avatar;
                             
                         }
                         avatarSet = true;
@@ -461,7 +423,6 @@
                     avatarEl.textContent = avatarEmoji;
                     avatarEl.title = `Click to view ${userName}'s profile`;
                 }
-                if (heroAvatarEl) heroAvatarEl.textContent = avatarEmoji;
             } else if (avatarEl) {
                 avatarEl.title = `Click to view ${userName}'s profile`;
             }
