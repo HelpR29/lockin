@@ -379,7 +379,7 @@
             // Fetch and display avatar. Prefer uploaded photo (user_profiles.avatar_url); fallback to emoji in user_profiles.avatar or onboarding emoji
             const avatarEl = document.getElementById('dashboardAvatar');
             let heroAvatarEl = document.getElementById('heroAvatar');
-            // Fallback: inject hero avatar node if missing
+            // Ensure hero avatar exists and is positioned on the right
             if (!heroAvatarEl) {
                 const container = document.querySelector('.hero-beer-display');
                 const ref = document.getElementById('heroBeerIcon');
@@ -388,11 +388,28 @@
                     heroAvatarEl.id = 'heroAvatar';
                     heroAvatarEl.className = 'hero-avatar';
                     // Inline fallback styles in case CSS is cached
-                    heroAvatarEl.style.cssText = 'width:88px;height:88px;border-radius:50%;overflow:hidden;border:2px solid var(--glass-border);box-shadow:0 0 0 4px rgba(255,149,0,0.15);display:flex;align-items:center;justify-content:center;font-size:2rem;';
-                    heroAvatarEl.textContent = '👤';
+                    heroAvatarEl.style.cssText = 'position:absolute;right:1.25rem;top:50%;transform:translateY(-50%);width:110px;height:110px;border-radius:50%;overflow:hidden;border:2px solid var(--glass-border);box-shadow:0 0 0 6px rgba(255,149,0,0.15);display:flex;align-items:center;justify-content:center;font-size:2rem;';
+                    heroAvatarEl.textContent = '\uD83D\uDC64';
                     container.insertBefore(heroAvatarEl, ref.nextSibling);
                 }
             }
+            // Enforce container spacing and right-side placement regardless of cache
+            (function(){
+                const container = document.querySelector('.hero-beer-display');
+                if (container) {
+                    container.style.position = 'relative';
+                    if (!container.style.paddingRight) container.style.paddingRight = '9rem';
+                }
+                if (heroAvatarEl) {
+                    heroAvatarEl.style.position = 'absolute';
+                    heroAvatarEl.style.right = '1.25rem';
+                    heroAvatarEl.style.top = '50%';
+                    heroAvatarEl.style.transform = 'translateY(-50%)';
+                    if (!heroAvatarEl.style.width) heroAvatarEl.style.width = '110px';
+                    if (!heroAvatarEl.style.height) heroAvatarEl.style.height = '110px';
+                    heroAvatarEl.style.borderRadius = '50%';
+                }
+            })();
             // Ensure default emoji shown until photo loads
             if (heroAvatarEl && !heroAvatarEl.innerHTML) heroAvatarEl.textContent = '👤';
             let avatarEmoji = '👤'; // default
