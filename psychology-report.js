@@ -35,20 +35,27 @@ function renderRuleAdherenceSection(rules, violations) {
     if (!container) return;
 
     const totalRules = rules.filter(r => r.is_active).length;
-    const totalViolations = violations.length; // Use actual violation records
     const totalFollowed = rules.reduce((sum, r) => sum + (r.times_followed || 0), 0);
-    const totalViolated = violations.length; // Use actual violation records (not counter)
+    const violationsFromRecords = violations.length;
+    const violationsFromCounters = rules.reduce((sum, r) => sum + (r.times_violated || 0), 0);
+    const totalViolated = Math.max(violationsFromRecords, violationsFromCounters);
     
     const adherenceRate = totalFollowed + totalViolated > 0 
         ? ((totalFollowed / (totalFollowed + totalViolated)) * 100).toFixed(1)
         : 100;
 
-    // Group violations by rule
+    // Group violations by rule (prefer records; fallback to counters)
     const violationsByRule = {};
-    violations.forEach(v => {
-        const ruleName = v.trading_rules?.rule || 'Unknown';
-        violationsByRule[ruleName] = (violationsByRule[ruleName] || 0) + 1;
-    });
+    if (violationsFromRecords > 0) {
+        violations.forEach(v => {
+            const ruleName = v.trading_rules?.rule || 'Unknown';
+            violationsByRule[ruleName] = (violationsByRule[ruleName] || 0) + 1;
+        });
+    } else {
+        rules.filter(r => (r.times_violated || 0) > 0).forEach(r => {
+            violationsByRule[r.rule] = (violationsByRule[r.rule] || 0) + (r.times_violated || 0);
+        });
+    }
 
     const topViolations = Object.entries(violationsByRule)
         .sort((a, b) => b[1] - a[1])
@@ -72,7 +79,7 @@ function renderRuleAdherenceSection(rules, violations) {
                     <div class="stat-value" style="color: #34C759;">${totalFollowed}</div>
                     <div class="stat-label">Times Followed</div>
                 </div>
-                <div class="stat-item" data-tooltip="Number of violations recorded across your rules" title="Total rule violations">
+                <div class="stat-item" data-tooltip="Number of violations recorded across your rules (from logs or counters)" title="Total rule violations">
                     <div class="stat-value" style="color: #FF453A;">${totalViolated}</div>
                     <div class="stat-label">Times Violated</div>
                 </div>
