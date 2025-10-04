@@ -48,7 +48,7 @@ async function loadFollowingData() {
     const followingIds = follows.map(f => f.following_id);
     const { data: profiles } = await supabase
         .from('user_profiles')
-        .select('user_id, username, is_premium')
+        .select('user_id, username, is_premium, avatar, avatar_url')
         .in('user_id', followingIds);
     const { data: lbRows } = await supabase
         .from('leaderboard_stats')
@@ -57,7 +57,12 @@ async function loadFollowingData() {
 
     const profileMap = new Map();
     // Primary: username from user_profiles
-    (profiles || []).forEach(p => profileMap.set(p.user_id, { username: (p.username && p.username.trim()) ? p.username : null, is_premium: !!p.is_premium }));
+    (profiles || []).forEach(p => profileMap.set(p.user_id, {
+        username: (p.username && p.username.trim()) ? p.username : null,
+        is_premium: !!p.is_premium,
+        avatar: p.avatar || null,
+        avatar_url: p.avatar_url || null
+    }));
     // Fallback: full_name/email from leaderboard_stats
     (lbRows || []).forEach(r => {
         const fallbackName = (r.full_name && r.full_name.trim())
@@ -82,7 +87,19 @@ async function loadFollowingData() {
         followingEl.className = 'user-item';
         const profile = profileMap.get(followingId) || { username: 'User', is_premium: false };
         const badge = profile.is_premium ? '<span title="PREMIUM" style="color: #FFD54F; margin-left: 0.25rem;">💎</span>' : '';
-        followingEl.innerHTML = `<span><button class="lb-name" data-user-id="${followingId}" style="all:unset; cursor:pointer; font-weight:600;">${profile.username}</button>${badge}</span> <button onclick="unfollowUser('${followingId}')">Unfollow</button>`;
+        const avatarUrl = profile.avatar_url || (typeof profile.avatar === 'string' && profile.avatar.startsWith('http') ? profile.avatar : null);
+        const avatarEmoji = avatarUrl ? '' : (profile.avatar || '👤');
+        const avatarBlock = avatarUrl
+            ? `<button class="lb-avatar" data-user-id="${followingId}" style="all:unset; cursor:pointer;"><img src="${avatarUrl}" alt="avatar" style="width:32px;height:32px;border-radius:50%;object-fit:cover;display:block;"></button>`
+            : `<button class="lb-avatar" data-user-id="${followingId}" style="all:unset; cursor:pointer;"><div style="width:32px;height:32px;border-radius:50%;background: linear-gradient(135deg, var(--primary), #FFB84D); display:flex;align-items:center;justify-content:center;font-size:1rem;">${avatarEmoji}</div></button>`;
+        followingEl.innerHTML = `
+            <div style="display:flex; align-items:center; gap:0.75rem; justify-content:space-between; width:100%;">
+                <div style="display:flex; align-items:center; gap:0.6rem;">
+                    ${avatarBlock}
+                    <span><button class="lb-name" data-user-id="${followingId}" style="all:unset; cursor:pointer; font-weight:600;">${profile.username || 'User'}</button>${badge}</span>
+                </div>
+                <button onclick="unfollowUser('${followingId}')">Unfollow</button>
+            </div>`;
         followingList.appendChild(followingEl);
     });
     } catch (error) {
