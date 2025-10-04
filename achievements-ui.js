@@ -389,9 +389,7 @@ function renderLeaderboard(data) {
                     <div class="podium-rank">${medals[actualRank - 1]}</div>
                     ${avatarBlock}
                     <div class="podium-name">
-                        <span class="${user.is_legendary ? 'legendary-name' : ''}">
-                            <button class="lb-name" data-user-id="${user.user_id}" style="all:unset; cursor:pointer; font-weight:700;">${user.display_name || user.full_name || 'Trader'}</button>
-                        </span>
+                        <button class="lb-name ${user.is_legendary ? 'legendary-name' : ''}" data-user-id="${user.user_id}" style="all:unset; cursor:pointer; font-weight:700;">${user.display_name || user.full_name || 'Trader'}</button>
                         ${badge}
                     </div>
                     <div class="podium-stats">
@@ -428,7 +426,7 @@ function renderLeaderboard(data) {
                     <div style="font-weight: 700; color: var(--primary);">#${idx + 1}</div>
                     <div style="font-weight: 600; display:flex; align-items:center; gap:0.6rem;">
                         ${avatarBlock}
-                        <span class="${user.is_legendary ? 'legendary-name' : ''}"><button class="lb-name" data-user-id="${user.user_id}" style="all:unset; cursor:pointer; font-weight:600;">${user.display_name || user.full_name || 'Trader'}</button></span>${badge}
+                        <button class="lb-name ${user.is_legendary ? 'legendary-name' : ''}" data-user-id="${user.user_id}" style="all:unset; cursor:pointer; font-weight:600;">${user.display_name || user.full_name || 'Trader'}</button>${badge}
                     </div>
                     <div>${user.completions}</div>
                     <div>${user.discipline_score}%</div>
