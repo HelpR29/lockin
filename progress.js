@@ -541,6 +541,34 @@ async function checkAndUnlockAchievements(userId, stats) {
     }
 }
 
+// Calculate Discipline Score
+const calculateDisciplineScore = async (userId) => {
+    const { data: trades, error: tradesError } = await supabase
+        .from('trades')
+        .select('id')
+        .eq('user_id', userId);
+
+    const { data: violations, error: violationsError } = await supabase
+        .from('rule_violations')
+        .select('id')
+        .eq('user_id', userId);
+
+    if (tradesError || violationsError) {
+        console.error('Error fetching discipline data:', tradesError || violationsError);
+        return 0;
+    }
+
+    const totalTrades = trades.length;
+    const totalViolations = violations.length;
+
+    if (totalTrades === 0) {
+        return 100; // Perfect score if no trades yet
+    }
+
+    const score = Math.max(0, ((totalTrades - totalViolations) / totalTrades) * 100);
+    return Math.round(score);
+};
+
 // Get User Progress Summary
 async function getUserProgressSummary(userId) {
     try {
@@ -596,6 +624,8 @@ async function getUserProgressSummary(userId) {
         const progressPercent = goals ? ((goals.bottles_cracked || 0) / goals.total_bottles) * 100 : 0;
         
         // Calculate projected final balance
+        const disciplineScore = await calculateDisciplineScore(userId);
+
         const projectedBalance = goals ? calculateProjectedBalance(
             goals.starting_capital,
             goals.target_percent_per_beer,
@@ -610,7 +640,8 @@ async function getUserProgressSummary(userId) {
             projectedBalance,
             totalGrowthMultiplier: totalGrowth,
             achievements: achievements ? achievements.map(a => a.achievements) : [],
-            cycleCracked: goals?.bottles_cracked || 0
+            cycleCracked: goals?.bottles_cracked || 0,
+            disciplineScore
         };
         
     } catch (error) {

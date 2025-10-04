@@ -152,6 +152,10 @@
                                 </div>
                             </div>
                         </div>
+                        <div id="disciplineGauge" class="discipline-gauge">
+                            <div class="discipline-gauge-value">--%</div>
+                            <div class="discipline-gauge-label">Discipline</div>
+                        </div>
                     </div>
                     <div class="progress-bar-large-container">
                         <div class="progress-bar-large-fill" id="progressBarLarge"></div>
@@ -623,6 +627,16 @@
             document.getElementById('xpProgress').textContent = `${currentLevelXP} / ${nextXP} XP`;
             const xpPercent = Math.max(0, Math.min(100, (currentLevelXP / nextXP) * 100));
             document.getElementById('xpBarFill').style.width = `${xpPercent}%`;
+
+            // Update discipline gauge
+            const disciplineGauge = document.getElementById('disciplineGauge');
+            const disciplineGaugeValue = document.querySelector('.discipline-gauge-value');
+
+            if (disciplineGauge && disciplineGaugeValue) {
+                const score = progressSummary.disciplineScore || 0;
+                disciplineGaugeValue.textContent = `${score}%`;
+                disciplineGauge.style.background = `conic-gradient(var(--primary-mint) ${score * 3.6}deg, var(--glass-bg) 0deg)`;
+            }
         }
         
         // Load portfolio growth chart
