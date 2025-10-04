@@ -321,6 +321,34 @@ async function loadLeaderboard() {
             console.warn('Self premium enrichment failed:', enrichErr);
         }
 
+        // Enrich with avatars and username (fallbacks)
+        try {
+            const ids = rows.map(r => r.user_id);
+            if (ids.length) {
+                const { data: profiles } = await supabase
+                    .from('user_profiles')
+                    .select('user_id, username, avatar, avatar_url')
+                    .in('user_id', ids);
+                const pmap = new Map((profiles || []).map(p => [p.user_id, p]));
+                rows = rows.map(r => {
+                    const p = pmap.get(r.user_id);
+                    const display_name = (r.full_name && r.full_name.trim())
+                        ? r.full_name
+                        : (p?.username && p.username.trim())
+                            ? p.username
+                            : (r.email ? r.email.split('@')[0] : 'Trader');
+                    return {
+                        ...r,
+                        display_name,
+                        avatar_url: p?.avatar_url || (typeof p?.avatar === 'string' && p.avatar.startsWith('http') ? p.avatar : null),
+                        avatar: p?.avatar || null
+                    };
+                });
+            }
+        } catch (enrichAvatarErr) {
+            console.warn('Could not enrich avatars for leaderboard:', enrichAvatarErr);
+        }
+
         renderLeaderboard(rows);
     } catch (error) {
         console.error('Error loading leaderboard:', error);
@@ -348,18 +376,23 @@ function renderLeaderboard(data) {
         const showBadgePodium = user.is_premium === true || (SELF_USER.id && user.user_id === SELF_USER.id && SELF_USER.isPremium);
         const badge = showBadgePodium ? '<span title="PREMIUM" style="color: #FFD54F; margin-left: 0.25rem;">💎</span>' : '';
         console.log('Podium user:', user.full_name, 'is_premium:', user.is_premium, 'badge:', badge);
-        
+        const avatarUrl = user.avatar_url || (typeof user.avatar === 'string' && user.avatar.startsWith('http') ? user.avatar : null);
+        const avatarEmoji = avatarUrl ? '' : (user.avatar || '👤');
+        const avatarBlock = avatarUrl
+            ? `<button class="lb-avatar" data-user-id="${user.user_id}" style="all:unset; cursor:pointer;"><img src="${avatarUrl}" alt="avatar" style="width:72px;height:72px;border-radius:50%;object-fit:cover;display:block;margin:0 auto 0.5rem;"></button>`
+            : `<button class="lb-avatar" data-user-id="${user.user_id}" style="all:unset; cursor:pointer;"><div style="width:72px;height:72px;border-radius:50%;background: linear-gradient(135deg, var(--primary), #FFB84D); display:flex;align-items:center;justify-content:center;font-size:2rem;margin:0 auto 0.5rem;">${avatarEmoji}</div></button>`;
+
         return `
             <div class="podium-place">
                 <div class="podium-user">
                     <div class="podium-rank">${medals[actualRank - 1]}</div>
-                    <div class="podium-name"><button class="lb-name" data-user-id="${user.user_id}" style="all:unset; cursor:pointer; font-weight:700;">${user.full_name || 'Trader'}</button>${badge}</div>
+                    ${avatarBlock}
+                    <div class="podium-name"><button class="lb-name" data-user-id="${user.user_id}" style="all:unset; cursor:pointer; font-weight:700;">${user.display_name || user.full_name || 'Trader'}</button>${badge}</div>
                     <div class="podium-stats">
                         ${user.completions} completions<br>
                         ${user.discipline_score}% discipline
                     </div>
                 </div>
-                <div class="podium-base">
                     #${actualRank} ${titles[actualRank - 1]}
                 </div>
             </div>
@@ -378,10 +411,18 @@ function renderLeaderboard(data) {
         ${data.map((user, idx) => {
             const showBadge = user.is_premium === true || (SELF_USER.id && user.user_id === SELF_USER.id && SELF_USER.isPremium);
             const badge = showBadge ? '<span title="PREMIUM" style="color: #FFD54F; margin-left: 0.25rem;">💎</span>' : '';
+            const avatarUrl = user.avatar_url || (typeof user.avatar === 'string' && user.avatar.startsWith('http') ? user.avatar : null);
+            const avatarEmoji = avatarUrl ? '' : (user.avatar || '👤');
+            const avatarBlock = avatarUrl
+                ? `<button class=\"lb-avatar\" data-user-id=\"${user.user_id}\" style=\"all:unset; cursor:pointer;\"><img src=\"${avatarUrl}\" alt=\"avatar\" style=\"width:24px;height:24px;border-radius:50%;object-fit:cover;display:block;\"></button>`
+                : `<button class=\"lb-avatar\" data-user-id=\"${user.user_id}\" style=\"all:unset; cursor:pointer;\"><div style=\"width:24px;height:24px;border-radius:50%;background: linear-gradient(135deg, var(--primary), #FFB84D); display:flex;align-items:center;justify-content:center;font-size:0.9rem;\">${avatarEmoji}</div></button>`;
             return `
                 <div class="leaderboard-row">
                     <div style="font-weight: 700; color: var(--primary);">#${idx + 1}</div>
-                    <div style="font-weight: 600;"><button class="lb-name" data-user-id="${user.user_id}" style="all:unset; cursor:pointer; font-weight:600;">${user.full_name || 'Trader'}</button>${badge}</div>
+                    <div style="font-weight: 600; display:flex; align-items:center; gap:0.6rem;">
+                        ${avatarBlock}
+                        <button class="lb-name" data-user-id="${user.user_id}" style="all:unset; cursor:pointer; font-weight:600;">${user.display_name || user.full_name || 'Trader'}</button>${badge}
+                    </div>
                     <div>${user.completions}</div>
                     <div>${user.discipline_score}%</div>
                     <div>Lv ${user.level}</div>
@@ -404,11 +445,16 @@ async function openUserProfileModal(userId) {
     }
 }
 
-// Event delegation for leaderboard name clicks
+// Event delegation for leaderboard name/avatar clicks
 document.addEventListener('click', (e) => {
-    const btn = e.target.closest('.lb-name');
-    if (btn && btn.dataset.userId) {
-        openUserProfileModal(btn.dataset.userId);
+    const nameBtn = e.target.closest('.lb-name');
+    if (nameBtn && nameBtn.dataset.userId) {
+        openUserProfileModal(nameBtn.dataset.userId);
+        return;
+    }
+    const avatarBtn = e.target.closest('.lb-avatar');
+    if (avatarBtn && avatarBtn.dataset.userId) {
+        openUserProfileModal(avatarBtn.dataset.userId);
     }
 });
 
