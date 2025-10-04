@@ -62,47 +62,105 @@ CREATE TABLE IF NOT EXISTS user_rewards (
 
 -- 6. Leaderboard Stats (computed view)
 CREATE OR REPLACE VIEW leaderboard_stats AS
+WITH t_closed AS (
+  SELECT
+    user_id,
+    COUNT(DISTINCT id) AS closed_trades,
+    COUNT(DISTINCT CASE WHEN stop_loss IS NOT NULL AND stop_loss > 0 THEN id END) AS stop_cnt,
+    COUNT(DISTINCT CASE WHEN target_price IS NOT NULL AND target_price > 0 THEN id END) AS target_cnt,
+    COUNT(DISTINCT CASE WHEN notes IS NOT NULL AND LENGTH(notes) > 10 THEN id END) AS notes_cnt
+  FROM trades
+  WHERE status = 'closed'
+  GROUP BY user_id
+),
+viol AS (
+  SELECT user_id, rule_id, trade_id, DATE(violated_at) AS vdate
+  FROM rule_violations
+),
+v_trade AS (
+  SELECT user_id, rule_id, trade_id
+  FROM viol
+  WHERE trade_id IS NOT NULL
+  GROUP BY user_id, rule_id, trade_id
+),
+v_manual AS (
+  SELECT user_id, rule_id, vdate
+  FROM viol
+  WHERE trade_id IS NULL
+  GROUP BY user_id, rule_id, vdate
+),
+v_weighted_trade AS (
+  SELECT vt.user_id, SUM(tr.severity)::NUMERIC AS weighted_trade
+  FROM v_trade vt
+  JOIN trading_rules tr ON tr.id = vt.rule_id AND tr.user_id = vt.user_id
+  GROUP BY vt.user_id
+),
+v_weighted_manual AS (
+  SELECT vm.user_id, SUM(tr.severity)::NUMERIC AS weighted_manual
+  FROM v_manual vm
+  JOIN trading_rules tr ON tr.id = vm.rule_id AND tr.user_id = vm.user_id
+  GROUP BY vm.user_id
+),
+v_weighted AS (
+  SELECT COALESCE(t.user_id, m.user_id) AS user_id,
+         COALESCE(t.weighted_trade, 0) + COALESCE(m.weighted_manual, 0) AS weighted_logs
+  FROM v_weighted_trade t
+  FULL JOIN v_weighted_manual m ON m.user_id = t.user_id
+),
+counter_weighted AS (
+  SELECT user_id,
+         SUM((COALESCE(times_violated,0))::NUMERIC * GREATEST(COALESCE(severity,1),1)) AS weighted_counters,
+         SUM(GREATEST(COALESCE(severity,1),1)) AS sum_rule_weights
+  FROM trading_rules
+  WHERE is_active = true
+  GROUP BY user_id
+)
 SELECT 
-    u.id as user_id,
-    u.email,
-    u.raw_user_meta_data->>'full_name' as full_name,
-    COALESCE(uprof.is_premium, false) as is_premium,
-    COALESCE(up.beers_cracked, 0) as completions,
-    COALESCE(up.level, 1) as level,
-    COALESCE(up.total_check_ins, 0) as total_xp,
-    COALESCE(us.total_stars, 0) as total_stars,
-    COUNT(DISTINCT ua.achievement_id) as achievements_count,
-    -- Discipline score calculation
-    CASE 
-        WHEN COUNT(DISTINCT t.id) > 0 THEN
-            ROUND(
-                (COUNT(DISTINCT CASE WHEN t.stop_loss IS NOT NULL AND t.stop_loss > 0 THEN t.id END)::NUMERIC / COUNT(DISTINCT t.id) * 30) +
-                (COUNT(DISTINCT CASE WHEN t.target_price IS NOT NULL AND t.target_price > 0 THEN t.id END)::NUMERIC / COUNT(DISTINCT t.id) * 20) +
-                (COUNT(DISTINCT CASE WHEN t.notes IS NOT NULL AND LENGTH(t.notes) > 10 THEN t.id END)::NUMERIC / COUNT(DISTINCT t.id) * 20) +
-                (
-                    100 - LEAST(
-                        GREATEST(COUNT(DISTINCT rv.id)::NUMERIC, COALESCE(trsum.tr_violated_sum, 0))
-                        / GREATEST(COUNT(DISTINCT t.id), 1) * 100,
-                        100
-                    )
-                ) * 0.3
-            , 1)
-        ELSE 100
-    END as discipline_score,
-    MAX(up.updated_at) as last_activity
+  u.id AS user_id,
+  u.email,
+  u.raw_user_meta_data->>'full_name' AS full_name,
+  COALESCE(uprof.is_premium, false) AS is_premium,
+  COALESCE(up.beers_cracked, 0) AS completions,
+  COALESCE(up.level, 1) AS level,
+  COALESCE(up.total_check_ins, 0) AS total_xp,
+  COALESCE(us.total_stars, 0) AS total_stars,
+  COUNT(DISTINCT ua.achievement_id) AS achievements_count,
+  CASE 
+    WHEN COALESCE(tc.closed_trades,0) > 0 OR COALESCE(vw.weighted_logs,0) > 0 THEN
+      ROUND(
+        (COALESCE(tc.stop_cnt,0)::NUMERIC / NULLIF(tc.closed_trades,0) * 100) * 0.3 +
+        (COALESCE(tc.target_cnt,0)::NUMERIC / NULLIF(tc.closed_trades,0) * 100) * 0.15 +
+        (COALESCE(tc.notes_cnt,0)::NUMERIC / NULLIF(tc.closed_trades,0) * 100) * 0.15 +
+        (
+          100 - LEAST(
+            (
+              GREATEST(
+                COALESCE(vw.weighted_logs,0),
+                COALESCE(cw.weighted_counters,0)
+              )
+              / GREATEST(COALESCE(tc.closed_trades,0) * GREATEST(COALESCE(cw.sum_rule_weights,0),1), 1) * 100
+            ),
+            100
+          )
+        ) * 0.4
+      , 1)
+    ELSE 100
+  END AS discipline_score,
+  MAX(up.updated_at) AS last_activity
 FROM auth.users u
 LEFT JOIN user_progress up ON u.id = up.user_id
 LEFT JOIN user_profiles uprof ON u.id = uprof.user_id
 LEFT JOIN user_stars us ON u.id = us.user_id
 LEFT JOIN user_achievements ua ON u.id = ua.user_id
-LEFT JOIN trades t ON u.id = t.user_id AND t.status = 'closed'
-LEFT JOIN rule_violations rv ON u.id = rv.user_id
-LEFT JOIN LATERAL (
-    SELECT SUM(times_violated)::NUMERIC AS tr_violated_sum
-    FROM trading_rules
-    WHERE user_id = u.id
-) trsum ON TRUE
-GROUP BY u.id, u.email, u.raw_user_meta_data, uprof.is_premium, up.beers_cracked, up.level, up.total_check_ins, us.total_stars, up.updated_at
+LEFT JOIN t_closed tc ON tc.user_id = u.id
+LEFT JOIN v_weighted vw ON vw.user_id = u.id
+LEFT JOIN counter_weighted cw ON cw.user_id = u.id
+GROUP BY
+  u.id, u.email, u.raw_user_meta_data,
+  uprof.is_premium,
+  up.beers_cracked, up.level, up.total_check_ins, us.total_stars, up.updated_at,
+  tc.closed_trades, tc.stop_cnt, tc.target_cnt, tc.notes_cnt,
+  vw.weighted_logs, cw.weighted_counters, cw.sum_rule_weights
 ORDER BY completions DESC, discipline_score DESC, total_xp DESC;
 
 -- Enable RLS
