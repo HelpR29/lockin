@@ -162,18 +162,21 @@ function renderPresetAvatars() {
     else if (g === 'female') list = PRESET_AVATARS.female;
     else list = [...(PRESET_AVATARS.male || []), ...(PRESET_AVATARS.female || [])];
     gallery.innerHTML = (list || []).map(url => `
-        <div class="preset-avatar-item" data-url="${url}" style="width:64px; height:64px; border-radius:50%; overflow:hidden; border:2px solid ${selectedAvatarUrl===url ? 'var(--primary-orange)' : 'var(--glass-border)'}; cursor:pointer;">
+        <div class="preset-avatar-item ${selectedAvatarUrl===url ? 'preset-selected' : ''}" data-url="${url}">
             <img src="${url}" alt="avatar" style="width:100%; height:100%; object-fit:cover; display:block;"/>
         </div>
     `).join('');
-    // Bind clicks
-    Array.from(gallery.querySelectorAll('.preset-avatar-item')).forEach(el => {
-        el.onclick = () => {
-            const url = el.getAttribute('data-url');
+    // Event delegation (prevents rebinding and flicker)
+    if (!gallery.__lockinBound) {
+        gallery.addEventListener('click', (e) => {
+            const item = e.target.closest('.preset-avatar-item');
+            if (!item) return;
+            const url = item.getAttribute('data-url');
             selectPresetAvatar(url);
-        };
-    });
-    // Keep preview in sync after re-render
+        });
+        gallery.__lockinBound = true;
+    }
+    updateSelectedHighlight();
     updateAvatarPreview(selectedAvatarUrl);
 }
 
@@ -182,7 +185,7 @@ function selectPresetAvatar(url) {
     // Clear emoji selection (keep the hidden emoji if already set, but photo will take precedence)
     onboardingData.profile = { ...(onboardingData.profile || {}), avatar_url: url };
     updateAvatarPreview(url);
-    renderPresetAvatars();
+    updateSelectedHighlight();
 }
 
 function updateAvatarPreview(url) {
@@ -193,6 +196,16 @@ function updateAvatarPreview(url) {
     } else {
         preview.innerHTML = `<span style="font-size:2.25rem;">👤</span>`;
     }
+}
+
+function updateSelectedHighlight() {
+    const gallery = document.getElementById('presetAvatarGallery');
+    if (!gallery) return;
+    Array.from(gallery.querySelectorAll('.preset-avatar-item')).forEach(el => {
+        const url = el.getAttribute('data-url');
+        if (url === selectedAvatarUrl) el.classList.add('preset-selected');
+        else el.classList.remove('preset-selected');
+    });
 }
 
 // Step 2: Save Profile
