@@ -375,9 +375,20 @@
                 return;
             }
             
-            // Display user name
+            // Display user name (apply legendary glow if applicable)
             const userName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Trader';
-            document.getElementById('userName').textContent = userName;
+            const userNameEl = document.getElementById('userName');
+            if (userNameEl) {
+                userNameEl.textContent = userName;
+                try {
+                    const { data: profLegend } = await supabase
+                        .from('user_profiles')
+                        .select('is_legendary')
+                        .eq('user_id', user.id)
+                        .single();
+                    if (profLegend?.is_legendary) userNameEl.classList.add('legendary-name');
+                } catch (_) { /* ignore */ }
+            }
             
             // Fetch and display avatar. Prefer uploaded photo (user_profiles.avatar_url); fallback to emoji in user_profiles.avatar or onboarding emoji
             const avatarEl = document.getElementById('dashboardAvatar');

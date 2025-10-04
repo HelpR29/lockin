@@ -235,6 +235,7 @@ async function openProfileModal() {
     // Fetch avatar from onboarding (emoji fallback) and user_profiles (photo url or emoji)
     let avatarEmoji = '👤'; // default
     let avatarUrl = null;
+    let isLegendary = false;
     try {
         const { data: onboardingData, error } = await supabase
             .from('user_onboarding')
@@ -248,7 +249,7 @@ async function openProfileModal() {
     try {
         const { data: profileAvatar } = await supabase
             .from('user_profiles')
-            .select('avatar, avatar_url')
+            .select('avatar, avatar_url, is_legendary')
             .eq('user_id', user.id)
             .single();
         // Prefer explicit avatar_url if present
@@ -262,6 +263,7 @@ async function openProfileModal() {
                 avatarEmoji = profileAvatar.avatar;
             }
         }
+        isLegendary = !!profileAvatar?.is_legendary;
     } catch (_) { /* ignore */ }
     
     // Fetch premium status for inline badge
@@ -290,7 +292,7 @@ async function openProfileModal() {
             
             <div style="text-align: center; margin-bottom: 2rem;">
                 ${avatarBlock}
-                <h3 style="margin: 0.5rem 0; display: inline-flex; align-items: center; gap: 0.35rem;">${user.user_metadata?.full_name || 'Trader'}
+                <h3 style="margin: 0.5rem 0; display: inline-flex; align-items: center; gap: 0.35rem;"><span class="${isLegendary ? 'legendary-name' : ''}">${user.user_metadata?.full_name || 'Trader'}</span>
                     ${isPremium ? `<span title="PREMIUM" style="color: #FFD54F;">💎</span>` : ''}
                 </h3>
                 <p style="color: var(--text-secondary); font-size: 0.875rem;">${user.email}</p>
