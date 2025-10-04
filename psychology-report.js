@@ -219,15 +219,17 @@ function renderDisciplineScore(trades, rules, violations) {
     const violationsFromRecords = violations.length;
     const violationsFromCounters = (rules || []).reduce((sum, r) => sum + (r.times_violated || 0), 0);
     const violationsCount = Math.max(violationsFromRecords, violationsFromCounters);
-    const violationRate = closedTrades.length > 0 ? (violationsCount / closedTrades.length) * 100 : 0;
+    const violationRateRaw = closedTrades.length > 0 ? (violationsCount / closedTrades.length) * 100 : 0;
+    const violationRate = Math.min(100, violationRateRaw);
 
     // Overall discipline score (weighted average)
-    const disciplineScore = (
+    const disciplineScoreRaw = (
         stopLossRate * 0.3 + 
         targetRate * 0.2 + 
         journalRate * 0.2 + 
         (100 - violationRate) * 0.3
-    ).toFixed(1);
+    );
+    const disciplineScore = Math.max(0, Math.min(100, Number(disciplineScoreRaw.toFixed(1))));
 
     const scoreColor = disciplineScore >= 80 ? '#34C759' : disciplineScore >= 60 ? '#FFC107' : '#FF453A';
     const scoreGrade = disciplineScore >= 90 ? 'A+' : disciplineScore >= 80 ? 'A' : disciplineScore >= 70 ? 'B' : disciplineScore >= 60 ? 'C' : 'D';
