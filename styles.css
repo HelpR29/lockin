@@ -1746,16 +1746,16 @@ body {
     backdrop-filter: blur(20px);
     border: 2px solid var(--primary-orange);
     border-radius: 24px;
-    padding: 3rem;
-    margin-bottom: 1.5rem;
+    padding: 2rem; /* was 3rem */
+    margin-bottom: 1.25rem; /* was 1.5rem */
     display: flex;
     align-items: center;
-    gap: 3rem;
+    gap: 2rem; /* was 3rem */
     box-shadow: 0 20px 60px rgba(255, 149, 0, 0.3);
 }
 
 .beer-icon-large {
-    font-size: 10rem;
+    font-size: 8rem; /* was 10rem */
     animation: float 3s ease-in-out infinite, glow 2s ease-in-out infinite;
     text-shadow: 0 0 40px rgba(255, 149, 0, 0.6);
 }
@@ -1783,7 +1783,7 @@ body {
 }
 
 .beer-count-display {
-    margin-bottom: 2rem;
+    margin-bottom: 1rem; /* was 2rem */
 }
 
 .count-remaining {
