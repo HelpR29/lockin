@@ -162,7 +162,7 @@ function renderPresetAvatars() {
     else if (g === 'female') list = PRESET_AVATARS.female;
     else list = [...(PRESET_AVATARS.male || []), ...(PRESET_AVATARS.female || [])];
     gallery.innerHTML = (list || []).map(url => `
-        <div class="preset-avatar-item ${selectedAvatarUrl===url ? 'preset-selected' : ''}" data-url="${url}">
+        <div class="preset-avatar-item ${selectedAvatarUrl===url ? 'preset-selected' : ''}" data-url="${url}" role="button" tabindex="0" onclick="onPresetAvatarClick(event)">
             <img src="${url}" alt="avatar" style="width:100%; height:100%; object-fit:cover; display:block;"/>
         </div>
     `).join('');
@@ -191,15 +191,23 @@ function selectPresetAvatar(url) {
 function updateAvatarPreview(url) {
     const preview = document.getElementById('avatarLivePreview');
     const stepIcon = document.querySelector('#step2 .step-icon');
-    if (!preview) return;
     if (url) {
-        preview.innerHTML = `<img src="${url}" alt="avatar" style="width:100%; height:100%; object-fit:cover; display:block;"/>`;
+        if (preview) preview.innerHTML = `<img src="${url}" alt="avatar" style="width:100%; height:100%; object-fit:cover; display:block;"/>`;
         if (stepIcon) stepIcon.innerHTML = `<img src="${url}" alt="avatar" style="width:100%; height:100%; object-fit:cover; border-radius:50%; display:block;"/>`;
     } else {
-        preview.innerHTML = `<span style="font-size:2.25rem;">👤</span>`;
+        if (preview) preview.innerHTML = `<span style="font-size:2.25rem;">👤</span>`;
         if (stepIcon) stepIcon.innerHTML = '👤';
     }
 }
+
+// Fallback inline click handler used by rendered items
+function onPresetAvatarClick(e) {
+    const item = e.currentTarget || e.target.closest('.preset-avatar-item');
+    if (!item) return;
+    const url = item.getAttribute('data-url');
+    selectPresetAvatar(url);
+}
+window.onPresetAvatarClick = onPresetAvatarClick;
 
 function updateSelectedHighlight() {
     const gallery = document.getElementById('presetAvatarGallery');
