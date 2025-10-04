@@ -146,6 +146,9 @@
     #uploadAvatarBtn, #removeAvatarBtn { width: 100% !important; }
 }
 
+/* Hide preset avatar row in Settings (presets are selected during onboarding) */
+#presetAvatarRow { display: none !important; }
+
 :root {
     --primary-orange: #FF9500;
     --primary-mint: #B4E7CE;

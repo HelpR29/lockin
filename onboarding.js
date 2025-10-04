@@ -174,8 +174,8 @@ async function saveProfile() {
         return;
     }
     
-    if (!selectedAvatar) {
-        alert('Please select a profile picture!');
+    if (!selectedAvatar && !selectedAvatarUrl) {
+        alert('Please select a profile picture (emoji or preset)!');
         return;
     }
     
