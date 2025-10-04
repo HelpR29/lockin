@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS trading_rules (
     rule TEXT NOT NULL,
     category TEXT NOT NULL,
     is_active BOOLEAN DEFAULT true,
+    severity INTEGER NOT NULL DEFAULT 1,
     times_followed INTEGER DEFAULT 0,
     times_violated INTEGER DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now()

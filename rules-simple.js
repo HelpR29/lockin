@@ -48,6 +48,8 @@ async function saveCustomRule(event) {
         
         const category = document.getElementById('ruleCategory').value;
         const ruleText = document.getElementById('ruleText').value;
+        const severityByCategory = { 'Risk Management': 3, 'Exit Rules': 3, 'Entry Rules': 2, 'Psychology': 2, 'General': 1 };
+        const severity = severityByCategory[category] || 2;
         
         const { error } = await supabase
             .from('trading_rules')
@@ -55,7 +57,8 @@ async function saveCustomRule(event) {
                 user_id: user.id,
                 rule: ruleText,
                 category: category,
-                is_active: true
+                is_active: true,
+                severity
             });
         
         if (error) {
@@ -261,6 +264,17 @@ async function loadRules() {
                     ? `<button class="rule-delete-btn" onclick="deleteRule('${rule.id}')">🗑️</button>`
                     : `<button class="rule-delete-btn" onclick="showPremiumModal()" style="opacity: 0.6;">🗑️ 🔒</button>`;
                 
+                const sev = Number(rule.severity) || 1;
+                const severitySelect = `
+                    <label style="display:inline-flex; align-items:center; gap:0.35rem; font-size:0.85rem; color: var(--text-secondary);">
+                        Severity
+                        <select onchange="updateRuleSeverity('${rule.id}', this.value)" style="background: var(--card-bg); color: var(--text-primary); border:1px solid var(--glass-border); border-radius:6px; padding:0.25rem 0.4rem;">
+                            <option value="1" ${sev===1?'selected':''}>Low</option>
+                            <option value="2" ${sev===2?'selected':''}>Medium</option>
+                            <option value="3" ${sev===3?'selected':''}>High</option>
+                        </select>
+                    </label>`;
+
                 ruleEl.innerHTML = `
                     <div style="flex: 1;">
                         <p class="rule-title" style="font-weight: 500; margin: 0 0 0.5rem 0; color: var(--text-primary); line-height:1.3; word-break: break-word; hyphens: auto;">${rule.rule}</p>
@@ -271,6 +285,7 @@ async function loadRules() {
                         </div>
                     </div>
                     <div class="rule-actions" style="display: flex; gap: 0.5rem; align-items: center;">
+                        ${severitySelect}
                         <label style="display: inline-flex; align-items: center; cursor: pointer;">
                             <input type="checkbox" ${rule.is_active ? 'checked' : ''} onchange="toggleRuleActive('${rule.id}', this.checked)" style="width: 20px; height: 20px; cursor: pointer;">
                             <span style="margin-left: 0.5rem; font-size: 0.875rem;">Active</span>
@@ -395,12 +410,14 @@ async function initializeDefaultRules() {
 
         console.log('📦 Inserting', defaultRules.length, 'default rules...');
         
+        const severityByCategory = { 'Risk Management': 3, 'Exit Rules': 3, 'Entry Rules': 2, 'Psychology': 2, 'General': 1 };
         for (const ruleData of defaultRules) {
             await supabase.from('trading_rules').insert({
                 user_id: user.id,
                 rule: ruleData.rule,
                 category: ruleData.category,
                 is_active: true,
+                severity: severityByCategory[ruleData.category] || 1,
                 times_followed: 0,
                 times_violated: 0
             });
@@ -479,6 +496,28 @@ async function deleteRule(id) {
 
 window.editRule = editRule;
 window.deleteRule = deleteRule;
+
+// Update severity
+async function updateRuleSeverity(id, severity) {
+    try {
+        const sev = Math.max(1, Math.min(5, Number(severity) || 1));
+        const { error } = await supabase
+            .from('trading_rules')
+            .update({ severity: sev })
+            .eq('id', id);
+        if (error) {
+            console.error('Error updating severity:', error);
+            alert('Failed to update severity.');
+        } else {
+            // Do a light refresh
+            await loadRules();
+        }
+    } catch (e) {
+        console.error('updateRuleSeverity failed', e);
+        alert('Could not update severity.');
+    }
+}
+window.updateRuleSeverity = updateRuleSeverity;
 
 // Show premium upgrade modal
 function showPremiumModal() {

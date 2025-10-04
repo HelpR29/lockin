@@ -27,6 +27,65 @@ async function generatePsychologyReport() {
     } catch (error) {
         console.error('Error generating psychology report:', error);
     }
+
+// Helper: sum of active rule severities (fallback to 1 if missing)
+function sumActiveRuleWeights(rules) {
+    const active = (rules || []).filter(r => r.is_active);
+    return active.reduce((s, r) => s + (Number(r.severity) || 1), 0) || 0;
+}
+
+// Helper: weighted, de-duplicated violations based on rule severity
+// - 1 per (trade_id, rule_id)
+// - 1 per (date, rule_id) for manual entries (no trade_id)
+function countWeightedViolations(rules, violations) {
+    try {
+        const weightByRule = new Map((rules || []).map(r => [r.id, (Number(r.severity) || 1)]));
+        const seen = new Set();
+        let total = 0;
+        (violations || []).forEach(v => {
+            const rid = v.rule_id;
+            const w = weightByRule.get(rid) || 1;
+            let key = '';
+            if (v.trade_id) {
+                key = `${rid}|T|${v.trade_id}`;
+            } else {
+                const d = v.violated_at ? new Date(v.violated_at) : null;
+                const ymd = d ? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` : 'unknown';
+                key = `${rid}|D|${ymd}`;
+            }
+            if (!seen.has(key)) {
+                seen.add(key);
+                total += w;
+            }
+        });
+        return total;
+    } catch (_) {
+        // Fallback: unweighted dedup
+        return countDedupViolations(violations);
+    }
+}
+}
+
+// Helper: de-duplicate violation records
+// - Counts 1 per linked trade (by trade_id)
+// - Counts 1 per day for manual violations (no trade_id)
+function countDedupViolations(violations) {
+    try {
+        const tradeSet = new Set();
+        const daySet = new Set();
+        (violations || []).forEach(v => {
+            if (v.trade_id) {
+                tradeSet.add(v.trade_id);
+            } else {
+                const d = v.violated_at ? new Date(v.violated_at) : null;
+                const ymd = d ? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` : 'unknown';
+                daySet.add(ymd);
+            }
+        });
+        return tradeSet.size + daySet.size;
+    } catch (_) {
+        return (violations || []).length;
+    }
 }
 
 // 1. Rule Adherence Overview
@@ -36,7 +95,7 @@ function renderRuleAdherenceSection(rules, violations) {
 
     const totalRules = rules.filter(r => r.is_active).length;
     const totalFollowed = rules.reduce((sum, r) => sum + (r.times_followed || 0), 0);
-    const violationsFromRecords = violations.length;
+    const violationsFromRecords = countDedupViolations(violations);
     const violationsFromCounters = rules.reduce((sum, r) => sum + (r.times_violated || 0), 0);
     const totalViolated = Math.max(violationsFromRecords, violationsFromCounters);
     
@@ -216,10 +275,13 @@ function renderDisciplineScore(trades, rules, violations) {
     const stopLossRate = closedTrades.length > 0 ? (hasStopLoss / closedTrades.length) * 100 : 0;
     const targetRate = closedTrades.length > 0 ? (hasTarget / closedTrades.length) * 100 : 0;
     const journalRate = closedTrades.length > 0 ? (hasNotes / closedTrades.length) * 100 : 0;
-    const violationsFromRecords = violations.length;
-    const violationsFromCounters = (rules || []).reduce((sum, r) => sum + (r.times_violated || 0), 0);
-    const violationsCount = Math.max(violationsFromRecords, violationsFromCounters);
-    const violationRateRaw = closedTrades.length > 0 ? (violationsCount / closedTrades.length) * 100 : 0;
+    const activeRules = (rules || []).filter(r => r.is_active);
+    const sumWeights = sumActiveRuleWeights(activeRules);
+    const weightedFromRecords = countWeightedViolations(activeRules, violations);
+    const weightedFromCounters = activeRules.reduce((s, r) => s + ((r.times_violated || 0) * (Number(r.severity) || 1)), 0);
+    const weightedViolations = Math.max(weightedFromRecords, weightedFromCounters);
+    const denom = closedTrades.length * Math.max(sumWeights, 1);
+    const violationRateRaw = denom > 0 ? (weightedViolations / denom) * 100 : 0;
     const violationRate = Math.min(100, violationRateRaw);
 
     // Overall discipline score (weighted average)
@@ -265,11 +327,11 @@ function renderDisciplineScore(trades, rules, violations) {
                     </div>
                     <div style="font-size: 0.875rem; color: var(--text-secondary);">Trade Journaling</div>
                 </div>
-                <div style="text-align: center; padding: 1rem; background: rgba(255, 255, 255, 0.05); border-radius: 12px;" data-tooltip="Total rule violations logged across all trades" title="Rule violations count">
+                <div style="text-align: center; padding: 1rem; background: rgba(255, 255, 255, 0.05); border-radius: 12px;" data-tooltip="Weighted (by rule severity) de-duplicated violations" title="Weighted rule violations">
                     <div style="font-size: 1.5rem; font-weight: 700; color: ${violationRate <= 10 ? '#34C759' : '#FF453A'};">
-                        ${violationsCount}
+                        ${weightedViolations}
                     </div>
-                    <div style="font-size: 0.875rem; color: var(--text-secondary);">Rule Violations</div>
+                    <div style="font-size: 0.875rem; color: var(--text-secondary);">Weighted Violations</div>
                 </div>
             </div>
         </div>
