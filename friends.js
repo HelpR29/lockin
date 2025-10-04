@@ -264,15 +264,35 @@ async function loadLeaderboard() {
             return;
         }
 
-        // Fetch usernames and premium status
+        // Fetch usernames, avatars, premium with robust fallbacks
         const userIds = leaderboard.map(r => r.user_id);
         const { data: profiles } = await supabase
             .from('user_profiles')
-            .select('user_id, username, is_premium')
+            .select('user_id, username, is_premium, avatar, avatar_url')
+            .in('user_id', userIds);
+        const { data: lbRows } = await supabase
+            .from('leaderboard_stats')
+            .select('user_id, full_name, email, is_premium')
             .in('user_id', userIds);
 
         const profileMap = new Map();
-        (profiles || []).forEach(p => profileMap.set(p.user_id, { username: p.username || 'User', is_premium: !!p.is_premium }));
+        (profiles || []).forEach(p => profileMap.set(p.user_id, {
+            username: (p.username && p.username.trim()) ? p.username : null,
+            is_premium: !!p.is_premium,
+            avatar: p.avatar || null,
+            avatar_url: p.avatar_url || null
+        }));
+        (lbRows || []).forEach(r => {
+            const fallbackName = (r.full_name && r.full_name.trim()) ? r.full_name : (r.email ? r.email.split('@')[0] : null);
+            const existing = profileMap.get(r.user_id);
+            if (!existing) {
+                profileMap.set(r.user_id, { username: fallbackName || 'User', is_premium: !!r.is_premium });
+            } else {
+                if (!existing.username || existing.username.trim() === '') existing.username = fallbackName || 'User';
+                existing.is_premium = existing.is_premium || !!r.is_premium;
+                profileMap.set(r.user_id, existing);
+            }
+        });
 
         // Apply filter: following only
         let rows = leaderboard;
@@ -304,6 +324,11 @@ async function loadLeaderboard() {
             const isCurrentUser = entry.user_id === user.id;
             const rank = index + 1;
             const rankEmoji = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`;
+            const avatarUrl = profile.avatar_url || (typeof profile.avatar === 'string' && profile.avatar.startsWith('http') ? profile.avatar : null);
+            const avatarEmoji = avatarUrl ? '' : (profile.avatar || '👤');
+            const avatarBlock = avatarUrl
+                ? `<button class="lb-avatar" data-user-id="${entry.user_id}" style="all:unset; cursor:pointer;"><img src="${avatarUrl}" alt="avatar" style="width:28px;height:28px;border-radius:50%;object-fit:cover;display:block;"></button>`
+                : `<button class="lb-avatar" data-user-id="${entry.user_id}" style="all:unset; cursor:pointer;"><div style="width:28px;height:28px;border-radius:50%;background: linear-gradient(135deg, var(--primary), #FFB84D); display:flex;align-items:center;justify-content:center;font-size:0.95rem;">${avatarEmoji}</div></button>`;
             
             const itemEl = document.createElement('div');
             itemEl.className = 'user-item';
@@ -312,8 +337,9 @@ async function loadLeaderboard() {
             itemEl.innerHTML = `
                 <div style="display: flex; align-items: center; gap: 0.75rem; flex: 1;">
                     <div style="font-weight: 700; min-width: 2.5rem; text-align: center; font-size: 1.125rem;">${rankEmoji}</div>
+                    ${avatarBlock}
                     <div style="flex: 1;">
-                        <div style="font-weight: 600;"><button class="lb-name" data-user-id="${entry.user_id}" style="all:unset; cursor:pointer; font-weight:600;">${profile.username}</button>${badge}${isCurrentUser ? ' <span style="font-size: 0.75rem; color: var(--primary);">(You)</span>' : ''}</div>
+                        <div style="font-weight: 600;"><button class="lb-name" data-user-id="${entry.user_id}" style="all:unset; cursor:pointer; font-weight:600;">${profile.username || 'User'}</button>${badge}${isCurrentUser ? ' <span style="font-size: 0.75rem; color: var(--primary);">(You)</span>' : ''}</div>
                         <div style="font-size: 0.75rem; color: var(--text-secondary);">Level ${entry.level} • ${entry.experience} XP</div>
                     </div>
                 </div>
@@ -327,10 +353,17 @@ async function loadLeaderboard() {
 
 // Event delegation for profile modal from ranking names
 document.addEventListener('click', (e) => {
-    const btn = e.target.closest('.lb-name');
-    if (btn && btn.dataset.userId) {
+    const nameBtn = e.target.closest('.lb-name');
+    if (nameBtn && nameBtn.dataset.userId) {
         if (typeof openUserProfileById === 'function') {
-            openUserProfileById(btn.dataset.userId);
+            openUserProfileById(nameBtn.dataset.userId);
+        }
+        return;
+    }
+    const avatarBtn = e.target.closest('.lb-avatar');
+    if (avatarBtn && avatarBtn.dataset.userId) {
+        if (typeof openUserProfileById === 'function') {
+            openUserProfileById(avatarBtn.dataset.userId);
         }
     }
 });
