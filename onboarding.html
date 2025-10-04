@@ -59,44 +59,12 @@
                         <p class="step-description">Tell us a bit about yourself</p>
                         
                         <form class="onboarding-form" id="profileForm">
-                            <div class="form-group">
-                                <label>Choose Profile Picture</label>
-                                <div class="profile-pic-selector" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
-                                    <div class="profile-pic-option" data-avatar="👨‍💼" onclick="selectAvatar('👨‍💼')" style="cursor: pointer; padding: 1rem; background: rgba(255,149,0,0.1); border: 2px solid transparent; border-radius: 12px; text-align: center; font-size: 3rem; transition: all 0.3s;">
-                                        👨‍💼
-                                    </div>
-                                    <div class="profile-pic-option" data-avatar="👩‍💼" onclick="selectAvatar('👩‍💼')" style="cursor: pointer; padding: 1rem; background: rgba(255,149,0,0.1); border: 2px solid transparent; border-radius: 12px; text-align: center; font-size: 3rem; transition: all 0.3s;">
-                                        👩‍💼
-                                    </div>
-                                    <div class="profile-pic-option" data-avatar="🧑‍💼" onclick="selectAvatar('🧑‍💼')" style="cursor: pointer; padding: 1rem; background: rgba(255,149,0,0.1); border: 2px solid transparent; border-radius: 12px; text-align: center; font-size: 3rem; transition: all 0.3s;">
-                                        🧑‍💼
-                                    </div>
-                                    <div class="profile-pic-option" data-avatar="👨‍🚀" onclick="selectAvatar('👨‍🚀')" style="cursor: pointer; padding: 1rem; background: rgba(255,149,0,0.1); border: 2px solid transparent; border-radius: 12px; text-align: center; font-size: 3rem; transition: all 0.3s;">
-                                        👨‍🚀
-                                    </div>
-                                    <div class="profile-pic-option" data-avatar="👩‍🚀" onclick="selectAvatar('👩‍🚀')" style="cursor: pointer; padding: 1rem; background: rgba(255,149,0,0.1); border: 2px solid transparent; border-radius: 12px; text-align: center; font-size: 3rem; transition: all 0.3s;">
-                                        👩‍🚀
-                                    </div>
-                                    <div class="profile-pic-option" data-avatar="🧑‍🚀" onclick="selectAvatar('🧑‍🚀')" style="cursor: pointer; padding: 1rem; background: rgba(255,149,0,0.1); border: 2px solid transparent; border-radius: 12px; text-align: center; font-size: 3rem; transition: all 0.3s;">
-                                        🧑‍🚀
-                                    </div>
-                                    <div class="profile-pic-option" data-avatar="👨‍💻" onclick="selectAvatar('👨‍💻')" style="cursor: pointer; padding: 1rem; background: rgba(255,149,0,0.1); border: 2px solid transparent; border-radius: 12px; text-align: center; font-size: 3rem; transition: all 0.3s;">
-                                        👨‍💻
-                                    </div>
-                                    <div class="profile-pic-option" data-avatar="👩‍💻" onclick="selectAvatar('👩‍💻')" style="cursor: pointer; padding: 1rem; background: rgba(255,149,0,0.1); border: 2px solid transparent; border-radius: 12px; text-align: center; font-size: 3rem; transition: all 0.3s;">
-                                        👩‍💻
-                                    </div>
-                                    <div class="profile-pic-option" data-avatar="🧑‍💻" onclick="selectAvatar('🧑‍💻')" style="cursor: pointer; padding: 1rem; background: rgba(255,149,0,0.1); border: 2px solid transparent; border-radius: 12px; text-align: center; font-size: 3rem; transition: all 0.3s;">
-                                        🧑‍💻
-                                    </div>
-                                </div>
-                                <input type="hidden" id="profileAvatar" value="" required>
-                            </div>
+                            <!-- Emoji avatar grid removed; using preset gallery only -->
 
                             <!-- Preset Avatar Gallery (filtered by gender) -->
                             <div class="form-group" id="presetAvatarWrap">
-                                <label>Or choose a preset avatar</label>
-                                <div style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 0.5rem;">Filtered by your selected gender. You can also use emoji above.</div>
+                                <label>Choose a preset avatar</label>
+                                <div style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 0.5rem;">Filtered by your selected gender.</div>
                                 <div id="presetAvatarGallery" style="display:flex; gap:0.75rem; flex-wrap:wrap;"></div>
                             </div>
                             
