@@ -393,6 +393,7 @@ function renderLeaderboard(data) {
                         ${user.discipline_score}% discipline
                     </div>
                 </div>
+                <div class="podium-base">
                     #${actualRank} ${titles[actualRank - 1]}
                 </div>
             </div>
