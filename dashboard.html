@@ -130,9 +130,12 @@
 
                 <!-- View: Beer Wall (Main) -->
                 <div class="view-content active" id="view-wall">
+                    <!-- Overlay Avatar to fill empty space -->
+                    <div id="heroOverlayAvatar" class="hero-overlay-avatar" title="Your avatar"></div>
                     <div class="hero-beer-display">
                         <div class="beer-icon-large" id="heroBeerIcon">🍺</div>
-                        <div id="heroAvatar" class="hero-avatar" title="Your avatar"></div>
+                        <!-- Inline avatar inside card (kept for layout balance; overlay is primary) -->
+                        <div id="heroAvatar" class="hero-avatar" title="Your avatar" style="display:none;"></div>
                         <div class="beer-main-info">
                             <div class="beer-count-display">
                                 <div class="count-remaining" id="bottlesRemainingLarge">50</div>
@@ -379,6 +382,7 @@
             // Fetch and display avatar. Prefer uploaded photo (user_profiles.avatar_url); fallback to emoji in user_profiles.avatar or onboarding emoji
             const avatarEl = document.getElementById('dashboardAvatar');
             let heroAvatarEl = document.getElementById('heroAvatar');
+            let heroOverlayAvatarEl = document.getElementById('heroOverlayAvatar');
             // Fallback: inject hero avatar node if missing
             if (!heroAvatarEl) {
                 const container = document.querySelector('.hero-beer-display');
@@ -387,9 +391,29 @@
                     heroAvatarEl = document.createElement('div');
                     heroAvatarEl.id = 'heroAvatar';
                     heroAvatarEl.className = 'hero-avatar';
+                    // Inline fallback styles in case CSS is cached
+                    heroAvatarEl.style.cssText = 'width:88px;height:88px;border-radius:50%;overflow:hidden;border:2px solid var(--glass-border);box-shadow:0 0 0 4px rgba(255,149,0,0.15);display:flex;align-items:center;justify-content:center;font-size:2rem;';
+                    heroAvatarEl.textContent = '👤';
                     container.insertBefore(heroAvatarEl, ref.nextSibling);
                 }
             }
+            // Fallback: inject overlay avatar if missing
+            if (!heroOverlayAvatarEl) {
+                const viewWall = document.querySelector('#view-wall');
+                const heroCard = document.querySelector('.hero-beer-display');
+                if (viewWall && heroCard) {
+                    heroOverlayAvatarEl = document.createElement('div');
+                    heroOverlayAvatarEl.id = 'heroOverlayAvatar';
+                    heroOverlayAvatarEl.className = 'hero-overlay-avatar';
+                    // Inline fallback styles
+                    heroOverlayAvatarEl.style.cssText = 'width:110px;height:110px;border-radius:50%;overflow:hidden;border:2px solid var(--glass-border);box-shadow:0 0 0 6px rgba(255,149,0,0.15),0 8px 28px rgba(0,0,0,0.35);margin:0.25rem auto 0.75rem;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--primary),#FFB84D);font-size:2.25rem;';
+                    heroOverlayAvatarEl.textContent = '👤';
+                    viewWall.insertBefore(heroOverlayAvatarEl, heroCard);
+                }
+            }
+            // Ensure default emoji shown until photo loads
+            if (heroAvatarEl && !heroAvatarEl.innerHTML) heroAvatarEl.textContent = '👤';
+            if (heroOverlayAvatarEl && !heroOverlayAvatarEl.innerHTML) heroOverlayAvatarEl.textContent = '👤';
             let avatarEmoji = '👤'; // default
             let avatarSet = false;
             try {
@@ -402,14 +426,17 @@
                     if (profRow.avatar_url) {
                         avatarEl.innerHTML = `<img src="${profRow.avatar_url}" alt="avatar" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
                         if (heroAvatarEl) heroAvatarEl.innerHTML = `<img src="${profRow.avatar_url}" alt="avatar" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+                        if (heroOverlayAvatarEl) heroOverlayAvatarEl.innerHTML = `<img src="${profRow.avatar_url}" alt="avatar" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
                         avatarSet = true;
                     } else if (profRow.avatar) {
                         if (typeof profRow.avatar === 'string' && profRow.avatar.startsWith('http')) {
                             avatarEl.innerHTML = `<img src="${profRow.avatar}" alt="avatar" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
                             if (heroAvatarEl) heroAvatarEl.innerHTML = `<img src="${profRow.avatar}" alt="avatar" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+                            if (heroOverlayAvatarEl) heroOverlayAvatarEl.innerHTML = `<img src="${profRow.avatar}" alt="avatar" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
                         } else {
                             avatarEl.textContent = profRow.avatar;
                             if (heroAvatarEl) heroAvatarEl.textContent = profRow.avatar;
+                            if (heroOverlayAvatarEl) heroOverlayAvatarEl.textContent = profRow.avatar;
                         }
                         avatarSet = true;
                     }
@@ -437,6 +464,7 @@
                     avatarEl.title = `Click to view ${userName}'s profile`;
                 }
                 if (heroAvatarEl) heroAvatarEl.textContent = avatarEmoji;
+                if (heroOverlayAvatarEl) heroOverlayAvatarEl.textContent = avatarEmoji;
             } else if (avatarEl) {
                 avatarEl.title = `Click to view ${userName}'s profile`;
             }

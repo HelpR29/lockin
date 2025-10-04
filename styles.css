@@ -17,6 +17,23 @@
 }
 .hero-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
+/* Overlay avatar above hero card to fill dead space */
+.hero-overlay-avatar {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid var(--glass-border);
+    box-shadow: 0 0 0 6px rgba(255,149,0,0.15), 0 8px 28px rgba(0,0,0,0.35);
+    margin: 0.25rem auto 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--primary), #FFB84D);
+    z-index: 1;
+}
+.hero-overlay-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 50%; }
+
 /* Dashboard desktop avatar & container overflow (prevents clipping on wide screens) */
 .dashboard-header { overflow: visible; }
 .dashboard-container { overflow: visible; }
