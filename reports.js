@@ -407,14 +407,24 @@ function calculateAndDisplayKPIs(trades) {
     });
 
     const winRate = totalWins + totalLosses > 0 ? (totalWins / (totalWins + totalLosses)) * 100 : 0;
-    const profitFactor = grossLoss > 0 ? grossProfit / grossLoss : 0;
+    // Profit Factor = Gross Profit / Gross Loss
+    // If there are no losses but some profit, PF is ∞ (infinite)
+    let profitFactor = 0;
+    let profitFactorText = '0.00';
+    if (grossLoss > 0) {
+        profitFactor = grossProfit / grossLoss;
+        profitFactorText = profitFactor.toFixed(2);
+    } else if (grossProfit > 0) {
+        profitFactor = Infinity;
+        profitFactorText = '∞';
+    }
     const avgWin = totalWins > 0 ? grossProfit / totalWins : 0;
     const avgLoss = totalLosses > 0 ? grossLoss / totalLosses : 0;
 
     const elements = {
         kpiTotalPl: `$${totalPl.toFixed(2)}`,
         kpiWinRate: `${winRate.toFixed(2)}%`,
-        kpiProfitFactor: profitFactor.toFixed(2),
+        kpiProfitFactor: profitFactorText,
         kpiAvgWin: `$${avgWin.toFixed(2)}`,
         kpiAvgLoss: `$${avgLoss.toFixed(2)}`
     };
