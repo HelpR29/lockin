@@ -1044,6 +1044,16 @@ body {
 
 /* Mobile Optimizations */
 @media (max-width: 768px) {
+    .discipline-gauge {
+        width: 120px;
+        height: 120px;
+        --gauge-thickness: 12px;
+        --gauge-tick-size: 4px;
+        --gauge-tick-spacing: 2px;
+        --gauge-animation-duration: 1s;
+        --gauge-animation-timing-function: ease-in-out;
+    }
+}
     .hero-title {
         font-size: 2.5rem;
     }
@@ -1765,43 +1775,67 @@ body {
 
 /* Discipline Gauge */
 .discipline-gauge {
-    width: 120px;
-    height: 120px;
+    --gauge-angle: 0; /* degrees 0-360 */
+    --gauge-color: var(--primary-mint);
+    --gauge-track: rgba(255,255,255,0.10);
+    --gauge-thickness: 14px;
+
+    width: 150px;
+    height: 150px;
     border-radius: 50%;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: conic-gradient(var(--primary-mint) 0deg, var(--glass-bg) 0deg);
+    background: conic-gradient(var(--gauge-color) calc(var(--gauge-angle) * 1deg), var(--gauge-track) 0deg);
     position: relative;
     flex-shrink: 0;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.25);
+    transition: background 800ms ease-out, box-shadow 800ms ease-out;
 }
 
 .discipline-gauge::before {
     content: '';
     position: absolute;
-    left: 10px;
-    top: 10px;
-    right: 10px;
-    bottom: 10px;
+    inset: var(--gauge-thickness);
     background: var(--card-bg);
     border-radius: 50%;
+    box-shadow: inset 0 0 0 1px var(--glass-border);
+}
+
+/* tick marks ring */
+.discipline-gauge::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: repeating-conic-gradient(rgba(255,255,255,0.08) 0 2deg, transparent 2deg 12deg);
+    /* mask so only the ring area shows ticks */
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(50% - var(--gauge-thickness) - 2px), #000 calc(50% - var(--gauge-thickness) - 1px));
+            mask: radial-gradient(farthest-side, transparent calc(50% - var(--gauge-thickness) - 2px), #000 calc(50% - var(--gauge-thickness) - 1px));
+    pointer-events: none;
 }
 
 .discipline-gauge-value {
     font-family: 'Orbitron', sans-serif;
-    font-size: 2rem;
-    font-weight: 700;
+    font-size: 2.1rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
     color: var(--text-primary);
     z-index: 1;
 }
 
 .discipline-gauge-label {
-    font-size: 0.875rem;
+    font-size: 0.8rem;
     color: var(--text-secondary);
     z-index: 1;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 1.2px;
+    margin-top: 2px;
+}
+
+.discipline-gauge.animate {
+    filter: drop-shadow(0 0 14px rgba(255,149,0,0.15));
 }
 
 /* Hero Beer Display */
@@ -1817,6 +1851,7 @@ body {
     gap: 2rem; /* was 3rem */
     box-shadow: 0 20px 60px rgba(255, 149, 0, 0.3);
     position: relative; /* anchor (no extra right padding) */
+    justify-content: space-between;
 }
 
 .beer-icon-large {
