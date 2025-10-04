@@ -1054,49 +1054,15 @@ body {
         --gauge-animation-timing-function: ease-in-out;
     }
 }
-    .hero-title {
-        font-size: 2.5rem;
-    }
-    
-    .hero {
-        text-align: center;
-        position: relative;
-        z-index: 10;
-    }
-    
-    .hero-cta {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        width: 100%;
-        margin: 0 auto;
-    }
-    
-    .hero-visual {
-        width: 250px;
-        height: 250px;
-        position: sticky;
-        top: 0;
-        z-index: 100;
-        margin: 0 auto;
-    }
-    
-    .features {
-        position: relative;
-        z-index: 0;
-    }
-    
-    .section-title {
-        font-size: 2rem;
-    }
-    
-    .features-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .cta-title {
-        font-size: 2rem;
-    }
+@media (max-width: 768px) {
+    .hero-title { font-size: 2.5rem; }
+    .hero { text-align: center; position: relative; z-index: 10; }
+    .hero-cta { display: flex; justify-content: center; align-items: center; width: 100%; margin: 0 auto; }
+    .hero-visual { width: 250px; height: 250px; position: sticky; top: 0; z-index: 100; margin: 0 auto; }
+    .features { position: relative; z-index: 0; }
+    .section-title { font-size: 2rem; }
+    .features-grid { grid-template-columns: 1fr; }
+    .cta-title { font-size: 2rem; }
 }
 
 @media (max-width: 480px) {
