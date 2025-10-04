@@ -683,14 +683,16 @@ async function openUserProfileById(userId) {
         let avatarEmoji = '👤';
         let avatarUrl = null;
         let profileUsername = null;
+        let isLegendary = false;
         try {
             const { data: prof } = await supabase
                 .from('user_profiles')
-                .select('username, avatar, avatar_url')
+                .select('username, avatar, avatar_url, is_legendary')
                 .eq('user_id', userId)
                 .single();
             if (prof) {
                 profileUsername = (prof.username && prof.username.trim()) ? prof.username : null;
+                isLegendary = !!prof.is_legendary;
                 if (prof.avatar_url) {
                     avatarUrl = prof.avatar_url;
                 } else if (prof.avatar) {
@@ -713,13 +715,14 @@ async function openUserProfileById(userId) {
             : (profileUsername && profileUsername.trim())
                 ? profileUsername
                 : (row.email ? (row.email.split('@')[0]) : 'Trader');
+        const displayNameHtml = isLegendary ? `<span class="legendary-name">${displayName}</span>` : displayName;
 
         modal.innerHTML = `
             <div class="modal-content" style="max-width:520px; position: relative;">
                 <span class="close-button" onclick="this.closest('.modal').remove()">&times;</span>
                 <div style="text-align:center;">${avatarBlock}</div>
                 <div style="display:flex; align-items:center; justify-content:center; gap:0.5rem; margin-bottom:0.75rem;">
-                    <h2 style="margin:0; text-align:center;">${displayName} ${badge}</h2>
+                    <h2 style="margin:0; text-align:center;">${displayNameHtml} ${badge}</h2>
                     <button id="followIconBtn_${row.user_id}"
                         title="${isFollowing ? 'Unfollow' : 'Follow'}"
                         style="all:unset; cursor:pointer; background: rgba(255,255,255,0.08); border:1px solid var(--glass-border); width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1rem;">
