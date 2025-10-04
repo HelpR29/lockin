@@ -190,11 +190,14 @@ function selectPresetAvatar(url) {
 
 function updateAvatarPreview(url) {
     const preview = document.getElementById('avatarLivePreview');
+    const stepIcon = document.querySelector('#step2 .step-icon');
     if (!preview) return;
     if (url) {
         preview.innerHTML = `<img src="${url}" alt="avatar" style="width:100%; height:100%; object-fit:cover; display:block;"/>`;
+        if (stepIcon) stepIcon.innerHTML = `<img src="${url}" alt="avatar" style="width:100%; height:100%; object-fit:cover; border-radius:50%; display:block;"/>`;
     } else {
         preview.innerHTML = `<span style="font-size:2.25rem;">👤</span>`;
+        if (stepIcon) stepIcon.innerHTML = '👤';
     }
 }
 
