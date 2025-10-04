@@ -415,6 +415,19 @@ async function openSettingsModal() {
                         <button class="cta-secondary" id="removeAvatarBtn" onclick="removeAvatar()">Remove</button>
                     </div>
                 </div>
+                <div id="presetAvatarRow" style="margin-top: 0.75rem;">
+                    <div style="font-size:0.9rem; color: var(--text-secondary); margin-bottom: 0.4rem;">Or choose a preset:</div>
+                    <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+                        <div style="width:56px; height:56px; border-radius:50%; overflow:hidden; border:1px solid var(--glass-border);">
+                            <img src="/assets/avatars/male.png" alt="Male" style="width:100%; height:100%; object-fit:cover;">
+                        </div>
+                        <button class="cta-secondary" onclick="applyPresetAvatar('/assets/avatars/male.png')">Use Male</button>
+                        <div style="width:56px; height:56px; border-radius:50%; overflow:hidden; border:1px solid var(--glass-border);">
+                            <img src="/assets/avatars/female.png" alt="Female" style="width:100%; height:100%; object-fit:cover;">
+                        </div>
+                        <button class="cta-secondary" onclick="applyPresetAvatar('/assets/avatars/female.png')">Use Female</button>
+                    </div>
+                </div>
                 <div id="premiumPhotoNote" style="font-size:0.8rem; color:var(--text-secondary); margin-top:0.5rem;"></div>
             </div>
             
@@ -917,6 +930,24 @@ async function removeAvatar() {
 }
 window.selectAndUploadAvatar = selectAndUploadAvatar;
 window.removeAvatar = removeAvatar;
+
+// Apply a preset avatar (uses a local static asset path)
+async function applyPresetAvatar(url) {
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) { alert('Please log in'); return; }
+        await supabase.from('user_profiles').update({ avatar_url: url }).eq('user_id', user.id);
+        const preview = document.getElementById('settingsAvatarPreview');
+        if (preview) preview.innerHTML = `<img src="${url}" alt="avatar" style="width:100%; height:100%; object-fit:cover; object-position:center;">`;
+        const dash = document.getElementById('dashboardAvatar');
+        if (dash) dash.innerHTML = `<img src="${url}" alt="avatar" style="width:100%; height:100%; border-radius:50%; object-fit:cover; object-position:center;">`;
+        alert('Preset avatar applied');
+    } catch (e) {
+        console.error('applyPresetAvatar failed', e);
+        alert('Failed to apply preset.');
+    }
+}
+window.applyPresetAvatar = applyPresetAvatar;
 
 // Toggle follow/unfollow (global)
 async function toggleFollow(otherUserId) {
