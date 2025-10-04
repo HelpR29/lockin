@@ -348,10 +348,6 @@ async function loadLeaderboard() {
             `;
             leaderboardEl2.appendChild(itemEl);
         });
-                    existing.is_legendary = existing.is_legendary || !!r.is_legendary;
-                    profileMap.set(r.user_id, existing);
-                }
-            });
     } catch (error) {
         console.error('Error loading leaderboard:', error);
     }
