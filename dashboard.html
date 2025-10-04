@@ -628,14 +628,31 @@
             const xpPercent = Math.max(0, Math.min(100, (currentLevelXP / nextXP) * 100));
             document.getElementById('xpBarFill').style.width = `${xpPercent}%`;
 
-            // Update discipline gauge
+            // Update discipline gauge (animated)
             const disciplineGauge = document.getElementById('disciplineGauge');
             const disciplineGaugeValue = document.querySelector('.discipline-gauge-value');
 
             if (disciplineGauge && disciplineGaugeValue) {
-                const score = progressSummary.disciplineScore || 0;
+                const score = Math.max(0, Math.min(100, Number(progressSummary.disciplineScore || 0)));
                 disciplineGaugeValue.textContent = `${score}%`;
-                disciplineGauge.style.background = `conic-gradient(var(--primary-mint) ${score * 3.6}deg, var(--glass-bg) 0deg)`;
+                // Color mapping
+                const color = score >= 80 ? '#50E3C2' : score >= 50 ? '#FFC107' : '#FF6B6B';
+                disciplineGauge.style.setProperty('--gauge-color', color);
+                disciplineGauge.classList.add('animate');
+                // Animate from previous angle to target
+                const prevAngle = Number(disciplineGauge.dataset.angle || '0');
+                const targetAngle = score * 3.6; // degrees
+                const duration = 900;
+                const start = performance.now();
+                function animateGauge(now) {
+                    const t = Math.min(1, (now - start) / duration);
+                    const ease = 1 - Math.pow(1 - t, 3);
+                    const angle = prevAngle + (targetAngle - prevAngle) * ease;
+                    disciplineGauge.style.setProperty('--gauge-angle', angle.toFixed(1));
+                    if (t < 1) requestAnimationFrame(animateGauge);
+                    else disciplineGauge.dataset.angle = String(targetAngle.toFixed(1));
+                }
+                requestAnimationFrame(animateGauge);
             }
         }
         
