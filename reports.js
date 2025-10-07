@@ -595,17 +595,25 @@ async function generateReports() {
     // Calculate KPIs (always available)
     calculateAndDisplayKPIs(trades);
 
-    // Render all charts (always available)
-    renderPlChart(trades);
-    renderWinLossChart(trades);
-    renderDailyPlChart(trades);
-    renderPlByEntryHourChart(trades);
-    renderHoldingTimeStats(trades);
-    renderSessionKPIs(trades);
-    renderGoldenAvoidHours(trades);
-    renderTimeOfDayHeatmap(trades);
+    // Helper to prevent one failure from blocking the rest
+    const safe = (label, fn) => { try { fn(); } catch (e) { console.warn(`Reports: ${label} failed`, e); } };
 
-    // Initialize Performance Calendar
+    // Add brief tooltips to existing chart containers
+    try { document.getElementById('plChart')?.parentElement?.parentElement?.setAttribute('data-tooltip','Running total P/L over time.'); } catch(_) {}
+    try { document.getElementById('winLossChart')?.parentElement?.parentElement?.setAttribute('data-tooltip','Distribution of winning vs losing trades.'); } catch(_) {}
+    try { document.getElementById('dailyPlChart')?.parentElement?.parentElement?.setAttribute('data-tooltip','Total P/L by weekday.'); } catch(_) {}
+
+    // Render all charts (guarded)
+    safe('plChart', () => renderPlChart(trades));
+    safe('winLossChart', () => renderWinLossChart(trades));
+    safe('dailyPlChart', () => renderDailyPlChart(trades));
+    safe('plByHour', () => window.renderPlByEntryHourChart?.(trades));
+    safe('holdingStats', () => window.renderHoldingTimeStats?.(trades));
+    safe('sessionKPIs', () => window.renderSessionKPIs?.(trades));
+    safe('goldenHours', () => window.renderGoldenAvoidHours?.(trades));
+    safe('todHeatmap', () => window.renderTimeOfDayHeatmap?.(trades));
+
+    // Initialize Performance Calendar (always attempt even if charts errored)
     allClosedTrades = trades;
     const now = new Date();
     calendarYear = now.getFullYear();
