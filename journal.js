@@ -323,6 +323,16 @@ async function saveTrade(e) {
         const exitRaw = document.getElementById('exitPrice').value;
         const exitVal = statusVal === 'closed' ? (exitRaw !== '' ? parseFloat(exitRaw) : null) : null;
 
+        // Build entry_time from ET inputs (stored in UTC)
+        let entryTimeUTC = null;
+        try {
+            const dateET = document.getElementById('entryDateET')?.value || '';
+            const timeET = document.getElementById('entryTimeET')?.value || '';
+            if (dateET && timeET && typeof window.nyDateTimeToUTCISO === 'function') {
+                entryTimeUTC = window.nyDateTimeToUTCISO(dateET, timeET);
+            }
+        } catch(_) { /* ignore */ }
+
         // Prevent saving a closed trade without exit price
         if (statusVal === 'closed' && (exitVal === null || Number.isNaN(exitVal))) {
             alert('Please enter an Exit Price before saving a Closed trade. Or set status to Open and close it later.');
@@ -343,7 +353,8 @@ async function saveTrade(e) {
             position_size: parseFloat(document.getElementById('positionSize').value),
             status: statusVal,
             notes: document.getElementById('notes').value,
-            emotions: emotions
+            emotions: emotions,
+            entry_time: entryTimeUTC
         };
 
         let error;
