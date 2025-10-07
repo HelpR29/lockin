@@ -1,11 +1,13 @@
 // Onboarding State Management
 let currentStep = 1;
-const totalSteps = 6;
+const totalSteps = 7;
 let selectedToken = null;
 let selectedRules = [];
 let totalRulesAvailable = 0;
 // Active tab/category for step 6 (rules)
 let activeRuleCategory = 'Risk Management';
+// Checklist items for step 7
+let checklistItems = [];
 
 // Onboarding data
 const onboardingData = {
@@ -80,6 +82,10 @@ function nextStep() {
         // Load rules when entering step 6
         if (currentStep === 6) {
             loadRulesForSelection();
+        }
+        // Load checklist when entering step 7
+        if (currentStep === 7) {
+            renderChecklistItems();
         }
     }
 }
@@ -556,6 +562,71 @@ function updateSelectedCount() {
     if (countEl) countEl.textContent = selectedRules.length;
 }
 
+// ---- Step 7: Premarket Checklist Setup ----
+function renderChecklistItems() {
+    const container = document.getElementById('checklistItemsContainer');
+    const countEl = document.getElementById('checklistItemsCount');
+    if (!container) return;
+    
+    container.innerHTML = checklistItems.map((item, idx) => `
+        <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-radius: 8px; margin-bottom: 0.5rem;">
+            <span style="flex: 1;">${item}</span>
+            <button class="cta-secondary" onclick="editChecklistItem(${idx})" style="padding: 0.3rem 0.6rem;">✏️</button>
+            <button class="cta-secondary" onclick="removeChecklistItem(${idx})" style="padding: 0.3rem 0.6rem;">🗑️</button>
+        </div>
+    `).join('');
+    
+    if (countEl) countEl.textContent = checklistItems.length;
+}
+
+function addChecklistItemOnboarding() {
+    const input = document.getElementById('checklistItemInput');
+    const text = (input?.value || '').trim();
+    if (!text) {
+        alert('Please enter a checklist item');
+        return;
+    }
+    checklistItems.push(text);
+    input.value = '';
+    renderChecklistItems();
+}
+
+function editChecklistItem(idx) {
+    const newText = prompt('Edit checklist item:', checklistItems[idx]);
+    if (newText && newText.trim() && newText !== checklistItems[idx]) {
+        checklistItems[idx] = newText.trim();
+        renderChecklistItems();
+    }
+}
+
+function removeChecklistItem(idx) {
+    if (confirm('Remove this checklist item?')) {
+        checklistItems.splice(idx, 1);
+        renderChecklistItems();
+    }
+}
+
+function loadDefaultChecklist() {
+    if (checklistItems.length > 0 && !confirm('This will replace your current checklist. Continue?')) {
+        return;
+    }
+    checklistItems = [
+        'Review economic calendar / major news',
+        'Define A+ setups and avoid others',
+        'Set max loss and risk per trade',
+        'Mark key levels and plan entries/exits',
+        'Confirm no trading during first 15 minutes',
+        'Rehearse stop-loss execution and partials',
+        'Check broader market trend and correlations'
+    ];
+    renderChecklistItems();
+}
+
+window.addChecklistItemOnboarding = addChecklistItemOnboarding;
+window.editChecklistItem = editChecklistItem;
+window.removeChecklistItem = removeChecklistItem;
+window.loadDefaultChecklist = loadDefaultChecklist;
+
 // Complete Onboarding
 async function completeOnboarding() {
     if (!selectedToken) {
@@ -744,6 +815,24 @@ async function completeOnboarding() {
             });
         }
         console.log('✅ Trading rules saved successfully!');
+        
+        // Save checklist items
+        console.log('💾 Saving', checklistItems.length, 'checklist items...');
+        if (checklistItems.length > 0) {
+            try {
+                for (let i = 0; i < checklistItems.length; i++) {
+                    await supabase.from('premarket_checklist_items').insert({
+                        user_id: user.id,
+                        text: checklistItems[i],
+                        sort: i,
+                        is_active: true
+                    });
+                }
+                console.log('✅ Checklist items saved successfully!');
+            } catch (checklistError) {
+                console.warn('⚠️ Could not save checklist items (will use defaults):', checklistError.message);
+            }
+        }
         
         console.log('✅ Onboarding complete! Redirecting to dashboard...');
         
