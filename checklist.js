@@ -65,6 +65,11 @@ async function loadChecklistItems() {
 }
 
 function todayYMD() {
+  try {
+    if (typeof window !== 'undefined' && typeof window.todayYMD_NY === 'function') {
+      return window.todayYMD_NY();
+    }
+  } catch(_) {}
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
@@ -246,7 +251,14 @@ async function fetchPremarketAdherence(days = 30) {
   const start = new Date();
   start.setDate(end.getDate() - (days - 1));
 
-  function ymd(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+  function ymd(d) {
+    try {
+      if (typeof formatYMDInTZ === 'function') {
+        return formatYMDInTZ(d, (typeof NY_TZ !== 'undefined' ? NY_TZ : 'America/New_York'));
+      }
+    } catch(_) {}
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
 
   if (!userId) {
     // Compute from LS
