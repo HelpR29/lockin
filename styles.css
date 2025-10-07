@@ -1512,10 +1512,16 @@ body {
 }
 .reports-grid > * { min-width: 0; }
 
-/* Performance Calendar: ensure 7 columns fit on small screens */
+/* Performance Calendar: ensure 7 columns fit and grid renders */
 .calendar-grid {
+    display: grid; /* ensure grid always renders */
     width: 100%;
     grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+    gap: 0.5rem;
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    padding: 0.75rem;
 }
 .calendar-grid > * { min-width: 0; }
 .calendar-day { min-width: 0; }
@@ -1596,6 +1602,14 @@ body {
     .kpi-summary-card { grid-template-columns: 1fr !important; }
     .chart-card { padding: 0.75rem; }
     .kpi-item { padding: 0.6rem 0.75rem; }
+    /* Center headings on small screens */
+    .chart-card h3, .stat-card h3 { text-align: center; }
+    /* Center KPI tiles content */
+    .kpi-item { grid-template-columns: 1fr !important; text-align: center; }
+    .kpi-value { text-align: center; }
+    /* Center bodies of new analytics */
+    #sessionKpiBody, #goldenHoursBody { justify-items: center; }
+    #todHeatmapGrid { margin: 0 auto; }
 }
 
 @media (max-width: 480px) {
