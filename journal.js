@@ -84,10 +84,30 @@ function handleStatusChange() {
     const exitGroup = document.getElementById('exitGroup');
     const exitHint = document.getElementById('exitHint');
     const exitInput = document.getElementById('exitPrice');
+    const exitDateGroup = document.getElementById('exitDateGroup');
+    const exitTimeGroup = document.getElementById('exitTimeGroup');
     const isClosed = statusSel && statusSel.value === 'closed';
     if (exitGroup) exitGroup.style.display = isClosed ? 'block' : 'none';
     if (exitHint) exitHint.style.display = isClosed ? 'none' : 'block';
     if (exitInput) exitInput.required = isClosed;
+    if (exitDateGroup) exitDateGroup.style.display = isClosed ? 'block' : 'none';
+    if (exitTimeGroup) exitTimeGroup.style.display = isClosed ? 'block' : 'none';
+    if (isClosed) {
+        try {
+            const dEl = document.getElementById('exitDateET');
+            const tEl = document.getElementById('exitTimeET');
+            if (dEl && tEl) {
+                dEl.value = (typeof todayYMD_NY === 'function') ? todayYMD_NY() : (new Date()).toISOString().slice(0,10);
+                if (typeof nyTimeParts === 'function') {
+                    const p = nyTimeParts(new Date());
+                    tEl.value = `${String(p.hour).padStart(2,'0')}:${String(p.minute).padStart(2,'0')}`;
+                } else {
+                    const nd = new Date();
+                    tEl.value = `${String(nd.getHours()).padStart(2,'0')}:${String(nd.getMinutes()).padStart(2,'0')}`;
+                }
+            }
+        } catch(_) {}
+    }
 }
 
 async function checkPremiumStatus() {
@@ -344,6 +364,16 @@ async function saveTrade(e) {
             }
         } catch(_) { /* ignore */ }
 
+        // Build exit_time from ET inputs if provided (stored in UTC)
+        let exitTimeUTC = null;
+        try {
+            const dET = document.getElementById('exitDateET')?.value || '';
+            const tET = document.getElementById('exitTimeET')?.value || '';
+            if (dET && tET && typeof window.nyDateTimeToUTCISO === 'function') {
+                exitTimeUTC = window.nyDateTimeToUTCISO(dET, tET);
+            }
+        } catch(_) { /* ignore */ }
+
         // Prevent saving a closed trade without exit price
         if (statusVal === 'closed' && (exitVal === null || Number.isNaN(exitVal))) {
             alert('Please enter an Exit Price before saving a Closed trade. Or set status to Open and close it later.');
@@ -365,7 +395,8 @@ async function saveTrade(e) {
             status: statusVal,
             notes: document.getElementById('notes').value,
             emotions: emotions,
-            entry_time: entryTimeUTC
+            entry_time: entryTimeUTC,
+            exit_time: exitTimeUTC
         };
 
         let error;
