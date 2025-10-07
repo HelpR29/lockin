@@ -256,6 +256,17 @@ async function loadTrades() {
         tradeEl.className = 'trade-item';
         tradeEl.style.cursor = 'pointer';
         const vCount = (violationsByTrade.get(trade.id) || []).length;
+        // Build ET timestamp label (prefer entry_time)
+        const tsBase = trade.entry_time || trade.created_at;
+        let tsLabel = '';
+        try {
+            if (typeof formatNY === 'function') {
+                tsLabel = formatNY(new Date(tsBase), { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) + ' ET';
+            } else {
+                tsLabel = new Date(tsBase).toLocaleString();
+            }
+        } catch(_) { tsLabel = new Date(tsBase).toLocaleString(); }
+
         tradeEl.innerHTML = `
             <div class="trade-header">
                 <span class="trade-symbol">${trade.symbol}</span>
@@ -272,7 +283,7 @@ async function loadTrades() {
                 <div class="trade-notes">${trade.notes || ''}</div>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
                     <div class="trade-timestamp" style="font-size: 0.75rem; color: var(--text-muted);">
-                        ${new Date(trade.created_at).toLocaleString()}
+                        ${tsLabel}
                     </div>
                     <div style="display:flex; gap:0.4rem;">
                         ${vCount > 0 ? `
