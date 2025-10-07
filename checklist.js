@@ -23,6 +23,15 @@ async function getUserIdOrNull() {
   }
 }
 
+// Utility: attempt Supabase call and surface boolean
+async function trySupabase(fn) {
+  try {
+    return await fn();
+  } catch (_) {
+    return null;
+  }
+}
+
 // Load or initialize master checklist items for a user
 async function loadChecklistItems() {
   const userId = await getUserIdOrNull();
@@ -189,6 +198,45 @@ async function renderPremarketChecklistCard() {
     }
     renderList();
   });
+
+  // Add item
+  card.querySelector('#addChecklistItemBtn').addEventListener('click', async () => {
+    const input = document.getElementById('newChecklistText');
+    const text = (input.value || '').trim();
+    if (!text) return;
+    const newItem = await createChecklistItem(text, items.length);
+    if (newItem) {
+      items.push(newItem);
+      input.value = '';
+      renderList();
+    }
+  });
+
+  // Edit/Delete actions
+  list.addEventListener('click', async (e) => {
+    const btn = e.target.closest('button[data-action]');
+    if (!btn) return;
+    const action = btn.getAttribute('data-action');
+    const id = btn.getAttribute('data-id');
+    if (action === 'edit') {
+      const current = items.find(i => String(i.id) === String(id));
+      const newText = prompt('Edit checklist item:', current?.text || '');
+      if (newText && newText.trim() && newText !== current?.text) {
+        const ok = await updateChecklistItem(id, { text: newText.trim() });
+        if (ok !== false) {
+          items = items.map(it => it.id == id ? { ...it, text: newText.trim() } : it);
+          renderList();
+        }
+      }
+    } else if (action === 'delete') {
+      if (!confirm('Delete this item?')) return;
+      const ok = await deleteChecklistItem(id);
+      if (ok !== false) {
+        items = items.filter(it => String(it.id) !== String(id));
+        renderList();
+      }
+    }
+  });
 }
 
 window.renderPremarketChecklistCard = renderPremarketChecklistCard;
@@ -219,26 +267,31 @@ async function fetchPremarketAdherence(days = 30) {
   }
 
   try {
-    const { data, error } = await supabase
-      .from('premarket_checklist_daily')
-      .select('*')
-      .eq('user_id', userId)
-      .gte('date', ymd(start))
-      .lte('date', ymd(end));
-    if (error) throw error;
+    // Load active items and daily rows within range
+    const [itemsRes, dailyRes] = await Promise.all([
+      supabase.from('premarket_checklist_items').select('id,is_active').eq('user_id', userId),
+      supabase
+        .from('premarket_checklist_daily')
+        .select('*')
+        .eq('user_id', userId)
+        .gte('date', ymd(start))
+        .lte('date', ymd(end))
+    ]);
 
+    const items = (itemsRes.data || []).filter(i => i.is_active !== false).map(i => i.id);
+    const daily = dailyRes.data || [];
     const byDate = {};
-    (data || []).forEach(r => {
-      byDate[r.date] = byDate[r.date] || { adhered: 0, total: 0 };
-      byDate[r.date].total += 1;
+    daily.forEach(r => {
+      if (!items.includes(r.item_id)) return; // only count active items
+      byDate[r.date] = byDate[r.date] || { adhered: 0 };
       if (r.morning_checked && r.eod_confirmed) byDate[r.date].adhered += 1;
     });
 
     const series = [];
     for (let dt = new Date(start); dt <= end; dt.setDate(dt.getDate()+1)) {
       const key = ymd(dt);
-      const d = byDate[key] || { adhered: 0, total: 0 };
-      series.push({ date: key, adhered: d.adhered, total: d.total });
+      const adhered = byDate[key]?.adhered || 0;
+      series.push({ date: key, adhered, total: items.length });
     }
     return series;
   } catch (e) {
@@ -248,3 +301,82 @@ async function fetchPremarketAdherence(days = 30) {
 }
 
 window.fetchPremarketAdherence = fetchPremarketAdherence;
+
+// ---- CRUD helpers for checklist items ----
+function loadLsItems() {
+  try { return JSON.parse(localStorage.getItem(CHECKLIST_LS_KEY) || '[]'); } catch(_) { return []; }
+}
+function saveLsItems(items) { try { localStorage.setItem(CHECKLIST_LS_KEY, JSON.stringify(items)); } catch(_) {} }
+
+async function createChecklistItem(text, sort) {
+  const userId = await getUserIdOrNull();
+  if (!userId) {
+    const items = loadLsItems();
+    const id = `ls-${Date.now()}-${Math.random().toString(36).slice(2,7)}`;
+    const newItem = { id, text, sort: sort ?? items.length, is_active: true };
+    items.push(newItem);
+    saveLsItems(items);
+    return newItem;
+  }
+  try {
+    const { data, error } = await supabase
+      .from('premarket_checklist_items')
+      .insert({ user_id: userId, text, sort: sort ?? 0, is_active: true })
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  } catch (e) {
+    // Fallback LS
+    const items = loadLsItems();
+    const id = `ls-${Date.now()}-${Math.random().toString(36).slice(2,7)}`;
+    const newItem = { id, text, sort: sort ?? items.length, is_active: true };
+    items.push(newItem);
+    saveLsItems(items);
+    return newItem;
+  }
+}
+
+async function updateChecklistItem(id, fields) {
+  const userId = await getUserIdOrNull();
+  if (!userId || String(id).startsWith('ls-') || String(id).startsWith('local-') || String(id).startsWith('seed-')) {
+    const items = loadLsItems().map(it => String(it.id) === String(id) ? { ...it, ...fields } : it);
+    saveLsItems(items);
+    return true;
+  }
+  try {
+    const { error } = await supabase
+      .from('premarket_checklist_items')
+      .update({ ...fields })
+      .eq('id', id)
+      .eq('user_id', userId);
+    if (error) throw error;
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+async function deleteChecklistItem(id) {
+  const userId = await getUserIdOrNull();
+  if (!userId || String(id).startsWith('ls-') || String(id).startsWith('local-') || String(id).startsWith('seed-')) {
+    const items = loadLsItems().filter(it => String(it.id) !== String(id));
+    saveLsItems(items);
+    // Remove any daily states for this LS id
+    const all = JSON.parse(localStorage.getItem(CHECKLIST_LS_DAILY_KEY) || '{}');
+    Object.keys(all).forEach(date => { if (all[date][id]) delete all[date][id]; });
+    localStorage.setItem(CHECKLIST_LS_DAILY_KEY, JSON.stringify(all));
+    return true;
+  }
+  try {
+    const { error } = await supabase
+      .from('premarket_checklist_items')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', userId);
+    if (error) throw error;
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
