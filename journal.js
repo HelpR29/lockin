@@ -668,6 +668,27 @@ async function openLogTradeModal() {
     document.getElementById('tradeModalTitle').textContent = 'Log New Trade';
     document.querySelectorAll('.emotion-tags .tag').forEach(tag => tag.classList.remove('selected'));
     
+    // Default Entry Date/Time to current ET
+    try {
+        const dateEl = document.getElementById('entryDateET');
+        const timeEl = document.getElementById('entryTimeET');
+        if (dateEl && timeEl) {
+            if (typeof todayYMD_NY === 'function') {
+                dateEl.value = todayYMD_NY();
+            } else {
+                const d = new Date();
+                dateEl.value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+            }
+            if (typeof nyTimeParts === 'function') {
+                const p = nyTimeParts(new Date());
+                timeEl.value = `${String(p.hour).padStart(2,'0')}:${String(p.minute).padStart(2,'0')}`;
+            } else {
+                const d = new Date();
+                timeEl.value = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+            }
+        }
+    } catch(_) { /* ignore */ }
+
     // Show trade type fields based on selection
     const tradeTypeSelect = document.getElementById('tradeType');
     if (tradeTypeSelect) {
