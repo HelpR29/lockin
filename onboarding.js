@@ -4,6 +4,8 @@ const totalSteps = 6;
 let selectedToken = null;
 let selectedRules = [];
 let totalRulesAvailable = 0;
+// Active tab/category for step 6 (rules)
+let activeRuleCategory = 'Risk Management';
 
 // Onboarding data
 const onboardingData = {
@@ -102,6 +104,28 @@ function updateProgress() {
     if (progressFill) progressFill.style.width = `${progress}%`;
     if (currentStepEl) currentStepEl.textContent = currentStep;
 }
+
+// ---- Step 6 Tab Helpers ----
+function getActiveCategory() {
+    const activeTab = document.querySelector('#ruleTabs .rule-tab.active');
+    return activeTab?.getAttribute('data-category') || activeRuleCategory || 'Risk Management';
+}
+
+function showRuleCategory(category) {
+    activeRuleCategory = category || getActiveCategory();
+    document.querySelectorAll('.rule-category-panel').forEach(panel => {
+        const cat = panel.getAttribute('data-category');
+        panel.style.display = (cat === activeRuleCategory) ? 'block' : 'none';
+    });
+}
+
+// Delegate tab clicks (works when step 6 becomes active)
+document.addEventListener('click', (e) => {
+    const tab = e.target.closest('#ruleTabs .rule-tab');
+    if (!tab) return;
+    const category = tab.getAttribute('data-category');
+    showRuleCategory(category);
+});
 
 // Avatar selection
 let selectedAvatar = '';
@@ -423,31 +447,18 @@ async function loadRulesForSelection() {
     // Reset and track totals
     selectedRules = [];
     totalRulesAvailable = defaultRules.length;
-    
     const categories = ['Risk Management', 'Entry Rules', 'Exit Rules', 'Psychology', 'General'];
-    const categoryIcons = {
-        'Risk Management': '⚠️',
-        'Entry Rules': '📥',
-        'Exit Rules': '📤',
-        'Psychology': '🧠',
-        'General': '📋'
-    };
     
     categories.forEach(category => {
         const categoryRules = defaultRules.filter(r => r.category === category);
+        const panel = document.createElement('div');
+        panel.className = 'rule-category-panel';
+        panel.setAttribute('data-category', category);
+        panel.style.cssText = `display: ${category === getActiveCategory() ? 'block' : 'none'};`;
         
-        const categoryEl = document.createElement('div');
-        categoryEl.style.cssText = 'margin-bottom: 1.5rem; padding: 1rem; background: var(--card-bg); border-radius: 12px;';
-        
-        categoryEl.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--glass-border);">
-                <span style="font-size: 1.5rem;">${categoryIcons[category]}</span>
-                <h4 style="margin: 0; color: var(--primary-orange);">${category}</h4>
-            </div>
-            <div class="rules-list"></div>
-        `;
-        
-        const rulesList = categoryEl.querySelector('.rules-list');
+        const rulesList = document.createElement('div');
+        rulesList.className = 'rules-list';
+        panel.appendChild(rulesList);
         
         categoryRules.forEach((ruleData, index) => {
             const ruleId = `rule-${category.replace(/\s/g, '-')}-${index}`;
@@ -460,13 +471,11 @@ async function loadRulesForSelection() {
                 <input type="checkbox" id="${ruleId}" data-category="${category}" data-rule="${ruleData.rule.replace(/"/g, '&quot;')}" onchange="toggleRuleSelection(this)" style="width: 20px; height: 20px; cursor: pointer;" checked>
                 <label for="${ruleId}" style="flex: 1; cursor: pointer; user-select: none;">${ruleData.rule}</label>
             `;
-            
             rulesList.appendChild(ruleEl);
-            // Preselect all rules by default
             selectedRules.push({ category, rule: ruleData.rule });
         });
         
-        container.appendChild(categoryEl);
+        container.appendChild(panel);
     });
     
     updateSelectedCount();
@@ -491,20 +500,32 @@ function toggleRuleSelection(checkbox) {
 }
 
 function selectAllRules() {
-    const container = document.getElementById('ruleSelectionContainer');
-    selectedRules = [];
-    container.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-        cb.checked = true;
-        const rule = { category: cb.getAttribute('data-category'), rule: cb.getAttribute('data-rule') };
-        selectedRules.push(rule);
+    const activeCat = getActiveCategory();
+    const panel = document.querySelector(`.rule-category-panel[data-category="${activeCat}"]`);
+    if (!panel) return;
+    panel.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+        if (!cb.checked) {
+            cb.checked = true;
+            const rule = { category: cb.getAttribute('data-category'), rule: cb.getAttribute('data-rule') };
+            // Avoid duplicates
+            if (!selectedRules.find(r => r.rule === rule.rule && r.category === rule.category)) {
+                selectedRules.push(rule);
+            }
+        }
     });
     updateSelectedCount();
 }
 
 function deselectAllRules() {
-    const container = document.getElementById('ruleSelectionContainer');
-    container.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
-    selectedRules = [];
+    const activeCat = getActiveCategory();
+    const panel = document.querySelector(`.rule-category-panel[data-category="${activeCat}"]`);
+    if (!panel) return;
+    panel.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+        cb.checked = false;
+        const ruleText = cb.getAttribute('data-rule');
+        const cat = cb.getAttribute('data-category');
+        selectedRules = selectedRules.filter(r => !(r.rule === ruleText && r.category === cat));
+    });
     updateSelectedCount();
 }
 
