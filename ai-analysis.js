@@ -621,3 +621,72 @@ function bindServerAIButtons() {
 }
 
 document.addEventListener('DOMContentLoaded', bindServerAIButtons);
+
+// ---------------- Quota UI (optional enhancement) ----------------
+function _isoWeekKey(date) {
+    const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+    const day = d.getUTCDay() || 7; // 1..7, Monday=1
+    if (day !== 1) d.setUTCDate(d.getUTCDate() + (1 - day)); // back to Monday
+    const monday = new Date(d);
+    const temp = new Date(monday); temp.setUTCDate(temp.getUTCDate() + 3);
+    const year = temp.getUTCFullYear();
+    const yearStart = new Date(Date.UTC(year, 0, 1));
+    const week = Math.ceil((((monday - yearStart) / 86400000) + 1) / 7);
+    return `${year}-${String(week).padStart(2,'0')}`;
+}
+
+function _monthKey(date) {
+    const y = date.getUTCFullYear();
+    const m = date.getUTCMonth() + 1;
+    return `${y}-${String(m).padStart(2,'0')}`;
+}
+
+async function updateAIQuotaUI() {
+    try {
+        const quotaEl = document.getElementById('aiQuotaDisplay');
+        const weeklyBtn = document.getElementById('weeklyAIButton');
+        const monthlyBtn = document.getElementById('monthlyAIButton');
+        if (!weeklyBtn && !monthlyBtn && !quotaEl) return; // nothing to do on this page
+
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) { if (quotaEl) quotaEl.textContent = ''; return; }
+
+        const now = new Date();
+        const wkKey = _isoWeekKey(now);
+        const mKey = _monthKey(now);
+
+        let isPremium = false; let weeklyUsed = 0; let monthlyUsed = 0;
+        try {
+            const { data: prof } = await supabase.from('user_profiles').select('is_premium').eq('user_id', user.id).single();
+            isPremium = !!prof?.is_premium;
+        } catch (_) {}
+
+        try {
+            const { data: w } = await supabase.from('ai_usage').select('used_count').eq('user_id', user.id).eq('period', 'weekly').eq('period_key', wkKey).maybeSingle();
+            weeklyUsed = w?.used_count || 0;
+        } catch (_) {}
+        try {
+            const { data: m } = await supabase.from('ai_usage').select('used_count').eq('user_id', user.id).eq('period', 'monthly').eq('period_key', mKey).maybeSingle();
+            monthlyUsed = m?.used_count || 0;
+        } catch (_) {}
+
+        // Apply UI
+        if (weeklyBtn) weeklyBtn.title = `Weekly: ${weeklyUsed}/1 used`;
+        if (monthlyBtn) {
+            if (!isPremium) {
+                monthlyBtn.disabled = true;
+                monthlyBtn.title = 'Premium only: 0/1 available';
+            } else {
+                monthlyBtn.disabled = false;
+                monthlyBtn.title = `Monthly: ${monthlyUsed}/1 used`;
+            }
+        }
+        if (quotaEl) {
+            const wText = `Weekly: ${weeklyUsed}/1`;
+            const mText = isPremium ? `Monthly: ${monthlyUsed}/1` : `Monthly: Premium only`;
+            quotaEl.textContent = `${wText} • ${mText}`;
+        }
+    } catch (e) { console.warn('updateAIQuotaUI failed', e); }
+}
+
+document.addEventListener('DOMContentLoaded', updateAIQuotaUI);
