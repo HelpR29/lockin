@@ -10,7 +10,7 @@ async function isTodayChecklistComplete() {
     const items = await loadChecklistItems();
     const activeItems = items.filter(i => i.is_active !== false);
     
-    if (activeItems.length === 0) return true; // No items = pass
+    if (activeItems.length === 0) return 'no_items'; // Special flag for no checklist
     
     const dailyMap = await loadDailyChecklist();
     
