@@ -33,6 +33,9 @@
                         <rect x="48" y="58" width="4" height="10" rx="2" fill="#2C2C2E"/>
                     </svg>
                 </div>
+
+                <!-- Premarket Checklist Card -->
+                <div id="premarketChecklistCard" style="margin-top: 1rem;"></div>
                 <span class="logo-text">LockIn</span>
             </div>
             <nav class="nav" style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: nowrap; overflow: hidden;">
@@ -299,6 +302,7 @@
     <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="auth.js"></script>
+    <script src="checklist.js"></script>
     <script src="progress.js?v=20251004"></script>
     <script src="notifications.js"></script>
     <script src="achievement-tracker.js"></script>
@@ -451,6 +455,11 @@
             // Load recent activity
             if (typeof loadRecentActivity === 'function') {
                 await loadRecentActivity();
+            }
+
+            // Render premarket checklist card
+            if (typeof renderPremarketChecklistCard === 'function') {
+                try { await renderPremarketChecklistCard(); } catch (e) { console.warn('Checklist render failed', e); }
             }
             
             // Set up periodic progress refresh (every 30 seconds)
