@@ -544,7 +544,9 @@ async function callServerAI(period) {
     try {
         const { data: { session } } = await supabase.auth.getSession();
         const token = session?.access_token || '';
-        const base = (typeof window !== 'undefined' && window.SUPABASE_FUNCTIONS_URL) ? window.SUPABASE_FUNCTIONS_URL : null;
+        const base = (typeof window !== 'undefined')
+            ? (window.SUPABASE_FUNCTIONS_URL || (window.SUPABASE_URL ? window.SUPABASE_URL.replace('.supabase.co', '.functions.supabase.co') : null))
+            : null;
         let ok = false; let payload = null; let lastErr = null;
 
         // Prefer direct fetch to the functions domain to avoid wrong base URL issues
