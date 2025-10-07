@@ -25,7 +25,7 @@ async function isTodayChecklistComplete() {
     return true;
   } catch (e) {
     console.warn('Error checking checklist:', e);
-    return true; // If error, don't block trade
+    return 'no_items'; // Treat as no checklist so we prompt setup
   }
 }
 
