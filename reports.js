@@ -38,7 +38,7 @@ function renderSessionKPIs(trades) {
             return trades ? (wr>0 && wr<100 ? (Number(wr)/ (100-Number(wr))).toFixed(2) : (pl>0?'∞':'0.00')) : '0.00';
         })();
         return `
-        <div class="kpi-item" style="background: rgba(255,255,255,0.03); border:1px solid var(--glass-border); border-radius:10px; padding:0.75rem;">
+        <div class="kpi-item" data-tooltip="${s.label}: ${trades} trades • ${wr}% win • ${pl>=0?'+':''}$${pl.toFixed(2)} P/L" style="background: rgba(255,255,255,0.03); border:1px solid var(--glass-border); border-radius:10px; padding:0.75rem;">
             <div style="display:flex; justify-content:space-between; align-items:center;">
                 <span class="kpi-label" style="font-size:0.9rem; color: var(--text-secondary);">${s.label}</span>
                 <span style="font-size:0.9rem; color:${pl>=0?'#34C759':'#FF453A'}; font-weight:800;">${pl>=0?'+':''}$${pl.toFixed(2)}</span>
@@ -113,7 +113,7 @@ function renderTimeOfDayHeatmap(trades) {
             const g = Math.round(60 + 140*wr);
             const r = Math.round(255 - 140*wr);
             const bg = `rgb(${r}, ${g}, 80)`;
-            html += `<div title="${days[d]} ${String(h).padStart(2,'0')}:00 — ${n} trades, ${(wr*100).toFixed(0)}% win" style="height:22px; background:${bg}; text-align:center; font-size:0.7rem; color:#000;">${n||''}</div>`;
+            html += `<div data-tooltip="${days[d]} ${String(h).padStart(2,'0')}:00 — ${n} trades, ${(wr*100).toFixed(0)}% win" style="height:22px; background:${bg}; text-align:center; font-size:0.7rem; color:#000;">${n||''}</div>`;
         }
     }
     html += '</div>';
@@ -126,6 +126,7 @@ function renderPlByEntryHourChart(trades) {
     if (!canvas) return;
 
     const ctx = canvas.getContext('2d');
+    try { canvas.parentElement?.setAttribute('data-tooltip', 'Total P/L grouped by ENTRY hour in America/New_York time.'); } catch(_) {}
     const plByHour = new Array(24).fill(0);
 
     trades.forEach(trade => {
@@ -215,13 +216,13 @@ function renderHoldingTimeStats(trades) {
 
     // Render stat tiles
     const tiles = [
-        { label: 'Avg Holding Time', value: `${Math.round(avgMin)} min` },
-        { label: 'Median Holding Time', value: `${Math.round(medMin)} min` },
-        { label: 'Most Profitable Hour (ET)', value: `${String(bestHour).padStart(2,'0')}:00` },
-        { label: 'Trades at Best Hour', value: `${byHour[bestHour]}` }
+        { label: 'Avg Holding Time', value: `${Math.round(avgMin)} min`, tip: 'Average minutes between entry and exit across closed trades.' },
+        { label: 'Median Holding Time', value: `${Math.round(medMin)} min`, tip: 'Median minutes between entry and exit (robust to outliers).' },
+        { label: 'Most Profitable Hour (ET)', value: `${String(bestHour).padStart(2,'0')}:00`, tip: 'ET hour with the highest total P/L based on entry times.' },
+        { label: 'Trades at Best Hour', value: `${byHour[bestHour]}`, tip: 'Number of trades entered during your most profitable hour.' }
     ];
     host.innerHTML = tiles.map(t => `
-        <div class="kpi-item" style="background: rgba(255,255,255,0.03); border:1px solid var(--glass-border); border-radius:10px; padding:0.75rem; text-align:center;">
+        <div class="kpi-item" data-tooltip="${t.tip}" style="background: rgba(255,255,255,0.03); border:1px solid var(--glass-border); border-radius:10px; padding:0.75rem; text-align:center;">
             <div class="kpi-label" style="font-size:0.85rem; color: var(--text-secondary);">${t.label}</div>
             <div class="kpi-value" style="font-size:1.4rem; font-weight:800;">${t.value}</div>
         </div>
