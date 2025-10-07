@@ -82,27 +82,42 @@ async function checkRule(rule, trade, userId) {
         }
     }
     
-    // Market hours rule
+    // Market hours rule (use entry_time if provided; America/New_York)
     if (ruleText.includes('market hours') || ruleText.includes('9:30')) {
-        const tradeTime = new Date(trade.created_at);
-        const hour = tradeTime.getHours();
-        const minute = tradeTime.getMinutes();
-        
-        // Before 9:30 AM or after 4:00 PM
-        if (hour < 9 || (hour === 9 && minute < 30) || hour >= 16) {
-            return `Traded at ${tradeTime.toLocaleTimeString()} (outside market hours)`;
+        const baseISO = trade.entry_time || trade.created_at;
+        const baseDate = new Date(baseISO);
+        // If helper exists, use isNYMarketOpen; fallback to local hours check
+        if (typeof window !== 'undefined' && typeof window.isNYMarketOpen === 'function') {
+            if (!window.isNYMarketOpen(baseDate)) {
+                const etTime = (typeof window.formatNY === 'function') ? window.formatNY(baseDate, { hour: '2-digit', minute: '2-digit' }) : baseDate.toLocaleTimeString();
+                return `Traded at ${etTime} ET (outside market hours)`;
+            }
+        } else {
+            const hour = baseDate.getHours();
+            const minute = baseDate.getMinutes();
+            if (hour < 9 || (hour === 9 && minute < 30) || hour >= 16) {
+                return `Traded at ${baseDate.toLocaleTimeString()} (outside market hours)`;
+            }
         }
     }
     
-    // First/Last 15 minutes rule
-    if (ruleText.includes('first') && ruleText.includes('15 min')) {
-        const tradeTime = new Date(trade.created_at);
-        const hour = tradeTime.getHours();
-        const minute = tradeTime.getMinutes();
-        
-        // First 15 minutes (9:30-9:45) or last 15 minutes (3:45-4:00)
-        if ((hour === 9 && minute >= 30 && minute < 45) || (hour === 15 && minute >= 45)) {
-            return `Traded in first/last 15 minutes`;
+    // First/Last 15 minutes rule (ET)
+    if (ruleText.includes('first') && ruleText.includes('15')) {
+        const baseISO = trade.entry_time || trade.created_at;
+        const baseDate = new Date(baseISO);
+        if (typeof window !== 'undefined' && typeof window.nyMinutesSinceMidnight === 'function') {
+            const mins = window.nyMinutesSinceMidnight(baseDate);
+            const first15 = (mins >= (9*60+30) && mins < (9*60+45));
+            const last15 = (mins >= (15*60+45) && mins <= (16*60));
+            if (first15 || last15) {
+                return 'Traded in first/last 15 minutes of market';
+            }
+        } else {
+            const hour = baseDate.getHours();
+            const minute = baseDate.getMinutes();
+            if ((hour === 9 && minute >= 30 && minute < 45) || (hour === 15 && minute >= 45)) {
+                return `Traded in first/last 15 minutes`;
+            }
         }
     }
     
