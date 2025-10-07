@@ -293,10 +293,37 @@
                         <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1.5rem;">
                             ⚠️ <strong>Important:</strong> After onboarding, editing/adding/removing rules requires Premium. Choose wisely!
                         </p>
+                        <!-- Category Tabs -->
+                        <div id="ruleTabs" style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:1rem;">
+                            <button class="rule-tab active" data-category="Risk Management" style="padding:0.5rem 0.9rem; border-radius:8px; border:1px solid var(--glass-border); background: rgba(255,255,255,0.05); color: var(--text-primary); cursor:pointer;">
+                                ⚠️ Risk Management
+                            </button>
+                            <button class="rule-tab" data-category="Entry Rules" style="padding:0.5rem 0.9rem; border-radius:8px; border:1px solid var(--glass-border); background: rgba(255,255,255,0.05); color: var(--text-primary); cursor:pointer;">
+                                📥 Entry Rules
+                            </button>
+                            <button class="rule-tab" data-category="Exit Rules" style="padding:0.5rem 0.9rem; border-radius:8px; border:1px solid var(--glass-border); background: rgba(255,255,255,0.05); color: var(--text-primary); cursor:pointer;">
+                                📤 Exit Rules
+                            </button>
+                            <button class="rule-tab" data-category="Psychology" style="padding:0.5rem 0.9rem; border-radius:8px; border:1px solid var(--glass-border); background: rgba(255,255,255,0.05); color: var(--text-primary); cursor:pointer;">
+                                🧠 Psychology
+                            </button>
+                            <button class="rule-tab" data-category="General" style="padding:0.5rem 0.9rem; border-radius:8px; border:1px solid var(--glass-border); background: rgba(255,255,255,0.05); color: var(--text-primary); cursor:pointer;">
+                                📋 General
+                            </button>
+                        </div>
+                        <script>
+                            // Lightweight active style enhancer
+                            document.addEventListener('click', (e) => {
+                                const btn = e.target.closest('#ruleTabs .rule-tab');
+                                if (!btn) return;
+                                document.querySelectorAll('#ruleTabs .rule-tab').forEach(b => b.classList.remove('active'));
+                                btn.classList.add('active');
+                            });
+                        </script>
                         
                         <!-- Rule Categories -->
                         <div id="ruleSelectionContainer" style="max-height: 60vh; overflow-y: auto; margin-bottom: 1.5rem;">
-                            <!-- Rules will be loaded here -->
+                            <!-- Per-category panels will be injected here by onboarding.js -->
                         </div>
                         
                         <!-- Add Custom Rule -->
@@ -322,10 +349,10 @@
                                 <span style="font-size: 1.5rem; font-weight: 700; color: var(--primary-orange);" id="selectedRulesCount">0</span>
                             </div>
                         </div>
-                        <!-- Bulk selection helpers -->
+                        <!-- Bulk selection helpers (scoped to active tab) -->
                         <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.75rem;">
-                            <button class="cta-secondary" onclick="selectAllRules()">Select All</button>
-                            <button class="cta-secondary" onclick="deselectAllRules()">Deselect All</button>
+                            <button class="cta-secondary" onclick="selectAllRules()">Select All (Tab)</button>
+                            <button class="cta-secondary" onclick="deselectAllRules()">Deselect All (Tab)</button>
                         </div>
                         <!-- Acknowledgement -->
                         <label style="display:flex; gap:0.5rem; align-items:center; margin-bottom:1rem;">
