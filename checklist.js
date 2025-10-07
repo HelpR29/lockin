@@ -48,10 +48,8 @@ async function loadChecklistItems() {
     if (error) throw error;
 
     if (!data || data.length === 0) {
-      // Seed defaults (ignore failures if table missing)
-      const seed = DEFAULT_CHECKLIST.map((text, idx) => ({ user_id: userId, text, sort: idx, is_active: true }));
-      try { await supabase.from('premarket_checklist_items').insert(seed); } catch (_) {}
-      return seed.map((r, idx) => ({ id: `seed-${idx}`, text: r.text, sort: r.sort, is_active: true }));
+      // Do NOT auto-seed; return empty so the UI can prompt user to set up checklist
+      return [];
     }
     return data;
   } catch (e) {
