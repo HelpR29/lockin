@@ -140,6 +140,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       return new Response(JSON.stringify({ error: 'Quota exceeded for this period.' }), {
         status: 429,
         headers: { ...cors, 'Content-Type': 'application/json' },
+      });
     }
 
     // Fetch trades for timeframe (closed only)
