@@ -24,6 +24,60 @@
     return formatYMDInTZ(new Date(), NY_TZ);
   }
 
+  function formatNY(date = new Date(), opts = {}) {
+    const base = {
+      timeZone: NY_TZ,
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: undefined,
+      hour12: false
+    };
+    return new Intl.DateTimeFormat('en-US', { ...base, ...opts }).format(date);
+  }
+
+  // Convert a New York local date/time (YYYY-MM-DD, HH:MM 24h) to a UTC ISO string
+  // Works by iteratively aligning a UTC date so that its NY representation matches the input
+  function nyDateTimeToUTCISO(ymd, hm) {
+    try {
+      const [Y, M, D] = (ymd || '').split('-').map(n => parseInt(n, 10));
+      const [h, m] = (hm || '').split(':').map(n => parseInt(n, 10));
+      if (!Y || !M || !D || isNaN(h) || isNaN(m)) return null;
+
+      // Desired ET components as a UTC date baseline
+      let utc = new Date(Date.UTC(Y, M - 1, D, h, m, 0, 0));
+
+      const getEtParts = (d) => {
+        const parts = new Intl.DateTimeFormat('en-US', {
+          timeZone: NY_TZ,
+          hour12: false,
+          year: 'numeric', month: '2-digit', day: '2-digit',
+          hour: '2-digit', minute: '2-digit'
+        }).formatToParts(d);
+        const map = Object.fromEntries(parts.map(p => [p.type, p.value]));
+        return {
+          year: Number(map.year),
+          month: Number(map.month),
+          day: Number(map.day),
+          hour: Number(map.hour),
+          minute: Number(map.minute)
+        };
+      };
+
+      // One or two iterations are enough
+      for (let i = 0; i < 2; i++) {
+        const et = getEtParts(utc);
+        const desiredUTC = Date.UTC(Y, M - 1, D, h, m, 0, 0);
+        const currentETasUTC = Date.UTC(et.year, et.month - 1, et.day, et.hour, et.minute, 0, 0);
+        const deltaMs = desiredUTC - currentETasUTC; // minutes to adjust on UTC timeline
+        if (Math.abs(deltaMs) < 60000) break; // <1 minute difference
+        utc = new Date(utc.getTime() + deltaMs);
+      }
+      return utc.toISOString();
+    } catch (e) {
+      console.warn('nyDateTimeToUTCISO failed:', e);
+      return null;
+    }
+  }
+
   function nyTimeParts(date = new Date()) {
     try {
       const parts = new Intl.DateTimeFormat('en-US', {
@@ -73,6 +127,8 @@
   window.NY_TZ = NY_TZ;
   window.formatYMDInTZ = formatYMDInTZ;
   window.todayYMD_NY = todayYMD_NY;
+  window.formatNY = formatNY;
+  window.nyDateTimeToUTCISO = nyDateTimeToUTCISO;
   window.nyTimeParts = nyTimeParts;
   window.nyMinutesSinceMidnight = nyMinutesSinceMidnight;
   window.isNYMarketOpen = isNYMarketOpen;
