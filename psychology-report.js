@@ -543,3 +543,75 @@ function renderRulesPerformance(trades, rules, violations) {
         </div>
     `;
 }
+
+// 6. Pretrade Checklist Analytics
+async function renderPremarketChecklistSection() {
+    const container = document.getElementById('premarketChecklistSection');
+    if (!container) return;
+
+    try {
+        if (typeof fetchPremarketAdherence !== 'function') {
+            container.innerHTML = '<div class="psychology-card"><p style="color: var(--text-secondary); text-align: center;">Checklist analytics not available</p></div>';
+            return;
+        }
+        
+        const series = await fetchPremarketAdherence(30);
+        const perDayRates = series.map(d => ({ date: d.date, rate: d.total > 0 ? (d.adhered / d.total) * 100 : 0 }));
+        const avgRate = perDayRates.length > 0 ? (perDayRates.reduce((s, x) => s + x.rate, 0) / perDayRates.length) : 0;
+        
+        let streak = 0;
+        for (let i = perDayRates.length - 1; i >= 0; i--) {
+            if ((perDayRates[i].rate || 0) >= 80) streak++; else break;
+        }
+
+        container.innerHTML = `
+            <div class="psychology-card">
+                <h3 data-tooltip="How consistently you complete your pretrade checklist">📋 Pretrade Checklist Adherence</h3>
+                <div class="stat-grid">
+                    <div class="stat-item" title="Average percent of items checked before trading">
+                        <div class="stat-value" style="color: ${avgRate >= 80 ? '#34C759' : avgRate >= 60 ? '#FFC107' : '#FF453A'};">${avgRate.toFixed(0)}%</div>
+                        <div class="stat-label">30d Avg Adherence</div>
+                    </div>
+                    <div class="stat-item" title="Consecutive days with ≥80% completion">
+                        <div class="stat-value" style="color: ${streak >= 3 ? '#34C759' : '#FFC107'};">${streak}</div>
+                        <div class="stat-label">High-Adherence Streak</div>
+                    </div>
+                </div>
+                <div style="margin-top: 1rem; height: 180px;">
+                    <canvas id="premarketChecklistChart"></canvas>
+                </div>
+            </div>
+        `;
+
+        const ctx = document.getElementById('premarketChecklistChart')?.getContext('2d');
+        if (ctx && series.length > 0) {
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: perDayRates.map(x => x.date),
+                    datasets: [{
+                        label: 'Adherence %',
+                        data: perDayRates.map(x => Number(x.rate.toFixed(0))),
+                        borderColor: '#FF9500',
+                        backgroundColor: 'rgba(255,149,0,0.2)',
+                        tension: 0.25,
+                        fill: true,
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { min: 0, max: 100, ticks: { callback: v => v + '%' } },
+                        x: { display: false }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+    } catch (e) {
+        console.warn('Pretrade checklist analytics failed:', e);
+        container.innerHTML = '<div class="psychology-card"><p style="color: var(--text-secondary); text-align: center;">No checklist data yet</p></div>';
+    }
+}
