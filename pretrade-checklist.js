@@ -185,10 +185,147 @@ async function showPretradeChecklistModal() {
   });
 }
 
+// Show setup prompt when no checklist items exist
+async function showChecklistSetupPrompt() {
+  return new Promise((resolve) => {
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+      display: flex;
+      position: fixed;
+      z-index: 999999;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.95);
+      justify-content: center;
+      align-items: center;
+      animation: fadeIn 0.2s ease;
+    `;
+    
+    modal.innerHTML = `
+      <div style="
+        background: linear-gradient(135deg, #2C2C2E 0%, #1C1C1E 100%);
+        border: 2px solid var(--primary-orange);
+        border-radius: 24px;
+        padding: 2rem;
+        max-width: 550px;
+        width: 90%;
+        box-shadow: 0 20px 60px rgba(255, 149, 0, 0.4);
+        animation: slideUp 0.3s ease;
+      ">
+        <div style="text-align: center; margin-bottom: 1.5rem;">
+          <div style="font-size: 3rem; margin-bottom: 0.5rem;">⚠️</div>
+          <h2 style="color: var(--primary-orange); margin: 0 0 0.5rem 0; font-size: 1.8rem;">No Pretrade Checklist Set Up</h2>
+          <p style="color: var(--text-secondary); font-size: 0.95rem; margin: 0; line-height: 1.5;">
+            You haven't created your pretrade checklist yet. A checklist helps ensure you're prepared before every trade.
+          </p>
+        </div>
+        
+        <div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem;">
+          <button id="loadDefaultChecklistBtn" style="
+            background: linear-gradient(135deg, var(--primary-orange), #FF8C00);
+            border: none;
+            color: white;
+            padding: 1rem;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(255, 149, 0, 0.4);
+            transition: all 0.3s;
+          ">📦 Load Default Checklist (7 Items)</button>
+          
+          <button id="createCustomChecklistBtn" style="
+            background: transparent;
+            border: 2px solid var(--primary-orange);
+            color: var(--primary-orange);
+            padding: 1rem;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+          ">✏️ Create Custom Checklist</button>
+        </div>
+        
+        <div style="text-align: center;">
+          <button id="skipSetupBtn" style="
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            padding: 0.5rem;
+            font-size: 0.875rem;
+            cursor: pointer;
+            text-decoration: underline;
+          ">Skip for now (not recommended)</button>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Load default checklist
+    modal.querySelector('#loadDefaultChecklistBtn').addEventListener('click', async () => {
+      const defaultItems = [
+        'Review economic calendar / major news',
+        'Define A+ setups and avoid others',
+        'Set max loss and risk per trade',
+        'Mark key levels and plan entries/exits',
+        'Confirm no trading during first 15 minutes',
+        'Rehearse stop-loss execution and partials',
+        'Check mental and emotional state'
+      ];
+      
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          for (let i = 0; i < defaultItems.length; i++) {
+            await supabase.from('premarket_checklist_items').insert({
+              user_id: user.id,
+              text: defaultItems[i],
+              sort: i,
+              is_active: true
+            });
+          }
+          
+          modal.remove();
+          // Show success message
+          alert('✅ Default checklist loaded! Now complete the items before trading.');
+          // Now show the actual checklist modal
+          resolve(await showPretradeChecklistModal());
+        }
+      } catch (e) {
+        console.error('Error loading default checklist:', e);
+        alert('Error loading checklist. Please try again.');
+      }
+    });
+    
+    // Create custom checklist
+    modal.querySelector('#createCustomChecklistBtn').addEventListener('click', () => {
+      modal.remove();
+      alert('Please go to Settings or complete Onboarding to create your custom checklist.');
+      resolve(false);
+    });
+    
+    // Skip
+    modal.querySelector('#skipSetupBtn').addEventListener('click', () => {
+      modal.remove();
+      resolve(true); // Allow trade but warn
+    });
+  });
+}
+
 // Check and enforce checklist before allowing trade
 async function enforcePretradeChecklist() {
   const isComplete = await isTodayChecklistComplete();
   
+  // No checklist items - prompt to set up
+  if (isComplete === 'no_items') {
+    return await showChecklistSetupPrompt();
+  }
+  
+  // Items exist but not all checked
   if (!isComplete) {
     return await showPretradeChecklistModal();
   }
@@ -199,3 +336,4 @@ async function enforcePretradeChecklist() {
 window.enforcePretradeChecklist = enforcePretradeChecklist;
 window.isTodayChecklistComplete = isTodayChecklistComplete;
 window.showPretradeChecklistModal = showPretradeChecklistModal;
+window.showChecklistSetupPrompt = showChecklistSetupPrompt;
