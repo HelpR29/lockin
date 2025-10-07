@@ -5,12 +5,14 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 // Initialize Supabase client
 // Explicitly set Functions URL to avoid calling the wrong domain in some environments/browsers
+const SUPABASE_FUNCTIONS_URL = SUPABASE_URL.replace('.supabase.co', '.functions.supabase.co');
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    functions: { url: SUPABASE_URL.replace('.supabase.co', '.functions.supabase.co') }
+    functions: { url: SUPABASE_FUNCTIONS_URL }
 });
 
 // Make supabase globally available
 window.supabase = supabase;
+window.SUPABASE_FUNCTIONS_URL = SUPABASE_FUNCTIONS_URL;
 
 // Check if user is already logged in
 async function checkAuth() {
