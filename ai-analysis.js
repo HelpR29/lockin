@@ -543,24 +543,52 @@ async function callServerAI(period) {
     btn.disabled = true; btn.textContent = 'Generating...';
     try {
         const { data: { session } } = await supabase.auth.getSession();
-        const headers = {};
-        if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`;
+        const token = session?.access_token || '';
+        const base = (typeof window !== 'undefined' && window.SUPABASE_FUNCTIONS_URL) ? window.SUPABASE_FUNCTIONS_URL : null;
+        let ok = false; let payload = null; let lastErr = null;
 
-        const { data, error } = await supabase.functions.invoke('ai-analyze', {
-            body: { period },
-            headers
-        });
-        if (error) throw error;
-        if (data?.html) {
+        // Prefer direct fetch to the functions domain to avoid wrong base URL issues
+        if (base) {
+            try {
+                const resp = await fetch(`${base}/ai-analyze`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                    },
+                    body: JSON.stringify({ period })
+                });
+                if (resp.ok) {
+                    payload = await resp.json();
+                    ok = true;
+                } else {
+                    lastErr = new Error(`HTTP ${resp.status}`);
+                }
+            } catch (e) { lastErr = e; }
+        }
+
+        // Fallback to supabase-js invoke if needed
+        if (!ok) {
+            try {
+                const { data, error } = await supabase.functions.invoke('ai-analyze', { body: { period } });
+                if (error) throw error;
+                payload = data; ok = true;
+            } catch (e) { lastErr = e; }
+        }
+
+        if (!ok) throw lastErr || new Error('Failed to call function');
+
+        if (payload?.html) {
             if (titleEl) titleEl.textContent = period === 'weekly' ? 'OpenAI Weekly Analysis' : 'OpenAI Monthly Analysis';
-            if (htmlEl) htmlEl.innerHTML = data.html;
+            if (htmlEl) htmlEl.innerHTML = payload.html;
             if (container) container.style.display = 'block';
         } else {
             alert('No analysis generated.');
         }
     } catch (e) {
+        console.error('Functions invoke error:', e);
         const msg = (e?.message || e?.error || '').toString();
-        alert(msg || 'Failed to generate analysis.');
+        alert(msg || 'Failed to send a request to the Edge Function');
     } finally {
         btn.disabled = false; btn.textContent = original;
         try { if (typeof initReportTooltips === 'function') initReportTooltips(); } catch(_) {}

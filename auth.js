@@ -13,6 +13,7 @@ const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
 // Make supabase globally available
 window.supabase = supabase;
 window.SUPABASE_FUNCTIONS_URL = SUPABASE_FUNCTIONS_URL;
+window.SUPABASE_URL = SUPABASE_URL;
 
 // Check if user is already logged in
 async function checkAuth() {
