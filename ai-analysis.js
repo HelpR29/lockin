@@ -549,10 +549,20 @@ async function callServerAI(period) {
             : null;
         let ok = false; let payload = null; let lastErr = null;
 
-        // Prefer direct fetch to the functions domain to avoid wrong base URL issues
+        // Prefer direct fetch to the functions domain; try multiple URL patterns
+        const candidates = [];
         if (base) {
+            candidates.push(`${base}/ai-analyze`);
+            candidates.push(`${base}/functions/v1/ai-analyze`); // fallback pattern if required by env
+        }
+        if (typeof window !== 'undefined' && window.SUPABASE_URL) {
+            candidates.push(`${window.SUPABASE_URL}/functions/v1/ai-analyze`);
+        }
+
+        for (const url of candidates) {
+            if (ok) break;
             try {
-                const resp = await fetch(`${base}/ai-analyze`, {
+                const resp = await fetch(url, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -564,7 +574,7 @@ async function callServerAI(period) {
                     payload = await resp.json();
                     ok = true;
                 } else {
-                    lastErr = new Error(`HTTP ${resp.status}`);
+                    lastErr = new Error(`HTTP ${resp.status} at ${url}`);
                 }
             } catch (e) { lastErr = e; }
         }
