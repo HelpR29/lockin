@@ -12,11 +12,16 @@
 
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
-const corsHeaders: Record<string, string> = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
+function buildCorsHeaders(req: Request): Record<string, string> {
+  const origin = req.headers.get('Origin') || '*';
+  const reqHeaders = req.headers.get('Access-Control-Request-Headers') || 'authorization, content-type, apikey, x-client-info';
+  return {
+    'Access-Control-Allow-Origin': origin,
+    'Access-Control-Allow-Headers': reqHeaders,
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Vary': 'Origin',
+  };
+}
 
 function isoWeekKey(d: Date): { key: string; start: Date; end: Date } {
   // ISO week: week starts Monday 00:00 UTC
@@ -47,15 +52,16 @@ function monthKey(d: Date): { key: string; start: Date; end: Date } {
 }
 
 Deno.serve(async (req: Request): Promise<Response> => {
+  const cors = buildCorsHeaders(req);
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return new Response('ok', { headers: cors });
   }
 
   try {
     if (req.method !== 'POST') {
       return new Response(JSON.stringify({ error: 'Method not allowed' }), {
         status: 405,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...cors, 'Content-Type': 'application/json' },
       });
     }
 
@@ -66,7 +72,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     if (!supabaseUrl || !anonKey || !serviceKey || !openaiKey) {
       return new Response(JSON.stringify({ error: 'Missing server configuration' }), {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...cors, 'Content-Type': 'application/json' },
       });
     }
 
@@ -74,7 +80,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     if (!authHeader) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...cors, 'Content-Type': 'application/json' },
       });
     }
 
@@ -105,20 +111,24 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const mk = monthKey(now);
     const key = period === 'weekly' ? wk.key : mk.key;
     const start = period === 'weekly' ? wk.start : mk.start;
-    const end = period === 'weekly' ? wk.end : mk.end;
 
     // Quotas
     const allowed = period === 'weekly' ? 1 : (isPremium ? 1 : 0);
     if (allowed <= 0) {
       return new Response(JSON.stringify({ error: 'Monthly AI analysis is for premium users only.' }), {
-        status: 402,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 402, // Payment Required
+        headers: {
+          ...cors,
+          'Access-Control-Allow-Origin': req.headers.get('Origin') || '*',
+          'Access-Control-Allow-Headers': req.headers.get('Access-Control-Request-Headers') || 'authorization, content-type, apikey, x-client-info',
+          'Content-Type': 'application/json',
+        },
       });
     }
 
     // Usage check
     const { data: usageRow } = await admin
-      .from('ai_usage')
+{{ ... }}
       .select('used_count')
       .eq('user_id', userId)
       .eq('period', period)
@@ -128,7 +138,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     if ((usageRow?.used_count || 0) >= allowed) {
       return new Response(JSON.stringify({ error: 'Quota exceeded for this period.' }), {
         status: 429,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...cors, 'Content-Type': 'application/json' },
       });
     }
 
@@ -145,7 +155,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     if (tErr) {
       return new Response(JSON.stringify({ error: 'Failed to load trades' }), {
         status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...cors, 'Content-Type': 'application/json' },
       });
     }
 
@@ -186,7 +196,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       const txt = await oaResp.text().catch(()=>'');
       return new Response(JSON.stringify({ error: 'OpenAI request failed', detail: txt }), {
         status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...cors, 'Content-Type': 'application/json' },
       });
     }
 
@@ -204,12 +214,14 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     return new Response(JSON.stringify({ html, period, period_key: key }), {
       status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...cors, 'Content-Type': 'application/json' },
     });
   } catch (e) {
+    // Build CORS again if req not available (edge case)
+    const fallbackCors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, content-type, apikey, x-client-info', 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Vary': 'Origin' };
     return new Response(JSON.stringify({ error: 'Unexpected error', detail: String(e) }), {
       status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...fallbackCors, 'Content-Type': 'application/json' },
     });
   }
 });
