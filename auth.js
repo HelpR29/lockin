@@ -4,15 +4,13 @@ const SUPABASE_URL = 'https://wdxxsldarfahwvzinjgt.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkeHhzbGRhcmZhaHd2emluamd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxOTgyNzcsImV4cCI6MjA3NDc3NDI3N30.rzAm83U4i5yjQjPdEus-tw0mm5txy7OKt1YrIeojF2s';
 
 // Initialize Supabase client
-// Explicitly set Functions URL to avoid calling the wrong domain in some environments/browsers
-const SUPABASE_FUNCTIONS_URL = SUPABASE_URL.replace('.supabase.co', '.functions.supabase.co');
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    functions: { url: SUPABASE_FUNCTIONS_URL }
-});
+// Initialize with defaults; supabase-js will call `${SUPABASE_URL}/functions/v1` for Edge Functions
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Make supabase globally available
 window.supabase = supabase;
-window.SUPABASE_FUNCTIONS_URL = SUPABASE_FUNCTIONS_URL;
+// Helpers for direct calls if needed
+window.SUPABASE_FUNCTIONS_URL = SUPABASE_URL.replace('.supabase.co', '.functions.supabase.co');
 window.SUPABASE_URL = SUPABASE_URL;
 
 // Check if user is already logged in

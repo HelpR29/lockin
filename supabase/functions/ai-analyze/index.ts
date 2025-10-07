@@ -93,7 +93,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     if (userErr || !userData?.user) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...cors, 'Content-Type': 'application/json' },
       });
     }
     const userId = userData.user.id;
@@ -111,6 +111,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const mk = monthKey(now);
     const key = period === 'weekly' ? wk.key : mk.key;
     const start = period === 'weekly' ? wk.start : mk.start;
+    const end = period === 'weekly' ? wk.end : mk.end;
 
     // Quotas
     const allowed = period === 'weekly' ? 1 : (isPremium ? 1 : 0);
@@ -128,7 +129,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     // Usage check
     const { data: usageRow } = await admin
-{{ ... }}
+      .from('ai_usage')
       .select('used_count')
       .eq('user_id', userId)
       .eq('period', period)
@@ -139,7 +140,6 @@ Deno.serve(async (req: Request): Promise<Response> => {
       return new Response(JSON.stringify({ error: 'Quota exceeded for this period.' }), {
         status: 429,
         headers: { ...cors, 'Content-Type': 'application/json' },
-      });
     }
 
     // Fetch trades for timeframe (closed only)
