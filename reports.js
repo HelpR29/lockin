@@ -4,6 +4,114 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.location.href = 'login.html';
         return;
     }
+
+// P/L by Entry Hour of Day (ET)
+function renderPlByEntryHourChart(trades) {
+    const canvas = document.getElementById('plByHourChart');
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    const plByHour = new Array(24).fill(0);
+
+    trades.forEach(trade => {
+        const baseISO = trade.entry_time || trade.created_at;
+        const d = new Date(baseISO);
+        let hour = d.getHours();
+        try {
+            if (typeof nyTimeParts === 'function') {
+                hour = nyTimeParts(d).hour;
+            }
+        } catch(_) {}
+        const isOption = trade.trade_type === 'call' || trade.trade_type === 'put';
+        const multiplier = isOption ? 100 : 1;
+        const pnl = (trade.exit_price - trade.entry_price) * trade.position_size * multiplier * (trade.direction === 'short' ? -1 : 1);
+        plByHour[hour] += pnl;
+    });
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: plByHour.map((_, h) => `${String(h).padStart(2,'0')}:00`),
+            datasets: [{
+                label: 'Total P/L',
+                data: plByHour,
+                backgroundColor: plByHour.map(v => v >= 0 ? '#34C759' : '#FF453A')
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { callback: (v) => '$' + Number(v).toLocaleString() }
+                }
+            }
+        }
+    });
+}
+
+// Holding Time Stats
+function renderHoldingTimeStats(trades) {
+    const host = document.getElementById('holdingStatsBody');
+    if (!host) return;
+
+    const durations = []; // minutes
+    const byHour = new Array(24).fill(0); // count entries per hour
+
+    trades.forEach(trade => {
+        const entryISO = trade.entry_time || trade.created_at;
+        const exitISO = trade.exit_time || trade.updated_at || trade.created_at;
+        const entry = new Date(entryISO);
+        const exit = new Date(exitISO);
+        const minutes = Math.max(0, (exit - entry) / 60000);
+        durations.push(minutes);
+
+        let hour = entry.getHours();
+        try { if (typeof nyTimeParts === 'function') hour = nyTimeParts(entry).hour; } catch(_) {}
+        byHour[hour] += 1;
+    });
+
+    const avg = (arr) => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0;
+    const median = (arr) => {
+        if (!arr.length) return 0;
+        const s = [...arr].sort((a,b)=>a-b);
+        const mid = Math.floor(s.length/2);
+        return s.length % 2 ? s[mid] : (s[mid-1]+s[mid])/2;
+    };
+
+    const avgMin = avg(durations);
+    const medMin = median(durations);
+
+    // Best entry hour by P/L
+    const plByHour = new Array(24).fill(0);
+    trades.forEach(trade => {
+        const baseISO = trade.entry_time || trade.created_at;
+        const d = new Date(baseISO);
+        let hour = d.getHours();
+        try { if (typeof nyTimeParts === 'function') hour = nyTimeParts(d).hour; } catch(_) {}
+        const isOption = trade.trade_type === 'call' || trade.trade_type === 'put';
+        const multiplier = isOption ? 100 : 1;
+        const pnl = (trade.exit_price - trade.entry_price) * trade.position_size * multiplier * (trade.direction === 'short' ? -1 : 1);
+        plByHour[hour] += pnl;
+    });
+    let bestHour = 0; let bestPl = -Infinity;
+    for (let h=0; h<24; h++) { if (plByHour[h] > bestPl) { bestPl = plByHour[h]; bestHour = h; } }
+
+    // Render stat tiles
+    const tiles = [
+        { label: 'Avg Holding Time', value: `${Math.round(avgMin)} min` },
+        { label: 'Median Holding Time', value: `${Math.round(medMin)} min` },
+        { label: 'Most Profitable Hour (ET)', value: `${String(bestHour).padStart(2,'0')}:00` },
+        { label: 'Trades at Best Hour', value: `${byHour[bestHour]}` }
+    ];
+    host.innerHTML = tiles.map(t => `
+        <div class="kpi-item" style="background: rgba(255,255,255,0.03); border:1px solid var(--glass-border); border-radius:10px; padding:0.75rem; text-align:center;">
+            <div class="kpi-label" style="font-size:0.85rem; color: var(--text-secondary);">${t.label}</div>
+            <div class="kpi-value" style="font-size:1.4rem; font-weight:800;">${t.value}</div>
+        </div>
+    `).join('');
+}
     try {
         await generateReports();
     } catch (error) {
@@ -366,6 +474,8 @@ async function generateReports() {
     renderPlChart(trades);
     renderWinLossChart(trades);
     renderDailyPlChart(trades);
+    renderPlByEntryHourChart(trades);
+    renderHoldingTimeStats(trades);
 
     // Initialize Performance Calendar
     allClosedTrades = trades;
