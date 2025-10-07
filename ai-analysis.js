@@ -549,40 +549,33 @@ async function callServerAI(period) {
             : null;
         let ok = false; let payload = null; let lastErr = null;
 
-        // Prefer direct fetch to the functions domain; try multiple URL patterns
-        const candidates = [];
-        if (base) {
-            candidates.push(`${base}/ai-analyze`);
-            candidates.push(`${base}/functions/v1/ai-analyze`); // fallback pattern if required by env
-        }
-        if (typeof window !== 'undefined' && window.SUPABASE_URL) {
-            candidates.push(`${window.SUPABASE_URL}/functions/v1/ai-analyze`);
-        }
-
-        for (const url of candidates) {
-            if (ok) break;
-            try {
-                const resp = await fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-                    },
-                    body: JSON.stringify({ period })
-                });
-                if (resp.ok) {
-                    payload = await resp.json();
-                    ok = true;
-                } else {
-                    lastErr = new Error(`HTTP ${resp.status} at ${url}`);
-                }
-            } catch (e) { lastErr = e; }
+        // Call the deployed function using its actual endpoint
+        const endpoint = 'https://wdxxsldarfahwvzinjgt.supabase.co/functions/v1/dynamic-processor';
+        
+        try {
+            const resp = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                },
+                body: JSON.stringify({ period })
+            });
+            if (resp.ok) {
+                payload = await resp.json();
+                ok = true;
+            } else {
+                const errorText = await resp.text().catch(() => '');
+                lastErr = new Error(`HTTP ${resp.status}: ${errorText || 'Unknown error'}`);
+            }
+        } catch (e) { 
+            lastErr = e; 
         }
 
-        // Fallback to supabase-js invoke if needed
+        // Fallback to supabase-js invoke if direct fetch failed
         if (!ok) {
             try {
-                const { data, error } = await supabase.functions.invoke('ai-analyze', { body: { period } });
+                const { data, error } = await supabase.functions.invoke('dynamic-processor', { body: { period } });
                 if (error) throw error;
                 payload = data; ok = true;
             } catch (e) { lastErr = e; }
