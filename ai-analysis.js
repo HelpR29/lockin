@@ -142,10 +142,7 @@ function generateLocalNotesSummary(trades) {
     return `
       <div>
         <div style="margin-bottom: 0.5rem;">
-          Using local (heuristic) summary. For deeper AI insights, set one of:
-          <code>lockin_gemini_key</code> (Gemini),
-          <code>lockin_openai_key</code> (OpenAI), or
-          <code>lockin_llm_base_url</code> + <code>lockin_llm_model</code> (self-hosted OpenAI-compatible).
+          Using local (heuristic) summary. For deeper insights, try the Weekly/Monthly OpenAI analysis above.
         </div>
         <ul style="margin: 0; padding-left: 1.25rem;">
           ${takeaways.map(t=> `<li>${t}</li>`).join('') || '<li>Write more detailed notes to unlock stronger insights.</li>'}
@@ -647,90 +644,60 @@ function createCumulativePnLChart(cumulativeData) {
 // Export to global scope
 window.generateAIAnalysis = generateAIAnalysis;
 
-// ---------------- LLM Settings Modal Handlers ----------------
-function _toggleLLMGroups(provider) {
-    const show = (id, on=true) => { const el = document.getElementById(id); if (el) el.style.display = on ? '' : 'none'; };
-    show('geminiKeyGroup', provider === 'gemini');
-    show('geminiModelGroup', provider === 'gemini');
-    show('openaiKeyGroup', provider === 'openai');
-    show('customBaseGroup', provider === 'custom');
-    show('customModelGroup', provider === 'custom');
-}
+// ---------------- Server-side OpenAI (Weekly/Monthly) ----------------
+async function callServerAI(period) {
+    const btn = period === 'weekly' ? document.getElementById('weeklyAIButton') : document.getElementById('monthlyAIButton');
+    const container = document.getElementById('aiServerAnalysisContainer');
+    const titleEl = document.getElementById('aiServerAnalysisTitle');
+    const htmlEl = document.getElementById('aiServerAnalysis');
+    if (!btn) return;
 
-function openLLMSettings() {
-    const modal = document.getElementById('llmSettingsModal');
-    if (!modal) return;
-    // Prefill from localStorage
-    const providerEl = document.getElementById('llmProvider');
-    const gemKeyEl = document.getElementById('geminiKey');
-    const gemModelEl = document.getElementById('geminiModel');
-    const openaiKeyEl = document.getElementById('openaiKey');
-    const customBaseEl = document.getElementById('customBase');
-    const customModelEl = document.getElementById('customModel');
+    const original = btn.textContent;
+    btn.disabled = true; btn.textContent = 'Generating...';
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const headers = {};
+        if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`;
 
-    // Decide default provider based on which key/url exists
-    let provider = 'gemini';
-    if (localStorage.getItem('lockin_llm_base_url')) provider = 'custom';
-    if (localStorage.getItem('lockin_openai_key')) provider = 'openai';
-    if (localStorage.getItem('lockin_gemini_key')) provider = 'gemini';
-
-    if (providerEl) providerEl.value = provider;
-    if (gemKeyEl) gemKeyEl.value = localStorage.getItem('lockin_gemini_key') || '';
-    if (gemModelEl) gemModelEl.value = localStorage.getItem('lockin_gemini_model') || 'gemini-1.5-flash';
-    if (openaiKeyEl) openaiKeyEl.value = localStorage.getItem('lockin_openai_key') || '';
-    if (customBaseEl) customBaseEl.value = localStorage.getItem('lockin_llm_base_url') || '';
-    if (customModelEl) customModelEl.value = localStorage.getItem('lockin_llm_model') || '';
-
-    _toggleLLMGroups(provider);
-    // Bind change
-    if (providerEl && !providerEl.__lockinBound) {
-        providerEl.addEventListener('change', (e) => _toggleLLMGroups(e.target.value));
-        providerEl.__lockinBound = true;
+        const { data, error } = await supabase.functions.invoke('ai-analyze', {
+            body: { period },
+            headers
+        });
+        if (error) throw error;
+        if (data?.html) {
+            if (titleEl) titleEl.textContent = period === 'weekly' ? 'OpenAI Weekly Analysis' : 'OpenAI Monthly Analysis';
+            if (htmlEl) htmlEl.innerHTML = data.html;
+            if (container) container.style.display = 'block';
+        } else {
+            alert('No analysis generated.');
+        }
+    } catch (e) {
+        const msg = (e?.message || e?.error || '').toString();
+        alert(msg || 'Failed to generate analysis.');
+    } finally {
+        btn.disabled = false; btn.textContent = original;
+        try { if (typeof initReportTooltips === 'function') initReportTooltips(); } catch(_) {}
     }
-
-    modal.style.display = 'block';
 }
 
-function saveLLMSettings() {
-    const provider = document.getElementById('llmProvider')?.value || 'gemini';
-    const gemKey = document.getElementById('geminiKey')?.value?.trim();
-    const gemModel = document.getElementById('geminiModel')?.value?.trim() || 'gemini-1.5-flash';
-    const openaiKey = document.getElementById('openaiKey')?.value?.trim();
-    const customBase = document.getElementById('customBase')?.value?.trim();
-    const customModel = document.getElementById('customModel')?.value?.trim();
-
-    // Clear all first to prevent cross-provider confusion
-    localStorage.removeItem('lockin_gemini_key');
-    localStorage.removeItem('lockin_gemini_model');
-    localStorage.removeItem('lockin_openai_key');
-    localStorage.removeItem('lockin_llm_base_url');
-    localStorage.removeItem('lockin_llm_model');
-
-    if (provider === 'gemini') {
-        if (gemKey) localStorage.setItem('lockin_gemini_key', gemKey);
-        localStorage.setItem('lockin_gemini_model', gemModel || 'gemini-1.5-flash');
-    } else if (provider === 'openai') {
-        if (openaiKey) localStorage.setItem('lockin_openai_key', openaiKey);
-    } else if (provider === 'custom') {
-        if (customBase) localStorage.setItem('lockin_llm_base_url', customBase);
-        if (customModel) localStorage.setItem('lockin_llm_model', customModel);
-    }
-
-    alert('LLM settings saved. You can click Analyze again.');
-    closeModal('llmSettingsModal');
+function bindServerAIButtons() {
+    const w = document.getElementById('weeklyAIButton');
+    const m = document.getElementById('monthlyAIButton');
+    if (w && !w.__lockinBound) { w.addEventListener('click', () => callServerAI('weekly')); w.__lockinBound = true; }
+    if (m && !m.__lockinBound) { m.addEventListener('click', () => callServerAI('monthly')); m.__lockinBound = true; }
+    // Premium gate: disable monthly for non-premium
+    (async () => {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+            const { data: prof } = await supabase.from('user_profiles').select('is_premium').eq('user_id', user.id).single();
+            if (!prof?.is_premium && m) {
+                m.disabled = true;
+                m.title = 'Premium only';
+                m.setAttribute('data-tooltip', 'Premium only: Monthly analysis is included once per month.');
+            }
+        } catch (_) {}
+    })();
 }
 
-function clearLLMSettings() {
-    localStorage.removeItem('lockin_gemini_key');
-    localStorage.removeItem('lockin_gemini_model');
-    localStorage.removeItem('lockin_openai_key');
-    localStorage.removeItem('lockin_llm_base_url');
-    localStorage.removeItem('lockin_llm_model');
-    alert('LLM settings cleared. The app will use the local heuristic summary.');
-    closeModal('llmSettingsModal');
-}
-
-// Export UI helpers
-window.openLLMSettings = openLLMSettings;
-window.saveLLMSettings = saveLLMSettings;
-window.clearLLMSettings = clearLLMSettings;
+document.addEventListener('DOMContentLoaded', bindServerAIButtons);
