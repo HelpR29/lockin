@@ -24,6 +24,7 @@ async function generatePsychologyReport() {
         renderDisciplineScore(trades, rules, violations);
         renderPsychologyInsights(trades, violations);
         renderRulesPerformance(trades, rules, violations);
+        renderPremarketChecklistSection();
     } catch (error) {
         console.error('Error generating psychology report:', error);
     }
