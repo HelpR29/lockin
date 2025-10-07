@@ -81,6 +81,29 @@
                 <!-- Psychology & Discipline Section (Most Important!) -->
                 <div style="margin-bottom: 3rem;">
                     <h2 style="font-size: 1.5rem; margin-bottom: 1.5rem; color: var(--primary);">🧠 Psychology & Discipline</h2>
+                    
+                    <!-- AI Analysis Buttons -->
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1.5rem; max-width: 600px;">
+                        <button class="cta-secondary" id="weeklyAIButton" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                            <span>🤖</span>
+                            <span>Weekly AI Analysis</span>
+                        </button>
+                        <button class="cta-secondary" id="monthlyAIButton" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                            <span>🤖</span>
+                            <span>Monthly AI Analysis</span>
+                        </button>
+                    </div>
+                    <div id="aiQuotaDisplay" style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.5rem;"></div>
+
+                    <!-- Server-side OpenAI Analysis HTML -->
+                    <div id="aiServerAnalysisContainer" style="display:none; background: rgba(255,149,0,0.08); border:1px solid var(--primary); border-radius:12px; padding:1.25rem; margin-bottom:1.5rem;">
+                        <h4 style="margin:0 0 0.75rem 0; color: var(--primary); display:flex; align-items:center; gap:0.5rem;">
+                            <span>🤖</span>
+                            <span id="aiServerAnalysisTitle">OpenAI Analysis</span>
+                        </h4>
+                        <div id="aiServerAnalysis" style="line-height:1.7; color: var(--text-primary);"></div>
+                    </div>
+
                     <div class="psychology-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
                         <div id="ruleAdherenceSection"></div>
                         <div id="emotionalAnalysisSection"></div>
@@ -218,10 +241,11 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="auth.js"></script>
+    <script src="auth.js?v=2"></script>
     <script src="time-utils.js?v=1"></script>
     <script src="checklist.js?v=4"></script>
     <script src="features.js"></script>
+    <script src="ai-analysis.js?v=3"></script>
     <script src="psychology-report.js?v=2"></script>
     <script src="reports.js"></script>
     <script src="script.js"></script>
