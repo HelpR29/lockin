@@ -5,6 +5,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
+    // Expose analytics functions globally so generateReports() (outside this scope) can call them
+    try {
+        window.renderSessionKPIs = renderSessionKPIs;
+        window.renderGoldenAvoidHours = renderGoldenAvoidHours;
+        window.renderTimeOfDayHeatmap = renderTimeOfDayHeatmap;
+        window.renderPlByEntryHourChart = renderPlByEntryHourChart;
+        window.renderHoldingTimeStats = renderHoldingTimeStats;
+    } catch(_) {}
+
 // --- Session KPIs (ET) ---
 function renderSessionKPIs(trades) {
     const host = document.getElementById('sessionKpiBody');
@@ -254,8 +263,8 @@ function fmtLocalYMD(d) {
 function wireCalendarNav() {
     const prevBtn = document.getElementById('calendarPrev');
     const nextBtn = document.getElementById('calendarNext');
-    if (prevBtn) prevBtn.onclick = async () => { await shiftCalendar(-1); };
-    if (nextBtn) nextBtn.onclick = async () => { await shiftCalendar(1); };
+    if (prevBtn) { prevBtn.onclick = async () => { await shiftCalendar(-1); }; prevBtn.setAttribute('data-tooltip','Previous month'); }
+    if (nextBtn) { nextBtn.onclick = async () => { await shiftCalendar(1); }; nextBtn.setAttribute('data-tooltip','Next month'); }
 }
 
 async function shiftCalendar(deltaMonths) {
