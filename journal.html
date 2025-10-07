@@ -442,6 +442,15 @@
                         <label for="exitPrice">Exit Price</label>
                         <input type="number" id="exitPrice" step="any" placeholder="Auto (set on close)">
                     </div>
+                    <div class="form-group" id="exitDateGroup" style="display: none;">
+                        <label for="exitDateET">Exit Date (ET)</label>
+                        <input type="date" id="exitDateET" placeholder="YYYY-MM-DD">
+                    </div>
+                    <div class="form-group" id="exitTimeGroup" style="display: none;">
+                        <label for="exitTimeET">Exit Time (ET)</label>
+                        <input type="time" id="exitTimeET" step="60" placeholder="HH:MM">
+                        <small style="color: var(--text-secondary);">Stored internally in UTC</small>
+                    </div>
                     <div class="form-group">
                         <label for="stopLoss">Stop Loss</label>
                         <input type="number" id="stopLoss" step="any" placeholder="Optional">
