@@ -4,7 +4,10 @@ const SUPABASE_URL = 'https://wdxxsldarfahwvzinjgt.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkeHhzbGRhcmZhaHd2emluamd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxOTgyNzcsImV4cCI6MjA3NDc3NDI3N30.rzAm83U4i5yjQjPdEus-tw0mm5txy7OKt1YrIeojF2s';
 
 // Initialize Supabase client
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Explicitly set Functions URL to avoid calling the wrong domain in some environments/browsers
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    functions: { url: SUPABASE_URL.replace('.supabase.co', '.functions.supabase.co') }
+});
 
 // Make supabase globally available
 window.supabase = supabase;
