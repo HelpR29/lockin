@@ -429,6 +429,15 @@
                         <label for="entryPrice">Entry Price</label>
                         <input type="number" id="entryPrice" step="any" required>
                     </div>
+                    <div class="form-group">
+                        <label for="entryDateET">Entry Date (ET)</label>
+                        <input type="date" id="entryDateET" placeholder="YYYY-MM-DD">
+                    </div>
+                    <div class="form-group">
+                        <label for="entryTimeET">Entry Time (ET)</label>
+                        <input type="time" id="entryTimeET" step="60" placeholder="HH:MM">
+                        <small style="color: var(--text-secondary);">Stored internally in UTC</small>
+                    </div>
                     <div class="form-group" id="exitGroup" style="display: none;">
                         <label for="exitPrice">Exit Price</label>
                         <input type="number" id="exitPrice" step="any" placeholder="Auto (set on close)">
