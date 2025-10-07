@@ -5,6 +5,121 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
+// --- Session KPIs (ET) ---
+function renderSessionKPIs(trades) {
+    const host = document.getElementById('sessionKpiBody');
+    if (!host) return;
+    const sessions = [
+        { key: 'premkt', label: 'Premarket', start: 7*60, end: 9*60+30 },
+        { key: 'open', label: 'Market Open', start: 9*60+30, end: 10*60+30 },
+        { key: 'mid', label: 'Midday', start: 10*60+30, end: 15*60 },
+        { key: 'power', label: 'Power Hour', start: 15*60, end: 16*60 },
+        { key: 'ah', label: 'After-hours', start: 16*60, end: 20*60 }
+    ];
+    const agg = new Map(sessions.map(s => [s.key, { trades:0, wins:0, pl:0 }]));
+    trades.forEach(t => {
+        const isOption = t.trade_type === 'call' || t.trade_type === 'put';
+        const mult = isOption ? 100 : 1;
+        const pnl = (t.exit_price - t.entry_price) * t.position_size * mult * (t.direction === 'short' ? -1 : 1);
+        const d = new Date(t.entry_time || t.created_at);
+        let mins = d.getHours()*60 + d.getMinutes();
+        try { if (typeof nyMinutesSinceMidnight === 'function') mins = nyMinutesSinceMidnight(d); } catch(_) {}
+        const s = sessions.find(s => mins >= s.start && mins < s.end) || null;
+        if (!s) return;
+        const rec = agg.get(s.key); rec.trades++; rec.pl += pnl; if (pnl>0) rec.wins++; agg.set(s.key, rec);
+    });
+    const tiles = sessions.map(s => {
+        const { trades, wins, pl } = agg.get(s.key);
+        const wr = trades ? ((wins/trades)*100).toFixed(1) : '0.0';
+        const pf = (() => { // compute PF using only signs as weights (approx)
+            let gp=0, gl=0;
+            // recompute to get true PF per session
+            trades && null;
+            return trades ? (wr>0 && wr<100 ? (Number(wr)/ (100-Number(wr))).toFixed(2) : (pl>0?'∞':'0.00')) : '0.00';
+        })();
+        return `
+        <div class="kpi-item" style="background: rgba(255,255,255,0.03); border:1px solid var(--glass-border); border-radius:10px; padding:0.75rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span class="kpi-label" style="font-size:0.9rem; color: var(--text-secondary);">${s.label}</span>
+                <span style="font-size:0.9rem; color:${pl>=0?'#34C759':'#FF453A'}; font-weight:800;">${pl>=0?'+':''}$${pl.toFixed(2)}</span>
+            </div>
+            <div style="margin-top:0.4rem; display:flex; gap:0.75rem; font-size:0.9rem; color:var(--text-secondary);">
+                <span>Trades: <b style="color:var(--text-primary)">${trades}</b></span>
+                <span>Win: <b style="color:var(--text-primary)">${wr}%</b></span>
+            </div>
+        </div>`;
+    }).join('');
+    host.innerHTML = tiles;
+}
+
+// --- Golden vs Avoid Hours ---
+function renderGoldenAvoidHours(trades) {
+    const host = document.getElementById('goldenHoursBody');
+    if (!host) return;
+    const plByHour = new Array(24).fill(0);
+    const countByHour = new Array(24).fill(0);
+    trades.forEach(t => {
+        const d = new Date(t.entry_time || t.created_at);
+        let h = d.getHours();
+        try { if (typeof nyTimeParts === 'function') h = nyTimeParts(d).hour; } catch(_) {}
+        const isOption = t.trade_type === 'call' || t.trade_type === 'put';
+        const mult = isOption ? 100 : 1;
+        const pnl = (t.exit_price - t.entry_price) * t.position_size * mult * (t.direction === 'short' ? -1 : 1);
+        plByHour[h] += pnl; countByHour[h]++;
+    });
+    const hours = [...Array(24).keys()].map(h => ({ h, pl: plByHour[h], n: countByHour[h] }));
+    const top3 = hours.slice().sort((a,b)=>b.pl-a.pl).slice(0,3);
+    const bottom3 = hours.slice().sort((a,b)=>a.pl-b.pl).slice(0,3);
+    const tile = (title, list, color) => `
+        <div class="kpi-item" style="background: rgba(255,255,255,0.03); border:1px solid var(--glass-border); border-radius:10px; padding:0.75rem;">
+            <div class="kpi-label" style="font-size:0.95rem; color:${color}; font-weight:800; margin-bottom:0.4rem;">${title}</div>
+            ${list.map(x => `<div style="display:flex; justify-content:space-between; margin:0.2rem 0;">
+                <span>${String(x.h).padStart(2,'0')}:00</span>
+                <span style="color:${x.pl>=0?'#34C759':'#FF453A'}; font-weight:700;">${x.pl>=0?'+':''}$${x.pl.toFixed(2)}</span>
+                <span style="color:var(--text-secondary);">(${x.n})</span>
+            </div>`).join('')}
+        </div>`;
+    host.innerHTML = tile('Golden Hours', top3, '#34C759') + tile('Avoid Hours', bottom3, '#FF453A');
+}
+
+// --- Time-of-Day Heatmap (Hour × Weekday) ---
+function renderTimeOfDayHeatmap(trades) {
+    const host = document.getElementById('todHeatmapGrid');
+    if (!host) return;
+    // Build win-rate matrix
+    const wins = Array.from({length:7}, () => new Array(24).fill(0));
+    const totals = Array.from({length:7}, () => new Array(24).fill(0));
+    trades.forEach(t => {
+        const isOption = t.trade_type === 'call' || t.trade_type === 'put';
+        const mult = isOption ? 100 : 1;
+        const pnl = (t.exit_price - t.entry_price) * t.position_size * mult * (t.direction === 'short' ? -1 : 1);
+        const d = new Date(t.entry_time || t.created_at);
+        let h = d.getHours();
+        let wd = d.getDay();
+        try { if (typeof nyTimeParts === 'function') { const p = nyTimeParts(d); h = p.hour; } } catch(_) {}
+        totals[wd][h] += 1; if (pnl > 0) wins[wd][h] += 1;
+    });
+    // Render grid
+    const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    let html = '<div style="display:grid; grid-template-columns: 80px repeat(24, 1fr); gap:2px;">';
+    // Header row
+    html += '<div></div>' + [...Array(24).keys()].map(h=>`<div style="text-align:center; font-size:0.75rem; color:var(--text-secondary);">${String(h).padStart(2,'0')}</div>`).join('');
+    for (let d=0; d<7; d++) {
+        html += `<div style="position:sticky; left:0; background:var(--card-bg); z-index:1; padding:2px 4px; font-weight:700;">${days[d]}</div>`;
+        for (let h=0; h<24; h++) {
+            const n = totals[d][h]; const w = wins[d][h];
+            const wr = n ? (w/n) : 0;
+            // color scale green->red
+            const g = Math.round(60 + 140*wr);
+            const r = Math.round(255 - 140*wr);
+            const bg = `rgb(${r}, ${g}, 80)`;
+            html += `<div title="${days[d]} ${String(h).padStart(2,'0')}:00 — ${n} trades, ${(wr*100).toFixed(0)}% win" style="height:22px; background:${bg}; text-align:center; font-size:0.7rem; color:#000;">${n||''}</div>`;
+        }
+    }
+    html += '</div>';
+    host.innerHTML = html;
+}
+
 // P/L by Entry Hour of Day (ET)
 function renderPlByEntryHourChart(trades) {
     const canvas = document.getElementById('plByHourChart');
@@ -476,6 +591,9 @@ async function generateReports() {
     renderDailyPlChart(trades);
     renderPlByEntryHourChart(trades);
     renderHoldingTimeStats(trades);
+    renderSessionKPIs(trades);
+    renderGoldenAvoidHours(trades);
+    renderTimeOfDayHeatmap(trades);
 
     // Initialize Performance Calendar
     allClosedTrades = trades;
