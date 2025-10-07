@@ -190,6 +190,13 @@
 }
 #avatarLivePreview img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
+/* Onboarding step 6 tabs */
+#ruleTabs .rule-tab.active {
+    background: rgba(255,149,0,0.15) !important;
+    border-color: var(--primary-orange) !important;
+    box-shadow: 0 0 0 3px rgba(255,149,0,0.15);
+}
+
 :root {
     --primary-orange: #FF9500;
     --primary-mint: #B4E7CE;
