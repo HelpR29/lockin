@@ -144,6 +144,24 @@
                         <h3 data-tooltip="How long you typically hold trades, and which entry hour is most profitable.">Holding Time</h3>
                         <div id="holdingStatsBody" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem;"></div>
                     </div>
+
+                    <!-- Session KPIs (ET) -->
+                    <div class="stat-card" id="sessionKpiCard">
+                        <h3 data-tooltip="Performance by trading session in America/New_York time.">Session Performance (ET)</h3>
+                        <div id="sessionKpiBody" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.75rem;"></div>
+                    </div>
+
+                    <!-- Golden vs Avoid Hours -->
+                    <div class="stat-card" id="goldenHoursCard">
+                        <h3 data-tooltip="Best and worst entry hours by total P/L (ET).">Golden / Avoid Hours</h3>
+                        <div id="goldenHoursBody" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 0.75rem;"></div>
+                    </div>
+
+                    <!-- Time-of-Day Heatmap -->
+                    <div class="chart-card" id="todHeatmapCard">
+                        <h3 data-tooltip="Win rate by hour (ET) across weekdays.">Win Rate Heatmap (Hour × Weekday, ET)</h3>
+                        <div id="todHeatmapGrid" style="overflow:auto;"></div>
+                    </div>
                 </div>
                 
                 <!-- Performance Calendar -->
