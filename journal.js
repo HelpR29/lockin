@@ -315,14 +315,7 @@ async function saveTrade(e) {
             return;
         }
 
-        // Enforce premarket checklist (only for new trades, not edits)
         const tradeId = document.getElementById('tradeId').value;
-        if (!tradeId && typeof enforcePretradeChecklist === 'function') {
-            const canProceed = await enforcePretradeChecklist();
-            if (!canProceed) {
-                return; // User cancelled or didn't complete checklist
-            }
-        }
         const emotions = Array.from(document.querySelectorAll('.emotion-tags .tag.selected')).map(tag => tag.dataset.emotion);
 
         const tradeType = document.getElementById('tradeType').value;
@@ -639,7 +632,15 @@ async function saveTrade(e) {
     }
 }
 
-function openLogTradeModal() {
+async function openLogTradeModal() {
+    // Enforce pretrade checklist BEFORE opening form
+    if (typeof enforcePretradeChecklist === 'function') {
+        const canProceed = await enforcePretradeChecklist();
+        if (!canProceed) {
+            return; // User cancelled or didn't complete checklist
+        }
+    }
+    
     document.getElementById('tradeForm').reset();
     document.getElementById('tradeId').value = '';
     document.getElementById('tradeModalTitle').textContent = 'Log New Trade';

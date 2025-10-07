@@ -74,8 +74,8 @@ async function showPretradeChecklistModal() {
       ">
         <div style="text-align: center; margin-bottom: 1.5rem;">
           <div style="font-size: 3rem; margin-bottom: 0.5rem;">📋</div>
-          <h2 style="color: var(--primary-orange); margin: 0 0 0.5rem 0; font-size: 1.8rem;">Premarket Checklist</h2>
-          <p style="color: var(--text-secondary); font-size: 0.95rem; margin: 0;">Complete your morning routine before trading</p>
+          <h2 style="color: var(--primary-orange); margin: 0 0 0.5rem 0; font-size: 1.8rem;">Pretrade Checklist</h2>
+          <p style="color: var(--text-secondary); font-size: 0.95rem; margin: 0;">Complete these items before placing your trade</p>
         </div>
         
         <div id="pretradeChecklistItems" style="margin-bottom: 1.5rem;">
