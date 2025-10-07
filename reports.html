@@ -130,6 +130,20 @@
                             <canvas id="dailyPlChart"></canvas>
                         </div>
                     </div>
+
+                    <!-- P/L by Entry Hour (ET) -->
+                    <div class="chart-card">
+                        <h3 data-tooltip="Aggregate P/L grouped by the hour you entered the trade (America/New_York time).">P/L by Entry Hour (ET)</h3>
+                        <div class="chart-container-reports">
+                            <canvas id="plByHourChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Holding Time Stats -->
+                    <div class="stat-card" id="holdingStatsCard">
+                        <h3 data-tooltip="How long you typically hold trades, and which entry hour is most profitable.">Holding Time</h3>
+                        <div id="holdingStatsBody" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem;"></div>
+                    </div>
                 </div>
                 
                 <!-- Performance Calendar -->
