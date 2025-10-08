@@ -18,34 +18,58 @@ const onboardingData = {
     tradingRules: []
 };
 
-// Check auth on load
+// Wait for Supabase user/session to be ready (prevents bounce to login)
+async function waitForUser(timeoutMs = 3000) {
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) return user;
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (sessionData?.session?.user) return sessionData.session.user;
+    } catch (_) {}
+    return new Promise(resolve => {
+        let done = false;
+        const timer = setTimeout(() => { if (!done) { done = true; resolve(null); } }, timeoutMs);
+        try {
+            const { data: { subscription } } = supabase.auth.onAuthStateChange((_evt, session) => {
+                if (!done && session?.user) {
+                    done = true;
+                    clearTimeout(timer);
+                    try { subscription.unsubscribe(); } catch (_) {}
+                    resolve(session.user);
+                }
+            });
+        } catch (_) {}
+    });
+}
+
+// Check auth on load (resilient)
 document.addEventListener('DOMContentLoaded', async () => {
-    const user = await checkAuth();
-    
+    const user = await waitForUser(3500);
     if (!user) {
+        // No session after grace period → go to login
         window.location.href = 'login.html';
         return;
     }
-    
+
     // Check if user has already completed onboarding
     const { data: profile, error: profileError } = await supabase
         .from('user_profiles')
         .select('*')
         .eq('user_id', user.id)
         .single();
-    
+
     // If profile doesn't exist or there's an error, user needs to complete onboarding
     if (profileError || !profile) {
         console.log('No profile found or error fetching profile, user needs onboarding');
         return; // Stay on onboarding page
     }
-    
+
     // If profile exists but onboarding is not completed, also stay on onboarding
     if (profile && !profile.onboarding_completed) {
         console.log('Profile exists but onboarding not completed, continuing onboarding');
         return; // Stay on onboarding page
     }
-    
+
     // Only redirect to dashboard if onboarding is fully completed
     if (profile && profile.onboarding_completed) {
         console.log('Onboarding already completed, redirecting to dashboard');
