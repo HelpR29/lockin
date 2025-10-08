@@ -116,6 +116,20 @@
                     </div>
                 </div>
 
+                <!-- Onboarding Incomplete Banner (hidden by default) -->
+                <div id="onboardingBanner" style="display:none; border:1px solid var(--primary-orange); background: rgba(255,149,0,0.08); border-radius: 12px; padding: 1rem; margin: 1rem 0;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:0.75rem; flex-wrap:wrap;">
+                        <div>
+                            <div style="font-weight:800; color: var(--primary-orange);">Finish onboarding to unlock your dashboard</div>
+                            <div style="font-size:0.9rem; color: var(--text-secondary);">Complete setup to configure goals, rules, and checklist.</div>
+                        </div>
+                        <div style="display:flex; gap:0.5rem;">
+                            <button class="cta-primary" onclick="window.location.href='onboarding.html'">Continue Onboarding</button>
+                            <button class="cta-secondary" onclick="document.getElementById('onboardingBanner').style.display='none'">Dismiss</button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- View Toggle -->
                 <div class="view-toggle">
                     <button class="toggle-btn active" data-view="wall" onclick="switchView('wall')">
@@ -396,10 +410,12 @@
                 .eq('user_id', user.id)
                 .single();
             
-            // If no profile exists or onboarding not completed, redirect to onboarding
+            // If no profile exists or onboarding not completed, show banner instead of redirecting
             if (profileError || !profile || !profile.onboarding_completed) {
-                console.log('User has not completed onboarding, redirecting...');
-                window.location.href = 'onboarding.html';
+                console.log('User has not completed onboarding, showing banner...');
+                const banner = document.getElementById('onboardingBanner');
+                if (banner) banner.style.display = 'block';
+                // Skip loading heavy dashboard data until onboarding is complete
                 return;
             }
             
