@@ -250,6 +250,32 @@
                     </div>
                 </div>
 
+                <!-- Performance Calendar (Dashboard) -->
+                <div class="chart-card" id="performanceCalendarCard" style="margin-top: 1.5rem;">
+                    <h3 data-tooltip="Heatmap of daily results for the selected month. Tap a day to see trades.">Performance Calendar</h3>
+                    <div class="calendar-summary" id="calendarSummary" style="display:flex; gap:0.75rem; margin:0.25rem 0 0.75rem; flex-wrap: wrap;">
+                        <div class="summary-item" data-tooltip="Sum of all daily P/L for the current month." style="flex:1; min-width:160px; background: rgba(255,255,255,0.03); border:1px solid var(--glass-border); border-radius:10px; padding:0.6rem 0.8rem;">
+                            <div class="label" style="font-size:0.8rem; color: var(--text-secondary);">Monthly P/L</div>
+                            <div class="value" id="calendarMonthSummaryPnL" style="font-weight:800; font-size:1.05rem;">$0.00</div>
+                        </div>
+                        <div class="summary-item" data-tooltip="Number of closed trades in the current month." style="flex:1; min-width:140px; background: rgba(255,255,255,0.03); border:1px solid var(--glass-border); border-radius:10px; padding:0.6rem 0.8rem;">
+                            <div class="label" style="font-size:0.8rem; color: var(--text-secondary);">Trades</div>
+                            <div class="value" id="calendarMonthSummaryTrades" style="font-weight:800; font-size:1.05rem;">0</div>
+                        </div>
+                        <div class="summary-item" data-tooltip="Wins divided by total closed trades in the month." style="flex:1; min-width:140px; background: rgba(255,255,255,0.03); border:1px solid var(--glass-border); border-radius:10px; padding:0.6rem 0.8rem;">
+                            <div class="label" style="font-size:0.8rem; color: var(--text-secondary);">Win Rate</div>
+                            <div class="value" id="calendarMonthSummaryWinRate" style="font-weight:800; font-size:1.05rem;">0%</div>
+                        </div>
+                    </div>
+                    <div style="display:flex; justify-content: space-between; align-items:center; gap:0.5rem; margin-bottom:0.5rem;">
+                        <button class="cta-secondary" id="calendarPrev" style="padding:0.25rem 0.6rem;">◀</button>
+                        <div id="calendarMonthLabel" style="font-weight:700; font-size:1.05rem;">Month YYYY</div>
+                        <button class="cta-secondary" id="calendarNext" style="padding:0.25rem 0.6rem;">▶</button>
+                    </div>
+                    <div class="calendar-grid" id="performanceCalendar"></div>
+                    <div style="font-size:0.8rem; color: var(--text-secondary); margin-top:0.5rem;">Tap a day to view trades and P/L.</div>
+                </div>
+
                 <!-- Quick Actions -->
                 <div class="dashboard-actions">
                     <h2 class="section-title" style="font-size: 1.5rem; margin-bottom: 1.5rem;">Quick Actions</h2>
@@ -306,6 +332,7 @@
     <script src="share-card-generator.js?v=5"></script>
     <script src="payments.js"></script>
     <script src="dashboard-extras.js?v=20251004"></script>
+    <script src="performance-calendar.js?v=1"></script>
     <script>
         // Simple sign out handler - defined globally
         function handleSignOut() {
