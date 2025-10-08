@@ -58,6 +58,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         .eq('user_id', user.id)
         .single();
 
+    // If we are in a forced onboarding state (after reset), do NOT redirect away even if a stale
+    // profile shows onboarding_completed=true. This guarantees the user remains on onboarding.
+    const forceOnboarding = (localStorage.getItem('lockin_reset_used') === '1');
+    if (forceOnboarding) {
+        console.log('Forced onboarding active (post-reset). Staying on onboarding.');
+        // Best effort: mark profile as not completed to keep routing consistent elsewhere
+        try {
+            await supabase.from('user_profiles').upsert({ user_id: user.id, onboarding_completed: false }, { onConflict: 'user_id', ignoreDuplicates: false });
+        } catch (_) { /* non-fatal */ }
+        return; // Stay on onboarding page
+    }
+
     // If profile doesn't exist or there's an error, user needs to complete onboarding
     if (profileError || !profile) {
         console.log('No profile found or error fetching profile, user needs onboarding');
@@ -859,6 +871,7 @@ async function completeOnboarding() {
         }
         
         console.log('✅ Onboarding complete! Redirecting to dashboard...');
+        try { localStorage.removeItem('lockin_reset_used'); } catch (_) {}
         
         // Show success message
         const finishButton = document.getElementById('finishButton');
