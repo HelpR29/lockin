@@ -92,27 +92,16 @@ window.openViolationsModal = async function openViolationsModal(tradeId) {
                 ruleText = tr?.rule || '';
             } catch (_) {}
             if (!ruleText) {
-// Helper: hide analysis blocks for other users
-function hideAnalysisForOtherView() {
-    const hideById = (id) => { try { const el = document.getElementById(id); if (el) el.style.display = 'none'; } catch(_){} };
-    // Hide AI/analysis controls
-    hideById('analyzeBtn');
-    hideById('weeklyAIButton');
-    hideById('monthlyAIButton');
-    hideById('aiServerAnalysisContainer');
-    hideById('cumulativeChartContainer');
-    hideById('aiNotesSummaryContainer');
-    hideById('aiInsights');
-    hideById('aiEmptyState');
-    // Hide premium-tagged panels entirely
-    try { document.querySelectorAll('[data-premium="true"]').forEach(el => el.style.display = 'none'); } catch(_){}
-    // Hide quick stats tiles (winRate, avgPnl)
-    try { const wr = document.getElementById('winRate'); if (wr && wr.parentElement) wr.parentElement.style.display = 'none'; } catch(_){}
-    try { const ap = document.getElementById('avgPnl'); if (ap && ap.parentElement) ap.parentElement.style.display = 'none'; } catch(_){}
-    // Hide the AI heading text if present
-    try { document.querySelectorAll('.chart-section h3').forEach(h => { if ((h.textContent||'').toLowerCase().includes('ai trading analysis')) h.style.display = 'none'; }); } catch(_){}
-    // Collapse the entire right panel initially
-    try { const section = document.querySelector('.chart-section'); if (section) section.style.display = 'none'; } catch(_){}
+                try {
+                    const { data: ur } = await supabase
+                        .from('user_defined_rules')
+                        .select('rule_text')
+                        .eq('id', v.rule_id)
+                        .single();
+                    ruleText = ur?.rule_text || '';
+                } catch (_) {}
+            }
+            items.push({ when: v.violation_date || v.violated_at, rule: ruleText, notes: v.notes });
         }
         items.sort((a,b) => new Date(b.when||0) - new Date(a.when||0));
 
