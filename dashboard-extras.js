@@ -781,8 +781,9 @@ async function openUserProfileById(userId) {
                     </div>
                 </div>
 
-                <div style="display:flex; gap:0.5rem; justify-content:center; margin-top:1rem;">
+                <div style="display:flex; gap:0.5rem; justify-content:center; margin-top:1rem; flex-wrap:wrap;">
                     <button class="cta-secondary" onclick="this.closest('.modal').remove()">Close</button>
+                    <button class="cta-primary" onclick="window.location.href='journal.html?user=${row.user_id}'" title="View ${displayName}'s trade journal (may require following)">View Journal</button>
                     <button class="cta-primary" id="followActionBtn_${row.user_id}" onclick="toggleFollow('${row.user_id}')">${isFollowing ? 'Unfollow' : 'Follow'}</button>
                 </div>
             </div>
