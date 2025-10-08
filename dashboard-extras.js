@@ -606,6 +606,7 @@ async function resetAccountOneTime() {
         ops.push(supabase.from('trades').delete().eq('user_id', user.id));
         ops.push(supabase.from('rule_violations').delete().eq('user_id', user.id));
         ops.push(supabase.from('trading_rules').delete().eq('user_id', user.id));
+        ops.push(supabase.from('user_defined_rules').delete().eq('user_id', user.id));
         ops.push(supabase.from('user_achievements').delete().eq('user_id', user.id));
         ops.push(supabase.from('user_stars').delete().eq('user_id', user.id));
         ops.push(supabase.from('user_progress').delete().eq('user_id', user.id));
@@ -613,14 +614,22 @@ async function resetAccountOneTime() {
         ops.push(supabase.from('beer_completions').delete().eq('user_id', user.id));
         ops.push(supabase.from('beer_spills').delete().eq('user_id', user.id));
         ops.push(supabase.from('daily_stats').delete().eq('user_id', user.id));
+        ops.push(supabase.from('daily_check_ins').delete().eq('user_id', user.id));
         ops.push(supabase.from('share_history').delete().eq('user_id', user.id));
+        ops.push(supabase.from('leaderboard_stats').delete().eq('user_id', user.id));
+        ops.push(supabase.from('notifications').delete().eq('user_id', user.id));
+        ops.push(supabase.from('user_customization').delete().eq('user_id', user.id));
+        ops.push(supabase.from('user_onboarding').delete().eq('user_id', user.id));
+        // Reset AI usage quotas as well
+        ops.push(supabase.from('ai_usage').delete().eq('user_id', user.id));
         await Promise.allSettled(ops);
 
-        // Ensure onboarding restarts next login (upsert to guarantee a row exists)
+        // Ensure onboarding restarts (upsert to guarantee a row exists) and mark reset_used
         try {
             await supabase.from('user_profiles').upsert({
                 user_id: user.id,
-                onboarding_completed: false
+                onboarding_completed: false,
+                reset_used: true
             }, { onConflict: 'user_id', ignoreDuplicates: false });
         } catch (_) { /* ignore */ }
         
@@ -634,10 +643,9 @@ async function resetAccountOneTime() {
         if (typeof window.currentProgressData !== 'undefined') window.currentProgressData = null;
         if (typeof window.userProgress !== 'undefined') window.userProgress = null;
 
-        alert('✅ Account reset complete. You will be signed out.');
-        // Sign out and redirect to login
-        try { await supabase.auth.signOut(); } catch (_) {}
-        window.location.href = 'login.html';
+        alert('✅ Account reset complete. Redirecting to onboarding...');
+        // Stay signed in and go straight to onboarding flow
+        window.location.replace('onboarding.html');
     } catch (e) {
         console.error('resetAccountOneTime failed', e);
         alert('Failed to reset account.');

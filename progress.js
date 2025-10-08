@@ -666,9 +666,22 @@ async function getUserProgressSummary(userId) {
             goals.total_bottles
         ) : 0;
         
+        // If onboarding is incomplete OR both progress and goals are missing, signal not ready
+        try {
+            const { data: profRow } = await supabase
+                .from('user_profiles')
+                .select('onboarding_completed')
+                .eq('user_id', userId)
+                .single();
+            if (!profRow?.onboarding_completed && !progress && !goals) {
+                return null;
+            }
+        } catch (_) { /* ignore */ }
+
+        const safeProgress = progress || {};
         return {
-            ...progress,
-            goals,
+            ...safeProgress,
+            goals: goals || null,
             token,
             progressPercent,
             projectedBalance,
