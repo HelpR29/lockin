@@ -29,6 +29,7 @@ async function checkAuth() {
             if (currentPage.includes('signup.html') || currentPage.includes('login.html')) {
                 // Decide destination by onboarding status
                 let onboarded = false;
+                const forceOnboarding = localStorage.getItem('lockin_reset_used') === '1';
                 try {
                     const { data: prof } = await supabase
                         .from('user_profiles')
@@ -37,7 +38,7 @@ async function checkAuth() {
                         .single();
                     onboarded = !!prof?.onboarding_completed;
                 } catch (_) { onboarded = false; }
-                window.location.href = onboarded ? 'dashboard.html' : 'onboarding.html';
+                window.location.href = (!onboarded || forceOnboarding) ? 'onboarding.html' : 'dashboard.html';
             }
         }
         
@@ -110,11 +111,12 @@ async function signIn(email, password) {
             .eq('user_id', data.user.id)
             .single();
         
-        // Redirect based on onboarding status
-        if (profile && profile.onboarding_completed) {
-            window.location.href = 'dashboard.html';
-        } else {
+        // Redirect based on onboarding status OR reset flag forcing onboarding
+        const forceOnboarding = localStorage.getItem('lockin_reset_used') === '1';
+        if (!profile || !profile.onboarding_completed || forceOnboarding) {
             window.location.href = 'onboarding.html';
+        } else {
+            window.location.href = 'dashboard.html';
         }
         
         return data;
