@@ -184,7 +184,11 @@ async function loadTradeChart(trade) {
         
         // Update chart info and show container
         updateChartInfo(trade);
-        // Show the chart container
+        // Show the right panel and chart container
+        try {
+            const section = document.querySelector('.chart-section');
+            if (section && section.style.display === 'none') section.style.display = 'block';
+        } catch(_) { /* ignore */ }
         const chartContainer = document.getElementById('chartContainer');
         if (chartContainer) {
             chartContainer.style.display = 'block';
