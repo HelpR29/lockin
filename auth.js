@@ -27,7 +27,17 @@ async function checkAuth() {
             // User is logged in
             const currentPage = window.location.pathname;
             if (currentPage.includes('signup.html') || currentPage.includes('login.html')) {
-                window.location.href = 'dashboard.html';
+                // Decide destination by onboarding status
+                let onboarded = false;
+                try {
+                    const { data: prof } = await supabase
+                        .from('user_profiles')
+                        .select('onboarding_completed')
+                        .eq('user_id', user.id)
+                        .single();
+                    onboarded = !!prof?.onboarding_completed;
+                } catch (_) { onboarded = false; }
+                window.location.href = onboarded ? 'dashboard.html' : 'onboarding.html';
             }
         }
         
