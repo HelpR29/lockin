@@ -93,6 +93,10 @@ function hideAnalysisForOtherView() {
     // Hide quick stats tiles (winRate, avgPnl)
     try { const wr = document.getElementById('winRate'); if (wr && wr.parentElement) wr.parentElement.style.display = 'none'; } catch(_){}
     try { const ap = document.getElementById('avgPnl'); if (ap && ap.parentElement) ap.parentElement.style.display = 'none'; } catch(_){}
+    // Hide the AI heading text if present
+    try { document.querySelectorAll('.chart-section h3').forEach(h => { if ((h.textContent||'').toLowerCase().includes('ai trading analysis')) h.style.display = 'none'; }); } catch(_){}
+    // Collapse the entire right panel initially
+    try { const section = document.querySelector('.chart-section'); if (section) section.style.display = 'none'; } catch(_){}
 }
         }
         items.sort((a,b) => new Date(b.when||0) - new Date(a.when||0));
