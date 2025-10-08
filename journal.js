@@ -42,16 +42,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const h1 = document.querySelector('.dashboard-title');
                 if (h1) h1.textContent = `Trade Journal — ${displayName}`;
             } catch (_) { /* no-op */ }
-            // Hide log new trade button
+            // Hide all analysis/write controls for other users
             try {
                 const logBtn = document.querySelector('.journal-actions .cta-primary');
                 if (logBtn) logBtn.style.display = 'none';
             } catch (_) {}
-            // Hide analyze button (avoid analyzing someone else's trades)
-            try {
-                const analyzeBtn = document.getElementById('analyzeBtn');
-                if (analyzeBtn) analyzeBtn.style.display = 'none';
-            } catch (_) {}
+            hideAnalysisForOtherView();
         }
     } catch (_) { /* ignore */ }
 
@@ -79,6 +75,25 @@ window.openViolationsModal = async function openViolationsModal(tradeId) {
                 } catch (_) {}
             }
             items.push({ when: v.violation_date || v.violated_at, rule: ruleText, notes: v.notes });
+
+// Helper: hide analysis blocks for other users
+function hideAnalysisForOtherView() {
+    const hideById = (id) => { try { const el = document.getElementById(id); if (el) el.style.display = 'none'; } catch(_){} };
+    // Hide AI/analysis controls
+    hideById('analyzeBtn');
+    hideById('weeklyAIButton');
+    hideById('monthlyAIButton');
+    hideById('aiServerAnalysisContainer');
+    hideById('cumulativeChartContainer');
+    hideById('aiNotesSummaryContainer');
+    hideById('aiInsights');
+    hideById('aiEmptyState');
+    // Hide premium-tagged panels entirely
+    try { document.querySelectorAll('[data-premium="true"]').forEach(el => el.style.display = 'none'); } catch(_){}
+    // Hide quick stats tiles (winRate, avgPnl)
+    try { const wr = document.getElementById('winRate'); if (wr && wr.parentElement) wr.parentElement.style.display = 'none'; } catch(_){}
+    try { const ap = document.getElementById('avgPnl'); if (ap && ap.parentElement) ap.parentElement.style.display = 'none'; } catch(_){}
+}
         }
         items.sort((a,b) => new Date(b.when||0) - new Date(a.when||0));
 
