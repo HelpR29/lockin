@@ -652,9 +652,10 @@ async function resetAccountOneTime() {
         if (typeof window.currentProgressData !== 'undefined') window.currentProgressData = null;
         if (typeof window.userProgress !== 'undefined') window.userProgress = null;
 
-        alert('✅ Account reset complete. Redirecting to onboarding...');
-        // Stay signed in and go straight to onboarding flow
-        window.location.replace('onboarding.html');
+        alert('✅ Account reset complete. Please sign in to start onboarding.');
+        // Sign out and send user to login; after sign-in, auth.js routes to onboarding
+        try { await supabase.auth.signOut(); } catch (_) {}
+        window.location.replace('login.html');
     } catch (e) {
         console.error('resetAccountOneTime failed', e);
         alert('Failed to reset account.');
