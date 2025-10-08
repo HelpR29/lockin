@@ -633,10 +633,19 @@ async function resetAccountOneTime() {
             }, { onConflict: 'user_id', ignoreDuplicates: false });
         } catch (_) { /* ignore */ }
         
-        // Clear all cached data
-        sessionStorage.clear();
-        const resetFlag = localStorage.getItem('lockin_reset_used');
-        localStorage.clear();
+        // Clear app cached data but PRESERVE Supabase auth token (keys prefixed with 'sb-')
+        try { sessionStorage.clear(); } catch (_) {}
+        try {
+            const keys = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const k = localStorage.key(i);
+                if (!k) continue;
+                // Keep Supabase session tokens (sb-...-auth-token)
+                if (k.startsWith('sb-')) continue;
+                keys.push(k);
+            }
+            keys.forEach(k => localStorage.removeItem(k));
+        } catch (_) { /* ignore */ }
         localStorage.setItem('lockin_reset_used', '1');
         
         // Clear any global state
