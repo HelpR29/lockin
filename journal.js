@@ -1,4 +1,6 @@
 let isPremiumUser = false;
+let viewedUserId = null; // whose journal is being viewed
+let isSelfView = true;   // true when viewing own journal
 
 document.addEventListener('DOMContentLoaded', async () => {
     const user = await checkAuth();
@@ -6,6 +8,52 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.location.href = 'login.html';
         return;
     }
+
+    // Determine if viewing another user's journal via ?user=<uuid>
+    try {
+        const params = new URLSearchParams(window.location.search);
+        const uParam = params.get('user') || params.get('u');
+        viewedUserId = uParam || user.id;
+        isSelfView = viewedUserId === user.id;
+
+        // Update title and hide write/analysis controls if viewing someone else
+        if (!isSelfView) {
+            try {
+                // Fetch display name for header
+                let displayName = '';
+                try {
+                    const { data: prof } = await supabase
+                        .from('user_profiles')
+                        .select('username')
+                        .eq('user_id', viewedUserId)
+                        .single();
+                    displayName = prof?.username || '';
+                } catch (_) { /* ignore */ }
+                if (!displayName) {
+                    try {
+                        const { data: lb } = await supabase
+                            .from('leaderboard_stats')
+                            .select('full_name, email')
+                            .eq('user_id', viewedUserId)
+                            .single();
+                        displayName = (lb?.full_name && lb.full_name.trim()) || (lb?.email ? lb.email.split('@')[0] : 'User');
+                    } catch (_) { displayName = 'User'; }
+                }
+                const h1 = document.querySelector('.dashboard-title');
+                if (h1) h1.textContent = `Trade Journal — ${displayName}`;
+            } catch (_) { /* no-op */ }
+            // Hide log new trade button
+            try {
+                const logBtn = document.querySelector('.journal-actions .cta-primary');
+                if (logBtn) logBtn.style.display = 'none';
+            } catch (_) {}
+            // Hide analyze button (avoid analyzing someone else's trades)
+            try {
+                const analyzeBtn = document.getElementById('analyzeBtn');
+                if (analyzeBtn) analyzeBtn.style.display = 'none';
+            } catch (_) {}
+        }
+    } catch (_) { /* ignore */ }
 
 // Show violations linked to a trade (exported on window)
 window.openViolationsModal = async function openViolationsModal(tradeId) {
@@ -218,7 +266,8 @@ async function loadTrades() {
         const statusFilter = document.getElementById('filterStatus')?.value || 'all';
         const sortOrder = document.getElementById('sortOrder')?.value || 'desc';
 
-    let query = supabase.from('trades').select('*').eq('user_id', user.id);
+    const targetId = viewedUserId || user.id;
+    let query = supabase.from('trades').select('*').eq('user_id', targetId);
 
     if (statusFilter !== 'all') {
         query = query.eq('status', statusFilter);
@@ -230,6 +279,13 @@ async function loadTrades() {
 
         if (error) {
             console.error('Error fetching trades:', error);
+            const container = document.getElementById('tradeList');
+            if (container) {
+                const msg = isSelfView
+                    ? 'Failed to load your trades. Please refresh.'
+                    : 'This journal is not available. You may need to follow this user to view their trades.';
+                container.innerHTML = `<p class="no-trades">${msg}</p>`;
+            }
             return;
         }
 
@@ -237,8 +293,11 @@ async function loadTrades() {
         if (!container) return;
     container.innerHTML = '';
 
-    if (trades.length === 0) {
-        container.innerHTML = '<p class="no-trades">No trades logged yet. Click "Log New Trade" to get started.</p>';
+    if (!trades || trades.length === 0) {
+        const msg = isSelfView
+            ? 'No trades logged yet. Click "Log New Trade" to get started.'
+            : 'No trades to show. If you are not following this user, follow them to view their journal.';
+        container.innerHTML = `<p class="no-trades">${msg}</p>`;
         return;
     }
 
@@ -306,14 +365,14 @@ async function loadTrades() {
                         ${tsLabel}
                     </div>
                     <div style="display:flex; gap:0.4rem;">
-                        ${vCount > 0 ? `
+                        ${(!isSelfView ? '' : (vCount > 0 ? `
                             <button class="cta-secondary" onclick="event.stopPropagation(); openViolationsModal('${trade.id}')" title="View Violations" style="padding: 0.4rem 0.75rem; font-size: 0.85rem;">🚨 ${vCount}</button>
-                        ` : ''}
-                        ${trade.status === 'open' ? `
+                        ` : ''))}
+                        ${(!isSelfView ? '' : (trade.status === 'open' ? `
                             <button class="cta-secondary" onclick="event.stopPropagation(); closeTrade('${trade.id}')" style="padding: 0.5rem 1rem; font-size: 0.875rem;">
                                 ✅ Close Trade
                             </button>
-                        ` : ''}
+                        ` : ''))}
                     </div>
                 </div>
             </div>
