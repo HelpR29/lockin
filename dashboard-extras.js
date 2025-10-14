@@ -28,7 +28,8 @@ function playDing() {
     try {
         const AC = window.AudioContext || window.webkitAudioContext;
         if (!AC) return;
-        const ctx = new AC();
+        const ctx = window.__lockinAudioCtx || new AC();
+        window.__lockinAudioCtx = ctx;
         const o = ctx.createOscillator();
         const g = ctx.createGain();
         o.type = 'triangle';
@@ -39,7 +40,6 @@ function playDing() {
         o.connect(g).connect(ctx.destination);
         o.start();
         o.stop(ctx.currentTime + 0.24);
-        setTimeout(() => { try { ctx.close(); } catch(_) {} }, 400);
     } catch (_) {}
 }
 
@@ -47,7 +47,8 @@ function playSoftBuzz() {
     try {
         const AC = window.AudioContext || window.webkitAudioContext;
         if (!AC) return;
-        const ctx = new AC();
+        const ctx = window.__lockinAudioCtx || new AC();
+        window.__lockinAudioCtx = ctx;
         const o = ctx.createOscillator();
         const g = ctx.createGain();
         o.type = 'sawtooth';
@@ -58,8 +59,17 @@ function playSoftBuzz() {
         o.connect(g).connect(ctx.destination);
         o.start();
         o.stop(ctx.currentTime + 0.3);
-        setTimeout(() => { try { ctx.close(); } catch(_) {} }, 500);
     } catch (_) {}
+}
+
+function unlockAudio() {
+    try {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return null;
+        if (!window.__lockinAudioCtx) window.__lockinAudioCtx = new AC();
+        if (typeof window.__lockinAudioCtx.resume === 'function') window.__lockinAudioCtx.resume();
+        return window.__lockinAudioCtx;
+    } catch (_) { return null; }
 }
 
 function reactAvatar(kind) {
@@ -173,12 +183,18 @@ async function openDailyFlow() {
             try {
                 submitBtn.disabled = true;
                 await (async function _handleSubmit() {
+                    unlockAudio();
                     const sym = (document.getElementById('dfSymbol')?.value || '').trim();
                     const pRaw = (document.getElementById('dfResult')?.value || '').trim();
                     const p = Number(pRaw);
                     let guard = (document.querySelector('input[name="dfGuard"]:checked')?.value || 'ok');
                     const mood = document.getElementById('dfMood')?.value || '🙂 Neutral';
                     const note = document.getElementById('dfNote')?.value || '';
+
+                    if (sym && typeof enforcePretradeChecklist === 'function') {
+                        const allowed = await enforcePretradeChecklist();
+                        if (!allowed) { throw new Error('Checklist not completed'); }
+                    }
 
                     const { data: goals } = await supabase
                         .from('user_goals')

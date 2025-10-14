@@ -51,7 +51,14 @@ async function loadChecklistItems() {
       // Do NOT auto-seed; return empty so the UI can prompt user to set up checklist
       return [];
     }
-    return data;
+    // Deduplicate by normalized text to avoid repeated rows
+    const seen = new Set();
+    const deduped = [];
+    for (const row of data) {
+      const key = String((row.text || '').trim().toLowerCase());
+      if (key && !seen.has(key)) { seen.add(key); deduped.push(row); }
+    }
+    return deduped;
   } catch (e) {
     // Fallback to localStorage
     let ls = [];
@@ -60,7 +67,14 @@ async function loadChecklistItems() {
       ls = DEFAULT_CHECKLIST.map((text, idx) => ({ id: `local-${idx}`, text, sort: idx, is_active: true }));
       localStorage.setItem(CHECKLIST_LS_KEY, JSON.stringify(ls));
     }
-    return ls;
+    // Deduplicate
+    const seen = new Set();
+    const deduped = [];
+    for (const row of ls) {
+      const key = String((row.text || '').trim().toLowerCase());
+      if (key && !seen.has(key)) { seen.add(key); deduped.push(row); }
+    }
+    return deduped;
   }
 }
 
