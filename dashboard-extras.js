@@ -168,7 +168,8 @@ function toggleSfxPopover() {
         const rect = btn.getBoundingClientRect();
         const w = pop.offsetWidth && pop.offsetWidth > 0 ? pop.offsetWidth : 230;
         const h = pop.offsetHeight && pop.offsetHeight > 0 ? pop.offsetHeight : 100;
-        let left = Math.max(8, Math.min(window.innerWidth - w - 8, rect.right - w));
+        // Prefer aligning popover to the button's left edge under it
+        let left = Math.max(8, Math.min(window.innerWidth - w - 8, rect.left));
         let top = Math.max(8, Math.min(window.innerHeight - h - 8, rect.bottom + 8));
         if (!Number.isFinite(left) || !Number.isFinite(top)) {
             left = Math.max(8, Math.floor((window.innerWidth - w) / 2));
