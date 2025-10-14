@@ -84,9 +84,9 @@
                             <span style="font-weight: 700;">SFX Volume</span>
                             <span id="sfxVolumeLabel" style="color: var(--text-secondary);">x1.8</span>
                         </div>
-                        <input id="sfxVolumeSlider" type="range" min="0.1" max="3.5" step="0.1" value="1.8" style="width: 100%;" />
+                        <input id="sfxVolumeSlider" type="range" min="0.1" max="3.5" step="0.1" value="1.8" style="width: 100%;" oninput="if(window.setSfxVolume){window.setSfxVolume(this.value)}" />
                         <div style="display:flex; justify-content:flex-end; margin-top:0.6rem;">
-                            <button id="sfxTestBtn" class="cta-secondary" style="padding:0.35rem 0.6rem;">Test</button>
+                            <button id="sfxTestBtn" class="cta-secondary" type="button" style="padding:0.35rem 0.6rem;" onclick="if(window.unlockAudio)window.unlockAudio(); if(window.playDing)window.playDing();">Test</button>
                         </div>
                     </div>
                 </div>
