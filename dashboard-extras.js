@@ -212,7 +212,7 @@ function getSfxMaster() {
         if (!ctx) return null;
         if (!window.__lockinSfxMaster) {
             const m = ctx.createGain();
-            let v = 1.8;
+            let v = 1.0;
             try { const ls = Number(localStorage.getItem('lockin_sfx_vol')); if (Number.isFinite(ls) && ls > 0) v = ls; } catch(_) {}
             m.gain.value = v;
             m.connect(ctx.destination);
