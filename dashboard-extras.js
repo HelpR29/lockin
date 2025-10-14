@@ -203,6 +203,7 @@ async function openDailyFlow() {
                         });
                     } catch (_) { /* ignore */ }
 
+                    let outcome = 'logged';
                     if (goals) {
                         const target = Number(goals.target_percent_per_beer || 8);
                         const maxLoss = Number(goals.max_loss_percent || 2);
@@ -219,6 +220,7 @@ async function openDailyFlow() {
                             showToast('🍺 You cracked one bottle!');
                             try { if (typeof fireConfetti === 'function') fireConfetti(); } catch(_) {}
                             try { playDing(); } catch(_) {}
+                            outcome = 'crack';
                         } else if ((guard === 'fail') || (hasPercent && p <= -maxLoss)) {
                             try { await spillBeer(user.id, {
                                 starting_balance: starting,
@@ -232,12 +234,25 @@ async function openDailyFlow() {
                             }); } catch(_) {}
                             showToast('🍺 Beer spilled! No worries — tomorrow’s another chance.');
                             try { playSoftBuzz(); } catch(_) {}
+                            outcome = 'spill';
                         }
                     }
 
                     try { await updateXPBar(); } catch(_) {}
                     try { await loadUserProgress(user.id); } catch(_) {}
                     try { if (typeof initDashboardCalendar === 'function') await initDashboardCalendar(); else if (typeof buildDashboardPerformanceCalendar === 'function') await buildDashboardPerformanceCalendar(); } catch(_) {}
+
+                    // Avatar reaction and disable CTA for today
+                    try { reactAvatar(outcome); } catch(_) {}
+                    try {
+                        const btn = document.getElementById('crackTodayBtn');
+                        const hint = document.getElementById('dailyFlowHint');
+                        if (btn) { btn.disabled = true; btn.classList.add('disabled'); }
+                        if (hint) { hint.textContent = 'See you tomorrow'; }
+                    } catch(_) {}
+
+                    // Show completion splash
+                    try { showDailyCompletionSplash(outcome); } catch(_) {}
                 })();
                 modal.remove();
             } catch (e) {
