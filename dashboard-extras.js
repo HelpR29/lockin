@@ -24,6 +24,208 @@ async function showQuickShareButton() {
     }
 }
 
+// Daily Flow: quick check-in + optional trade and crack/spill
+async function openDailyFlow() {
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.style.display = 'flex';
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width:520px;">
+                <span class="close-button" onclick="this.closest('.modal').remove()">&times;</span>
+                <h2 style="margin:0 0 0.75rem 0; display:flex; align-items:center; gap:0.5rem;">
+                    <span>🍺</span>
+                    <span>Log Today</span>
+                </h2>
+                <div style="display:grid; gap:0.75rem;">
+                    <label style="display:flex; justify-content:space-between; align-items:center; gap:1rem;">
+                        <span>Ticker</span>
+                        <input id="dfSymbol" type="text" placeholder="e.g., TSLA or BTC/USD" style="background: var(--card-bg); color:#fff; border:1px solid var(--glass-border); border-radius:8px; padding:0.45rem 0.6rem; width: 240px;" />
+                    </label>
+                    <label style="display:flex; justify-content:space-between; align-items:center; gap:1rem;">
+                        <span>Result (%)</span>
+                        <input id="dfResult" type="number" step="any" placeholder="e.g., 2.3 or -1.5" style="background: var(--card-bg); color:#fff; border:1px solid var(--glass-border); border-radius:8px; padding:0.45rem 0.6rem; width: 160px; text-align:right;" />
+                    </label>
+                    <div>
+                        <div style="font-size:0.9rem; color: var(--text-secondary); margin-bottom:0.35rem;">RuleGuard</div>
+                        <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                            <label style="display:flex; align-items:center; gap:0.35rem; background: rgba(80,227,194,0.12); border:1px solid #50E3C2; padding:0.35rem 0.6rem; border-radius:999px; cursor:pointer;">
+                                <input type="radio" name="dfGuard" value="ok" checked /> ✅
+                            </label>
+                            <label style="display:flex; align-items:center; gap:0.35rem; background: rgba(255,193,7,0.12); border:1px solid #FFC107; padding:0.35rem 0.6rem; border-radius:999px; cursor:pointer;">
+                                <input type="radio" name="dfGuard" value="warn" /> ⚠️
+                            </label>
+                            <label style="display:flex; align-items:center; gap:0.35rem; background: rgba(255,69,58,0.12); border:1px solid #FF453A; padding:0.35rem 0.6rem; border-radius:999px; cursor:pointer;">
+                                <input type="radio" name="dfGuard" value="fail" /> ❌
+                            </label>
+                        </div>
+                    </div>
+                    <label style="display:flex; justify-content:space-between; align-items:center; gap:1rem;">
+                        <span>Mood</span>
+                        <select id="dfMood" style="background: var(--card-bg); color:#fff; border:1px solid var(--glass-border); border-radius:8px; padding:0.45rem 0.6rem; width: 180px;">
+                            <option value="😌 Calm">😌 Calm</option>
+                            <option value="😎 Confident">😎 Confident</option>
+                            <option value="🙂 Neutral">🙂 Neutral</option>
+                            <option value="😠 Frustrated">😠 Frustrated</option>
+                            <option value="😢 Disappointed">😢 Disappointed</option>
+                        </select>
+                    </label>
+                    <label style="display:flex; flex-direction:column; gap:0.4rem;">
+                        <span>Reflection (optional)</span>
+                        <input id="dfNote" type="text" maxlength="180" placeholder="1 line — e.g., Exited too early, need patience." style="background: var(--card-bg); color:#fff; border:1px solid var(--glass-border); border-radius:8px; padding:0.55rem 0.6rem;" />
+                    </label>
+                </div>
+                <div style="display:flex; gap:0.5rem; justify-content:flex-end; margin-top:1rem;">
+                    <button class="cta-secondary" onclick="this.closest('.modal').remove()">Cancel</button>
+                    <button class="cta-primary" id="dfSubmitBtn">Log It</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        const submitBtn = modal.querySelector('#dfSubmitBtn');
+        if (submitBtn) submitBtn.addEventListener('click', async () => {
+            try {
+                submitBtn.disabled = true;
+                await (async function _handleSubmit() {
+                    const sym = (document.getElementById('dfSymbol')?.value || '').trim();
+                    const pRaw = (document.getElementById('dfResult')?.value || '').trim();
+                    const p = Number(pRaw);
+                    const guard = (document.querySelector('input[name="dfGuard"]:checked')?.value || 'ok');
+                    const mood = document.getElementById('dfMood')?.value || '🙂 Neutral';
+                    const note = document.getElementById('dfNote')?.value || '';
+
+                    const { data: goals } = await supabase
+                        .from('user_goals')
+                        .select('*')
+                        .eq('user_id', user.id)
+                        .eq('is_active', true)
+                        .single();
+
+                    const hasPercent = !Number.isNaN(p);
+                    const starting = Number(goals?.current_capital || 0);
+                    const gainPct = hasPercent ? p : 0;
+                    const ending = starting > 0 ? (starting * (1 + (gainPct / 100))) : starting;
+                    const pnlAbs = starting > 0 ? (starting * (gainPct / 100)) : 0;
+
+                    let tradeInserted = false;
+                    if (sym) {
+                        const entry = 100;
+                        const exit = hasPercent ? (100 * (1 + (gainPct / 100))) : 100;
+                        let posSize = (starting > 0) ? (starting / 100) : 1;
+                        if (!Number.isFinite(posSize) || posSize <= 0) posSize = 1;
+                        const trade = {
+                            user_id: user.id,
+                            symbol: sym,
+                            trade_type: 'stock',
+                            direction: 'long',
+                            entry_price: entry,
+                            exit_price: exit,
+                            position_size: Number(posSize.toFixed(2)),
+                            status: 'closed',
+                            notes: note || null,
+                            emotions: [mood],
+                            entry_time: new Date().toISOString(),
+                            exit_time: new Date().toISOString()
+                        };
+                        const { error: tErr } = await supabase.from('trades').insert(trade);
+                        if (!tErr) tradeInserted = true;
+                    }
+
+                    const guardMap = { ok: 10, warn: 7, fail: 4 };
+                    const discipline_rating = guardMap[guard] ?? 8;
+
+                    try {
+                        await performDailyCheckIn(user.id, {
+                            discipline_rating,
+                            followed_rules: guard === 'ok',
+                            traded_today: tradeInserted,
+                            trades_count: tradeInserted ? 1 : 0,
+                            win_rate: hasPercent ? (p > 0 ? 100 : (p < 0 ? 0 : 50)) : null,
+                            profit_loss: pnlAbs,
+                            notes: note,
+                            emotions: [mood]
+                        });
+                    } catch (_) { /* ignore */ }
+
+                    if (goals) {
+                        const target = Number(goals.target_percent_per_beer || 8);
+                        const maxLoss = Number(goals.max_loss_percent || 2);
+                        if (guard === 'ok' && hasPercent && p >= target) {
+                            try { await crackBeer(user.id, {
+                                starting_balance: starting,
+                                ending_balance: ending,
+                                gain_amount: pnlAbs,
+                                gain_percent: gainPct,
+                                target_percent: target,
+                                trades_count: tradeInserted ? 1 : 0,
+                                notes: note
+                            }); } catch(_) {}
+                            showToast('🍺 You cracked one bottle!');
+                            try { if (typeof fireConfetti === 'function') fireConfetti(); } catch(_) {}
+                        } else if ((guard === 'fail') || (hasPercent && p <= -maxLoss)) {
+                            try { await spillBeer(user.id, {
+                                starting_balance: starting,
+                                ending_balance: ending,
+                                loss_amount: Math.abs(pnlAbs),
+                                loss_percent: Math.abs(gainPct),
+                                max_loss_percent: maxLoss,
+                                violations: guard === 'fail' ? ['User-reported rule break'] : [],
+                                trades_count: tradeInserted ? 1 : 0,
+                                notes: note
+                            }); } catch(_) {}
+                            showToast('🍺 Beer spilled! No worries — tomorrow’s another chance.');
+                        }
+                    }
+
+                    try { await updateXPBar(); } catch(_) {}
+                    try { await loadUserProgress(user.id); } catch(_) {}
+                    try { if (typeof initDashboardCalendar === 'function') await initDashboardCalendar(); else if (typeof buildDashboardPerformanceCalendar === 'function') await buildDashboardPerformanceCalendar(); } catch(_) {}
+                })();
+                modal.remove();
+            } catch (e) {
+                console.error(e);
+                alert('Could not log your day.');
+            } finally {
+                submitBtn.disabled = false;
+            }
+        });
+    } catch (e) { console.error('openDailyFlow failed', e); }
+}
+
+function showToast(msg) {
+    try {
+        const toast = document.createElement('div');
+        toast.style.position = 'fixed';
+        toast.style.top = '16px';
+        toast.style.left = '50%';
+        toast.style.transform = 'translateX(-50%)';
+        toast.style.zIndex = '10000';
+        toast.style.background = 'rgba(34,34,36,0.9)';
+        toast.style.backdropFilter = 'blur(8px)';
+        toast.style.border = '1px solid rgba(255,149,0,0.4)';
+        toast.style.borderRadius = '12px';
+        toast.style.padding = '10px 14px';
+        toast.style.color = '#fff';
+        toast.style.fontSize = '0.95rem';
+        toast.style.boxShadow = '0 8px 24px rgba(0,0,0,0.35)';
+        toast.textContent = msg;
+        document.body.appendChild(toast);
+        toast.animate([
+            { opacity: 0, transform: 'translate(-50%, -8px)' },
+            { opacity: 1, transform: 'translate(-50%, 0)' }
+        ], { duration: 220, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'forwards' });
+        setTimeout(() => {
+            toast.animate([
+                { opacity: 1, transform: 'translate(-50%, 0)' },
+                { opacity: 0, transform: 'translate(-50%, -8px)' }
+            ], { duration: 240, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'forwards' })
+            .onfinish = () => toast.remove();
+        }, 1800);
+    } catch (_) {}
+}
+
 // Permanently delete account and all data
 async function deleteAccount() {
     try {
@@ -670,6 +872,7 @@ window.openSettingsModal = openSettingsModal;
 window.applyPremiumCode = applyPremiumCode;
 window.resetAccountOneTime = resetAccountOneTime;
 window.deleteAccount = deleteAccount;
+window.openDailyFlow = openDailyFlow;
 
 // Open any user's profile by id (shared for Achievements/Friends)
 async function openUserProfileById(userId) {
