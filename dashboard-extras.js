@@ -22,6 +22,50 @@ async function showQuickShareButton() {
             discipline: 100 // Calculate from trades/violations
         });
     }
+
+function setSfxVolume(vol) {
+    try {
+        let v = Number(vol);
+        if (!Number.isFinite(v)) return;
+        v = Math.max(0.1, Math.min(3.5, v));
+        try { localStorage.setItem('lockin_sfx_vol', String(v)); } catch(_) {}
+        const m = getSfxMaster();
+        if (m) m.gain.value = v;
+        const label = document.getElementById('sfxVolumeLabel');
+        if (label) label.textContent = 'x' + v.toFixed(1);
+    } catch (_) {}
+}
+
+function initSfxUi() {
+    try {
+        const btn = document.getElementById('sfxBtn');
+        const pop = document.getElementById('sfxPopover');
+        const slider = document.getElementById('sfxVolumeSlider');
+        const label = document.getElementById('sfxVolumeLabel');
+        if (!btn || !pop || !slider) return;
+        // Initialize slider from storage/default
+        let v = 1.8;
+        try { const ls = Number(localStorage.getItem('lockin_sfx_vol')); if (Number.isFinite(ls) && ls > 0) v = ls; } catch(_) {}
+        slider.value = String(v);
+        if (label) label.textContent = 'x' + v.toFixed(1);
+        setSfxVolume(v);
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            pop.style.display = (pop.style.display === 'block') ? 'none' : 'block';
+        });
+        slider.addEventListener('input', () => {
+            const nv = Number(slider.value);
+            setSfxVolume(nv);
+        });
+        document.addEventListener('click', (ev) => {
+            if (!pop.contains(ev.target) && ev.target !== btn) {
+                pop.style.display = 'none';
+            }
+        });
+    } catch (_) {}
+}
+
+document.addEventListener('DOMContentLoaded', initSfxUi);
 }
 
 function getSfxMaster() {
