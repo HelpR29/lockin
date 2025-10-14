@@ -143,11 +143,10 @@ async function showPretradeChecklistModal() {
     const continueBtn = modal.querySelector('#pretradeContinueBtn');
     
     function updateContinueButton() {
-      const allChecked = Array.from(checkboxes).every(cb => cb.checked);
       if (continueBtn) {
-        continueBtn.disabled = !allChecked;
-        continueBtn.style.opacity = allChecked ? '1' : '0.5';
-        continueBtn.style.cursor = allChecked ? 'pointer' : 'not-allowed';
+        continueBtn.disabled = false;
+        continueBtn.style.opacity = '1';
+        continueBtn.style.cursor = 'pointer';
       }
     }
     

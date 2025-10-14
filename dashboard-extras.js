@@ -256,8 +256,9 @@ async function openDailyFlow() {
                     const guardMap = { ok: 10, warn: 7, fail: 4 };
                     const discipline_rating = guardMap[guard] ?? 8;
 
+                    let checkinRes = null;
                     try {
-                        await performDailyCheckIn(user.id, {
+                        checkinRes = await performDailyCheckIn(user.id, {
                             discipline_rating,
                             followed_rules: guard === 'ok',
                             traded_today: tradeInserted,
@@ -317,8 +318,13 @@ async function openDailyFlow() {
                         if (hint) { hint.textContent = 'See you tomorrow'; }
                     } catch(_) {}
 
-                    // Show completion splash
-                    try { showDailyCompletionSplash(outcome); } catch(_) {}
+                    // Show completion splash (use latest from progress, fallback to check-in result)
+                    try {
+                        const prog = window.currentProgressData || {};
+                        const streak = (prog.streak != null && prog.streak !== undefined) ? prog.streak : (checkinRes?.newStreak || 0);
+                        const dscore = (prog.disciplineScore != null && prog.disciplineScore !== undefined) ? prog.disciplineScore : 0;
+                        showDailyCompletionSplash(outcome, { day: streak, disciplineScore: dscore });
+                    } catch(_) {}
                 })();
                 modal.remove();
             } catch (e) {
