@@ -122,13 +122,18 @@ async function openDailyFlow() {
     try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
-        // Enforce checklist immediately when starting the flow
+        // Always show checklist at start of flow (even if already completed)
         try {
-            if (typeof enforcePretradeChecklist === 'function') {
-                const ok = await enforcePretradeChecklist();
-                if (!ok) return; // user cancelled
+            if (typeof isTodayChecklistComplete === 'function' && typeof showPretradeChecklistModal === 'function') {
+                const status = await isTodayChecklistComplete();
+                if (status === 'no_items' && typeof showChecklistSetupPrompt === 'function') {
+                    const ok = await showChecklistSetupPrompt();
+                    if (!ok) return;
+                } else {
+                    await showPretradeChecklistModal();
+                }
             }
-        } catch (_) { /* ignore and continue */ }
+        } catch (_) { /* non-blocking */ }
         const modal = document.createElement('div');
         modal.className = 'modal';
         modal.style.display = 'flex';
@@ -309,6 +314,8 @@ async function openDailyFlow() {
 
                     try { await updateXPBar(); } catch(_) {}
                     try { await loadUserProgress(user.id); } catch(_) {}
+                    let freshSummary = null;
+                    try { freshSummary = await getUserProgressSummary(user.id); } catch(_) {}
                     try { if (typeof initDashboardCalendar === 'function') await initDashboardCalendar(); else if (typeof buildDashboardPerformanceCalendar === 'function') await buildDashboardPerformanceCalendar(); } catch(_) {}
 
                     // Avatar reaction and disable CTA for today
@@ -322,7 +329,7 @@ async function openDailyFlow() {
 
                     // Show completion splash (use latest from progress, fallback to check-in result)
                     try {
-                        const prog = window.currentProgressData || {};
+                        const prog = freshSummary || window.currentProgressData || {};
                         const streak = (prog.streak != null && prog.streak !== undefined) ? prog.streak : (checkinRes?.newStreak || 0);
                         const dscore = (prog.disciplineScore != null && prog.disciplineScore !== undefined) ? prog.disciplineScore : 0;
                         showDailyCompletionSplash(outcome, { day: streak, disciplineScore: dscore });
