@@ -37,6 +37,34 @@ function setSfxVolume(vol) {
     } catch (_) {}
 }
 
+function ensureSfxControl() {
+    try {
+        if (document.getElementById('sfxBtn') && document.getElementById('sfxPopover')) return;
+        const bell = document.querySelector('.notification-bell');
+        if (!bell || !bell.parentElement) return;
+        const wrap = document.createElement('div');
+        wrap.id = 'sfxControl';
+        wrap.style.position = 'relative';
+        wrap.style.marginRight = '0.25rem';
+        wrap.innerHTML = `
+            <button id="sfxBtn" class="cta-secondary" onclick="toggleSfxPopover()" style="padding: 0.35rem 0.55rem; line-height:1; display:flex; align-items:center; gap:0.35rem;">
+                <span style="font-size: 1.1rem;">🔊</span>
+                <span class="nav-label" style="font-size:0.85rem;">SFX</span>
+            </button>
+            <div id="sfxPopover" style="display:none; position:absolute; top: 2.3rem; right: 0; background: var(--card-bg); border: 1px solid var(--glass-border); border-radius: 10px; padding: 0.75rem; width: 230px; z-index: 9999; box-shadow: 0 8px 24px rgba(0,0,0,0.35);">
+                <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <span style="font-weight: 700;">SFX Volume</span>
+                    <span id="sfxVolumeLabel" style="color: var(--text-secondary);">x1.8</span>
+                </div>
+                <input id="sfxVolumeSlider" type="range" min="0.1" max="3.5" step="0.1" value="1.8" style="width: 100%;" oninput="if(window.setSfxVolume){window.setSfxVolume(this.value)}" />
+                <div style="display:flex; justify-content:flex-end; margin-top:0.6rem;">
+                    <button id="sfxTestBtn" class="cta-secondary" type="button" style="padding:0.35rem 0.6rem;" onclick="if(window.unlockAudio)window.unlockAudio(); if(window.playDing)window.playDing();">Test</button>
+                </div>
+            </div>`;
+        bell.parentElement.insertBefore(wrap, bell.nextSibling);
+    } catch (_) {}
+}
+
 function initSfxUi() {
     try {
         const btn = document.getElementById('sfxBtn');
@@ -102,7 +130,7 @@ function initSfxUi() {
     } catch (_) {}
 }
 
-document.addEventListener('DOMContentLoaded', initSfxUi);
+document.addEventListener('DOMContentLoaded', () => { try { ensureSfxControl(); } catch(_) {} initSfxUi(); });
 
 function toggleSfxPopover() {
     try {
