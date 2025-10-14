@@ -130,10 +130,23 @@ function initSfxUi() {
     } catch (_) {}
 }
 
-document.addEventListener('DOMContentLoaded', () => { try { ensureSfxControl(); } catch(_) {} initSfxUi(); });
+function __bootSfxUi() {
+    try { ensureSfxControl(); } catch(_) {}
+    initSfxUi();
+    // Retry once shortly after, in case header renders late
+    setTimeout(() => { try { ensureSfxControl(); } catch(_) {} initSfxUi(); }, 600);
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', __bootSfxUi);
+} else {
+    __bootSfxUi();
+}
 
 function toggleSfxPopover() {
     try {
+        // Ensure controls exist
+        try { ensureSfxControl(); } catch(_) {}
         const btn = document.getElementById('sfxBtn');
         const pop = document.getElementById('sfxPopover');
         if (!btn || !pop) return;
@@ -1597,4 +1610,5 @@ try {
     window.setSfxVolume = setSfxVolume;
     window.unlockAudio = unlockAudio;
     window.playDing = playDing;
+    window.ensureSfxControl = ensureSfxControl;
 } catch (_) {}
