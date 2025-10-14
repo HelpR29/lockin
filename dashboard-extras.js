@@ -50,8 +50,31 @@ function initSfxUi() {
         if (label) label.textContent = 'x' + v.toFixed(1);
         setSfxVolume(v);
         btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            pop.style.display = (pop.style.display === 'block') ? 'none' : 'block';
+            try {
+                e.stopPropagation();
+                unlockAudio();
+                // Move popover to body to avoid clipping by nav overflow
+                if (!pop.__movedToBody) {
+                    document.body.appendChild(pop);
+                    pop.__movedToBody = true;
+                    pop.style.position = 'fixed';
+                    pop.style.zIndex = '10050';
+                }
+                if (pop.style.display === 'block') {
+                    pop.style.display = 'none';
+                    return;
+                }
+                pop.style.display = 'block';
+                // Position near button
+                const rect = btn.getBoundingClientRect();
+                // Ensure width is measured
+                const w = pop.offsetWidth || 230;
+                const h = pop.offsetHeight || 80;
+                let left = Math.max(8, Math.min(window.innerWidth - w - 8, rect.right - w));
+                let top = Math.max(8, Math.min(window.innerHeight - h - 8, rect.bottom + 8));
+                pop.style.left = left + 'px';
+                pop.style.top = top + 'px';
+            } catch (_) {}
         });
         slider.addEventListener('input', () => {
             const nv = Number(slider.value);
@@ -66,7 +89,6 @@ function initSfxUi() {
 }
 
 document.addEventListener('DOMContentLoaded', initSfxUi);
-}
 
 function getSfxMaster() {
     try {
