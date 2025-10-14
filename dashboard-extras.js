@@ -22,6 +22,7 @@ async function showQuickShareButton() {
             discipline: 100 // Calculate from trades/violations
         });
     }
+}
 
 function setSfxVolume(vol) {
     try {
@@ -43,7 +44,12 @@ function initSfxUi() {
         const slider = document.getElementById('sfxVolumeSlider');
         const label = document.getElementById('sfxVolumeLabel');
         const testBtn = document.getElementById('sfxTestBtn');
-        if (!btn || !pop || !slider) return;
+        if (!btn || !pop || !slider) {
+            // Retry a few times in case header renders late
+            window.__sfxInitAttempts = (window.__sfxInitAttempts || 0) + 1;
+            if (window.__sfxInitAttempts < 10) setTimeout(initSfxUi, 400);
+            return;
+        }
         // Initialize slider from storage/default
         let v = 1.8;
         try { const ls = Number(localStorage.getItem('lockin_sfx_vol')); if (Number.isFinite(ls) && ls > 0) v = ls; } catch(_) {}
@@ -97,6 +103,59 @@ function initSfxUi() {
 }
 
 document.addEventListener('DOMContentLoaded', initSfxUi);
+
+function toggleSfxPopover() {
+    try {
+        const btn = document.getElementById('sfxBtn');
+        const pop = document.getElementById('sfxPopover');
+        if (!btn || !pop) return;
+        unlockAudio();
+        if (!pop.__movedToBody) {
+            document.body.appendChild(pop);
+            pop.__movedToBody = true;
+            pop.style.position = 'fixed';
+            pop.style.zIndex = '10050';
+        }
+        if (pop.style.display === 'block') {
+            pop.style.display = 'none';
+            return;
+        }
+        pop.style.display = 'block';
+        const rect = btn.getBoundingClientRect();
+        const w = pop.offsetWidth || 230;
+        const h = pop.offsetHeight || 100;
+        let left = Math.max(8, Math.min(window.innerWidth - w - 8, rect.right - w));
+        let top = Math.max(8, Math.min(window.innerHeight - h - 8, rect.bottom + 8));
+        pop.style.left = left + 'px';
+        pop.style.top = top + 'px';
+    } catch (_) {}
+}
+
+// Delegated handlers as a fallback if direct bindings missed
+document.addEventListener('click', (e) => {
+    const btn = e.target.closest && e.target.closest('#sfxBtn');
+    if (btn) {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleSfxPopover();
+    }
+});
+
+document.addEventListener('input', (e) => {
+    const el = e.target;
+    if (el && el.id === 'sfxVolumeSlider') {
+        const nv = Number(el.value);
+        setSfxVolume(nv);
+    }
+});
+
+document.addEventListener('click', (e) => {
+    if (e.target && e.target.id === 'sfxTestBtn') {
+        e.stopPropagation();
+        unlockAudio();
+        try { playDing(); } catch(_) {}
+    }
+});
 
 function getSfxMaster() {
     try {

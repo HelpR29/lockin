@@ -75,7 +75,7 @@
                 </div>
                 <!-- SFX Volume Control -->
                 <div id="sfxControl" style="position: relative; margin-right: 0.25rem;">
-                    <button id="sfxBtn" class="cta-secondary" style="padding: 0.35rem 0.55rem; line-height:1; display:flex; align-items:center; gap:0.35rem;">
+                    <button id="sfxBtn" class="cta-secondary" onclick="toggleSfxPopover()" style="padding: 0.35rem 0.55rem; line-height:1; display:flex; align-items:center; gap:0.35rem;">
                         <span style="font-size: 1.1rem;">🔊</span>
                         <span class="nav-label" style="font-size:0.85rem;">SFX</span>
                     </button>
@@ -374,7 +374,7 @@
     <script src="achievement-tracker.js"></script>
     <script src="share-card-generator.js?v=5"></script>
     <script src="payments.js"></script>
-    <script src="dashboard-extras.js?v=20251004"></script>
+    <script src="dashboard-extras.js?v=20251014-1"></script>
     <script src="performance-calendar.js?v=1"></script>
     <script>
         // Simple sign out handler - defined globally
