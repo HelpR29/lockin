@@ -24,6 +24,19 @@ async function showQuickShareButton() {
     }
 }
 
+async function loadScriptOnce(src) {
+    return new Promise((resolve, reject) => {
+        try {
+            if ([...document.scripts].some(s => (s.src || '').includes(src))) return resolve(true);
+            const el = document.createElement('script');
+            el.src = src;
+            el.onload = () => resolve(true);
+            el.onerror = () => reject(new Error('Failed to load ' + src));
+            document.head.appendChild(el);
+        } catch (e) { resolve(false); }
+    });
+}
+
 function playDing() {
     try {
         const AC = window.AudioContext || window.webkitAudioContext;
@@ -120,10 +133,12 @@ function showDailyCompletionSplash(kind, overrides) {
 // Daily Flow: quick check-in + optional trade and crack/spill
 async function openDailyFlow() {
     try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
         // Always show checklist at start of flow (even if already completed)
         try {
+            if (!(typeof isTodayChecklistComplete === 'function' && typeof showPretradeChecklistModal === 'function')) {
+                await loadScriptOnce('checklist.js');
+                await loadScriptOnce('pretrade-checklist.js');
+            }
             if (typeof isTodayChecklistComplete === 'function' && typeof showPretradeChecklistModal === 'function') {
                 const status = await isTodayChecklistComplete();
                 if (status === 'no_items' && typeof showChecklistSetupPrompt === 'function') {
@@ -134,6 +149,10 @@ async function openDailyFlow() {
                 }
             }
         } catch (_) { /* non-blocking */ }
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            // Allow the modal to open for reflection-only logging; guard back-end writes later
+        }
         const modal = document.createElement('div');
         modal.className = 'modal';
         modal.style.display = 'flex';
