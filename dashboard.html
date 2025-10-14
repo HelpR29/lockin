@@ -753,13 +753,8 @@
                     const today = new Date().toISOString().slice(0,10);
                     let already = false;
                     try {
-                        const { data: chk } = await supabase
-                            .from('daily_check_ins')
-                            .select('id')
-                            .eq('user_id', userId)
-                            .eq('check_in_date', today)
-                            .limit(1);
-                        already = Array.isArray(chk) && chk.length > 0;
+                        const last = String(progressSummary.last_check_in_date || '');
+                        already = (last === today);
                     } catch (_) { /* ignore */ }
                     if (already) {
                         btn.disabled = true;
