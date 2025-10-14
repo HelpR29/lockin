@@ -176,17 +176,7 @@ async function performDailyCheckIn(userId, checkInData) {
         
         if (progressError) throw progressError;
         
-        // Check if already checked in today
-        const { data: existingCheckIn } = await supabase
-            .from('daily_check_ins')
-            .select('*')
-            .eq('user_id', userId)
-            .eq('check_in_date', today)
-            .single();
-        
-        if (existingCheckIn) {
-            throw new Error('Already checked in today!');
-        }
+        // Avoid a pre-check SELECT; rely on UNIQUE(user_id, check_in_date)
         
         // Calculate new streak
         let newStreak = 1;
@@ -231,7 +221,13 @@ async function performDailyCheckIn(userId, checkInData) {
                 streak_at_time: newStreak
             });
         
-        if (checkInError) throw checkInError;
+        if (checkInError) {
+            // Unique violation means already checked in today
+            if (checkInError.code === '23505') {
+                throw new Error('Already checked in today!');
+            }
+            throw checkInError;
+        }
         
         // Update progress
         const newXP = progress.experience + totalXP;
