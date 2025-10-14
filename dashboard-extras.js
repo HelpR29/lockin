@@ -42,6 +42,7 @@ function initSfxUi() {
         const pop = document.getElementById('sfxPopover');
         const slider = document.getElementById('sfxVolumeSlider');
         const label = document.getElementById('sfxVolumeLabel');
+        const testBtn = document.getElementById('sfxTestBtn');
         if (!btn || !pop || !slider) return;
         // Initialize slider from storage/default
         let v = 1.8;
@@ -80,6 +81,13 @@ function initSfxUi() {
             const nv = Number(slider.value);
             setSfxVolume(nv);
         });
+        if (testBtn) {
+            testBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                unlockAudio();
+                try { playDing(); } catch(_) {}
+            });
+        }
         document.addEventListener('click', (ev) => {
             if (!pop.contains(ev.target) && ev.target !== btn) {
                 pop.style.display = 'none';
