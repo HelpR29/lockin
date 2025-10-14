@@ -24,6 +24,21 @@ async function showQuickShareButton() {
     }
 }
 
+function getSfxMaster() {
+    try {
+        const ctx = unlockAudio();
+        if (!ctx) return null;
+        if (!window.__lockinSfxMaster) {
+            const m = ctx.createGain();
+            let v = 1.8;
+            try { const ls = Number(localStorage.getItem('lockin_sfx_vol')); if (Number.isFinite(ls) && ls > 0) v = ls; } catch(_) {}
+            m.gain.value = v;
+            m.connect(ctx.destination);
+            window.__lockinSfxMaster = m;
+        }
+        return window.__lockinSfxMaster;
+    } catch (_) { return null; }
+}
 async function loadScriptOnce(src) {
     return new Promise((resolve, reject) => {
         try {
@@ -48,9 +63,11 @@ function playDing() {
         o.type = 'triangle';
         o.frequency.value = 880;
         g.gain.setValueAtTime(0.0001, ctx.currentTime);
-        g.gain.exponentialRampToValueAtTime(0.25, ctx.currentTime + 0.02);
-        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.22);
-        o.connect(g).connect(ctx.destination);
+        g.gain.exponentialRampToValueAtTime(0.4, ctx.currentTime + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.24);
+        const master = getSfxMaster();
+        if (!master) return;
+        o.connect(g).connect(master);
         o.start();
         o.stop(ctx.currentTime + 0.24);
     } catch (_) {}
@@ -67,9 +84,11 @@ function playSoftBuzz() {
         o.type = 'sawtooth';
         o.frequency.value = 180;
         g.gain.setValueAtTime(0.0001, ctx.currentTime);
-        g.gain.exponentialRampToValueAtTime(0.12, ctx.currentTime + 0.02);
-        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.28);
-        o.connect(g).connect(ctx.destination);
+        g.gain.exponentialRampToValueAtTime(0.22, ctx.currentTime + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.3);
+        const master = getSfxMaster();
+        if (!master) return;
+        o.connect(g).connect(master);
         o.start();
         o.stop(ctx.currentTime + 0.3);
     } catch (_) {}
