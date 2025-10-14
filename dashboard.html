@@ -116,6 +116,18 @@
                     </div>
                 </div>
 
+                <!-- Daily Flow CTA Row (hidden until progress loads) -->
+                <div id="dailyFlowRow" style="display:none; gap:0.75rem; align-items:center; flex-wrap:wrap; width:100%; margin: 0.25rem 0 0.75rem;">
+                    <div id="dailyStreakChip" style="display:flex; align-items:center; gap:0.4rem; background: rgba(255,149,0,0.12); border:1px solid var(--primary); color: var(--primary); padding: 0.4rem 0.6rem; border-radius: 999px; font-weight:700; font-size:0.9rem;">
+                        <span>🔥</span>
+                        <span><span id="dailyStreakCount">0</span> days strong!</span>
+                    </div>
+                    <button class="cta-primary" id="crackTodayBtn" onclick="openDailyFlow()" style="padding: 0.55rem 1.1rem;">
+                        <span>Crack Today’s Bottle</span>
+                    </button>
+                    <span id="dailyFlowHint" style="font-size:0.9rem; color: var(--text-secondary);"></span>
+                </div>
+
                 <!-- Onboarding Incomplete Banner (hidden by default) -->
                 <div id="onboardingBanner" style="display:none; border:1px solid var(--primary-orange); background: rgba(255,149,0,0.08); border-radius: 12px; padding: 1rem; margin: 1rem 0;">
                     <div style="display:flex; justify-content:space-between; align-items:center; gap:0.75rem; flex-wrap:wrap;">
@@ -709,6 +721,40 @@
                 }
                 requestAnimationFrame(animateGauge);
             }
+
+            // Update Daily Flow CTA Row
+            try {
+                const row = document.getElementById('dailyFlowRow');
+                const chip = document.getElementById('dailyStreakChip');
+                const countEl = document.getElementById('dailyStreakCount');
+                const hintEl = document.getElementById('dailyFlowHint');
+                const btn = document.getElementById('crackTodayBtn');
+                if (row && countEl && btn) {
+                    countEl.textContent = String(progressSummary.streak || 0);
+                    row.style.display = 'flex';
+                    // One-per-day guard
+                    const today = new Date().toISOString().slice(0,10);
+                    let already = false;
+                    try {
+                        const { data: chk } = await supabase
+                            .from('daily_check_ins')
+                            .select('id')
+                            .eq('user_id', userId)
+                            .eq('check_in_date', today)
+                            .limit(1);
+                        already = Array.isArray(chk) && chk.length > 0;
+                    } catch (_) { /* ignore */ }
+                    if (already) {
+                        btn.disabled = true;
+                        btn.classList.add('disabled');
+                        if (hintEl) hintEl.textContent = 'See you tomorrow';
+                    } else {
+                        btn.disabled = false;
+                        btn.classList.remove('disabled');
+                        if (hintEl) hintEl.textContent = '';
+                    }
+                }
+            } catch (_) { /* non-fatal */ }
         }
         
         // Load portfolio growth chart
