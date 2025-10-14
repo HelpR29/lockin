@@ -1555,3 +1555,11 @@ async function toggleFollow(otherUserId) {
     }
 }
 window.toggleFollow = toggleFollow;
+
+// Expose SFX helpers globally for inline handlers
+try {
+    window.toggleSfxPopover = toggleSfxPopover;
+    window.setSfxVolume = setSfxVolume;
+    window.unlockAudio = unlockAudio;
+    window.playDing = playDing;
+} catch (_) {}
