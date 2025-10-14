@@ -120,6 +120,13 @@ async function openDailyFlow() {
     try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
+        // Enforce checklist immediately when starting the flow
+        try {
+            if (typeof enforcePretradeChecklist === 'function') {
+                const ok = await enforcePretradeChecklist();
+                if (!ok) return; // user cancelled
+            }
+        } catch (_) { /* ignore and continue */ }
         const modal = document.createElement('div');
         modal.className = 'modal';
         modal.style.display = 'flex';
