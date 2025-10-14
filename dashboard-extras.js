@@ -54,9 +54,9 @@ function ensureSfxControl() {
             <div id="sfxPopover" style="display:none; position:absolute; top: 2.3rem; right: 0; background: var(--card-bg); border: 1px solid var(--glass-border); border-radius: 10px; padding: 0.75rem; width: 230px; z-index: 9999; box-shadow: 0 8px 24px rgba(0,0,0,0.35);">
                 <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
                     <span style="font-weight: 700;">SFX Volume</span>
-                    <span id="sfxVolumeLabel" style="color: var(--text-secondary);">x1.8</span>
+                    <span id="sfxVolumeLabel" style="color: var(--text-secondary);">x1.0</span>
                 </div>
-                <input id="sfxVolumeSlider" type="range" min="0.1" max="3.5" step="0.1" value="1.8" style="width: 100%;" oninput="if(window.setSfxVolume){window.setSfxVolume(this.value)}" />
+                <input id="sfxVolumeSlider" type="range" min="0.1" max="3.5" step="0.1" value="1.0" style="width: 100%;" oninput="if(window.setSfxVolume){window.setSfxVolume(this.value)}" />
                 <div style="display:flex; justify-content:flex-end; margin-top:0.6rem;">
                     <button id="sfxTestBtn" class="cta-secondary" type="button" style="padding:0.35rem 0.6rem;" onclick="if(window.unlockAudio)window.unlockAudio(); if(window.playDing)window.playDing();">Test</button>
                 </div>
@@ -79,7 +79,7 @@ function initSfxUi() {
             return;
         }
         // Initialize slider from storage/default
-        let v = 1.8;
+        let v = 1.0;
         try { const ls = Number(localStorage.getItem('lockin_sfx_vol')); if (Number.isFinite(ls) && ls > 0) v = ls; } catch(_) {}
         slider.value = String(v);
         if (label) label.textContent = 'x' + v.toFixed(1);
