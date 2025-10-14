@@ -62,6 +62,49 @@ function playSoftBuzz() {
     } catch (_) {}
 }
 
+function reactAvatar(kind) {
+  const el = document.getElementById('dashboardAvatar');
+  if (!el) return;
+  const base = el.style.transform || '';
+  const glow = kind === 'crack' ? 'rgba(80,227,194,0.6)' : kind === 'spill' ? 'rgba(255,69,58,0.5)' : 'rgba(255,149,0,0.4)';
+  const prevShadow = el.style.boxShadow || '';
+  el.style.transition = 'transform 250ms ease, box-shadow 250ms ease';
+  el.style.transform = 'scale(1.06)';
+  el.style.boxShadow = `0 0 0 8px ${glow}, 0 12px 36px rgba(0,0,0,0.35)`;
+  setTimeout(() => {
+    el.style.transform = base || 'scale(1)';
+    el.style.boxShadow = prevShadow || '0 0 0 6px rgba(255,149,0,0.15), 0 12px 36px rgba(255, 149, 0, 0.35)';
+  }, 850);
+}
+
+function showDailyCompletionSplash(kind) {
+  try {
+    const prog = window.currentProgressData || {};
+    const streak = prog.streak || 0;
+    const score = Math.round(Math.max(0, Math.min(100, prog.disciplineScore || 0)));
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'flex';
+    const title = kind === 'crack' ? 'You cracked one!' : kind === 'spill' ? 'Beer spilled' : 'Day logged';
+    const subtitle = kind === 'spill' ? 'No worries — tomorrow’s another chance.' : 'Nice work — keep the streak alive.';
+    modal.innerHTML = `
+      <div class="modal-content" style="max-width:480px; text-align:center;">
+        <span class="close-button" onclick="this.closest('.modal').remove()">&times;</span>
+        <h2 style="margin:0 0 0.5rem 0;">${title}</h2>
+        <div style="color: var(--text-secondary); margin-bottom:0.75rem;">${subtitle}</div>
+        <div style="display:grid; gap:0.5rem; margin-top:0.5rem;">
+          <div><strong>Day</strong> ${streak} logged successfully</div>
+          <div><strong>Discipline Score</strong> ${score}%</div>
+        </div>
+        <div style="margin-top:1rem;">
+          <button class="cta-primary" onclick="this.closest('.modal').remove()">See You Tomorrow</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  } catch (_) {}
+}
+
 // Daily Flow: quick check-in + optional trade and crack/spill
 async function openDailyFlow() {
     try {
