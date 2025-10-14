@@ -60,6 +60,9 @@ async function openDailyFlow() {
                             <label style="display:flex; align-items:center; gap:0.35rem; background: rgba(255,69,58,0.12); border:1px solid #FF453A; padding:0.35rem 0.6rem; border-radius:999px; cursor:pointer;">
                                 <input type="radio" name="dfGuard" value="fail" /> ❌
                             </label>
+                            <label style="display:flex; align-items:center; gap:0.35rem; background: rgba(255,255,255,0.08); border:1px solid var(--glass-border); padding:0.35rem 0.6rem; border-radius:999px; cursor:pointer;">
+                                <input type="radio" name="dfGuard" value="auto" /> 🤖 Auto
+                            </label>
                         </div>
                     </div>
                     <label style="display:flex; justify-content:space-between; align-items:center; gap:1rem;">
@@ -92,7 +95,7 @@ async function openDailyFlow() {
                     const sym = (document.getElementById('dfSymbol')?.value || '').trim();
                     const pRaw = (document.getElementById('dfResult')?.value || '').trim();
                     const p = Number(pRaw);
-                    const guard = (document.querySelector('input[name="dfGuard"]:checked')?.value || 'ok');
+                    let guard = (document.querySelector('input[name="dfGuard"]:checked')?.value || 'ok');
                     const mood = document.getElementById('dfMood')?.value || '🙂 Neutral';
                     const note = document.getElementById('dfNote')?.value || '';
 
@@ -110,6 +113,7 @@ async function openDailyFlow() {
                     const pnlAbs = starting > 0 ? (starting * (gainPct / 100)) : 0;
 
                     let tradeInserted = false;
+                    let insertedTrade = null;
                     if (sym) {
                         const entry = 100;
                         const exit = hasPercent ? (100 * (1 + (gainPct / 100))) : 100;
@@ -129,8 +133,20 @@ async function openDailyFlow() {
                             entry_time: new Date().toISOString(),
                             exit_time: new Date().toISOString()
                         };
-                        const { error: tErr } = await supabase.from('trades').insert(trade);
-                        if (!tErr) tradeInserted = true;
+                        const { data: inserted, error: tErr } = await supabase.from('trades').insert(trade).select().single();
+                        if (!tErr && inserted) { tradeInserted = true; insertedTrade = inserted; }
+                    }
+
+                    // Auto RuleGuard
+                    if (guard === 'auto') {
+                        if (insertedTrade && typeof checkTradeForViolations === 'function') {
+                            try {
+                                const v = await checkTradeForViolations(insertedTrade);
+                                guard = (Array.isArray(v) && v.length > 0) ? 'fail' : 'ok';
+                            } catch (_) { guard = 'warn'; }
+                        } else {
+                            guard = 'warn';
+                        }
                     }
 
                     const guardMap = { ok: 10, warn: 7, fail: 4 };
@@ -164,6 +180,7 @@ async function openDailyFlow() {
                             }); } catch(_) {}
                             showToast('🍺 You cracked one bottle!');
                             try { if (typeof fireConfetti === 'function') fireConfetti(); } catch(_) {}
+                            try { playDing(); } catch(_) {}
                         } else if ((guard === 'fail') || (hasPercent && p <= -maxLoss)) {
                             try { await spillBeer(user.id, {
                                 starting_balance: starting,
@@ -176,6 +193,7 @@ async function openDailyFlow() {
                                 notes: note
                             }); } catch(_) {}
                             showToast('🍺 Beer spilled! No worries — tomorrow’s another chance.');
+                            try { playSoftBuzz(); } catch(_) {}
                         }
                     }
 
