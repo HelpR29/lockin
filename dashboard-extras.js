@@ -87,11 +87,13 @@ function reactAvatar(kind) {
   }, 850);
 }
 
-function showDailyCompletionSplash(kind) {
+function showDailyCompletionSplash(kind, overrides) {
   try {
     const prog = window.currentProgressData || {};
-    const streak = prog.streak || 0;
-    const score = Math.round(Math.max(0, Math.min(100, prog.disciplineScore || 0)));
+    const streak = (overrides && typeof overrides.day === 'number') ? overrides.day : (prog.streak || 0);
+    const score = (overrides && typeof overrides.disciplineScore === 'number')
+      ? Math.round(Math.max(0, Math.min(100, overrides.disciplineScore)))
+      : Math.round(Math.max(0, Math.min(100, prog.disciplineScore || 0)));
     const modal = document.createElement('div');
     modal.className = 'modal';
     modal.style.display = 'flex';
