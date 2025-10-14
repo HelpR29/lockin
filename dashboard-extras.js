@@ -115,6 +115,9 @@ function toggleSfxPopover() {
             pop.__movedToBody = true;
             pop.style.position = 'fixed';
             pop.style.zIndex = '10050';
+            pop.style.right = 'auto';
+            pop.style.top = 'auto';
+            pop.style.left = 'auto';
         }
         if (pop.style.display === 'block') {
             pop.style.display = 'none';
@@ -122,10 +125,14 @@ function toggleSfxPopover() {
         }
         pop.style.display = 'block';
         const rect = btn.getBoundingClientRect();
-        const w = pop.offsetWidth || 230;
-        const h = pop.offsetHeight || 100;
+        const w = pop.offsetWidth && pop.offsetWidth > 0 ? pop.offsetWidth : 230;
+        const h = pop.offsetHeight && pop.offsetHeight > 0 ? pop.offsetHeight : 100;
         let left = Math.max(8, Math.min(window.innerWidth - w - 8, rect.right - w));
         let top = Math.max(8, Math.min(window.innerHeight - h - 8, rect.bottom + 8));
+        if (!Number.isFinite(left) || !Number.isFinite(top)) {
+            left = Math.max(8, Math.floor((window.innerWidth - w) / 2));
+            top = 72;
+        }
         pop.style.left = left + 'px';
         pop.style.top = top + 'px';
     } catch (_) {}
